@@ -1,7 +1,7 @@
 \name{Save}
 \alias{Save}
 \alias{Save.pos}
-\title{Save \R objects}
+\title{Save R objects}
 \description{These function resemble \code{save} and \code{save.image}, except that any functions which have been \code{mtrace}d (see the \pkg{debug} package) will be temporarily untraced during saving (though the \pkg{debug} package is not needed to run them). \code{Save()} is like \code{save.image()} \code{Save.pos(i)} saves all objects from the \code{i}th position on the search list in the corresponding .Rdata file. There is less flexibility in the arguments than for the system equivalents.}
 \usage{
 Save()

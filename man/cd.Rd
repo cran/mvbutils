@@ -1,6 +1,6 @@
 \name{cd}
 \alias{cd}
-\title{Organizing \R workspaces}
+\title{Organizing R workspaces}
 \description{\code{cd} allows you to set up and move through a hierarchically-organized set of \R workspaces, each corresponding to a directory. While working at any level of the hierarchy, all higher levels are attached on the search path, so you can see objects in the "parents". You can easily switch between workspaces in the same session, you can move objects around in the hierarchy, and you can do several hierarchy-wide things such as searching, even on parts of the hierarchy that aren't currently attached.}
 \synopsis{cd( to, execute.First=TRUE, execute.Last=TRUE)}
 \usage{

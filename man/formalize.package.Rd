@@ -5,7 +5,7 @@
 \usage{
  formalize.package()
  formalize.package( funs=find.funs( where), package, where=1, dir.=,
- description.file=)
+ description.file=, new.index=TRUE, README.goes.first=TRUE)
 }
 \arguments{
 \item{ funs}{character vector, defaulting to all functions in \code{where}.}
@@ -13,6 +13,8 @@
 \item{ where}{position in search path to make into package.}
 \item{ dir.}{directory to contain test package. Defaults to \code{path} attribute of search pos \code{where}}
 \item{ description.file}{filename of template DESCRIPTION file. If this doesn't exist, a default DESCRIPTION file will be concocted.}
+\item{ new.index}{should it create a new INDEX file using \code{Rdindex}}
+\item{ README.goes.first}{if there's a function whose name starts with \code{README}, should its documentation file be renamed so that it's found first? See "Package structure details".}
 }
 \details{
 A bare-bones package skeleton is created (no C code etc.) in directory \code{dir.}. The skeleton will have a DESCRIPTION file, a single \R source file with name "<<package>>.r" in the "R" subdirectory, and the individual function-by-function Rd files in the "man" subdirectory. More details of the package structure are given below.
@@ -29,7 +31,9 @@ All pre-existing files in the "man" and "R" subdirectories (only) will be remove
 
 By default, the \R source file will only contain functions, but you can include other objects too by naming them in the \code{funs} argument. For functions, only source code will be included; in other words, any attributes except \code{source} are removed before printing. In particular, flat-format documentation in \code{doc} attributes does not go into the \R file. However, it is used to create the Rd files, by\code{\link{doc2Rd}}.
 
-If any of the Rd files starts with a period (e.g. ".README.mvbutils.Rd"), it will be duplicated as e.g. "X.README.mvbutils.Rd". This results in a message during RCMD CHECK, but avoids a more serious bug whereby the function either doesn't appear in the help, or in the package manual.
+If any of the Rd files starts with a period (e.g. ".dotty.name"), it will be renamed to "01.dotty.name.Rd" (to avoid some problems with rcmd).
+
+If \code{README.goes.first} is TRUE, any Rd file starting with \code{README} will be renamed \code{00README\dots}. This will ensure that the README\dots function appears first in the "package manual", and top of the list when \code{library(help=mypackage)} is called.
 }
 \seealso{ \code{\link{cd}}, \code{\link{flatdoc}}, \code{\link{doc2Rd}}, \code{\link{README.mvbutils}}, \code{\link{make.usage.section}}, \code{\link{make.arguments.section}}}
 \author{Mark Bravington}

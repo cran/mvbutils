@@ -1,6 +1,6 @@
 \name{move}
 \alias{move}
-\title{Organizing \R workspaces}
+\title{Organizing R workspaces}
 \description{\code{move} shifts one or more objects around the task hierarchy (see \code{\link{cd}}), whether or not the source and destination are currently attached on the search path.}
 \synopsis{move( x='.', from='.', to='.', what, overwrite.by.default=FALSE, copy=FALSE)}
 \usage{

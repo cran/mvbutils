@@ -116,28 +116,22 @@ function( libname, pkgname) {
        .Path = 0, session.start.time = Sys.time( )))
     .Path <<- c( ROOT = .First.top.search)
     set.path.attr( pos.to.env( 1), .Path)
-    if( !exists( "tasks", pos.to.env( 1)) || !is.character( tasks)
-        || ("mvbutils" %!in% names( tasks))) {
+    if( !exists( "tasks", pos.to.env( 1)) || 
+        !is.character( tasks <- get( "tasks", pos.to.env( 1)) )) {
       cat( "MVBUTILS: no \"tasks\" vector found in ROOT\n")
-      tasks <- c( mvbutils = file.path( libname, "mvbutils")) }
+      tasks <- character( 0)
+    }
 
-    set.path.attr( pos.to.env( index( search( ) == "package:" %&% 
-        pkgname)[1]), tasks["mvbutils"])
+    if( 'mvbutils' %in% names( tasks))
+      set.path.attr( pos.to.env( index( search( ) == "package:" %&% 
+          pkgname)[1]), tasks["mvbutils"])
 
     if( option.or.default( 'mvbutils.replacements', TRUE)) {
       assign.to.base( "help", hack.help())
       assign.to.base( "library", hack.library( ))
     }
   }
-
-  cat( "MVBUTILS loaded OK\n")
-  invisible( NULL)
 }
-
-
-".README.mvbutils" <-
-function() 
-  help( '.README.mvbutils')
 
 
 "as.data.frame.I" <-
@@ -456,7 +450,10 @@ stop( 'Just exiting cd')
 
 # De-attach duplicates: do this after re-loading so that functions in 'mvbutils' are always available
   if( length( is.attached)) {
-    detach( pos=is.attached[1]+attach.new )
+    ow <- options( warn=-1)
+    on.exit( options( ow))
+    detach( pos=is.attached[1]+attach.new ) # avoid nannyish warnings
+    options( ow)
     attach( NULL, pos=is.attached[1]+attach.new, name='PLACEHOLDER:' %&% taskname)
   }
 
@@ -825,7 +822,7 @@ function( fun) {
       Rd <<- c( Rd, string)
     }
     
-  line <- function( skip.blanks=TRUE) {
+  line <- function( skip.blanks=TRUE, do.subs=TRUE) {
       repeat{ 
         line <- readLines( tcon, 1)
         if( !length( line)) {
@@ -838,6 +835,9 @@ function( fun) {
         if( !skip.blanks || nchar( line))
       break
       }
+      
+      if( !do.subs)
+    return( line)
       
       # Things inside single quotes go to \code fragments
       line <- " " %&% line %&% " "
@@ -997,7 +997,7 @@ function( fun) {
     name <- line( FALSE)
   }
   
-  out( 'title', line())
+  out( 'title', line( do.subs=FALSE)) # no special stuff allowed in title
 
   while( !EOF) {
     next.field <- tolower( line())
@@ -1580,7 +1580,8 @@ return( structure( list( funmat=matrix( 0,0,0), x=numeric( 0), level=numeric( 0)
 "formalize.package" <-
 function( funs=find.funs( where), package, where=1, 
     dir.=attr( pos.to.env( where), 'path'), 
-    description.file=file.path( dir., 'DESCRIPTION')) {
+    description.file=file.path( dir., 'DESCRIPTION'),
+    new.index=TRUE, README.goes.first=TRUE) {
   if( is.character( where))
     where <- index( search()==where)[1]
   if( is.na( where))
@@ -1645,7 +1646,7 @@ stop( "couldn't make directories")
 
   file.remove( file.path( dir., package, 'R', 
       dir( file.path( dir., package, 'R'), all.files=TRUE))) # clean out oldies
-  rfile <- file.path( dir., package, 'R', package %&% '.r')
+  rfile <- file.path( dir., package, 'R', package %&% '.R')
   # cat( '.packagename <- "', package, '"\n', sep='', file=rfile)
   cat( '# This is package', package, '\n', file=rfile)
   sapply( funs, ff)
@@ -1657,12 +1658,15 @@ stop( "couldn't make directories")
   for( i in docfuns) {
     docco <- doc2Rd( i)
     fname <- sub( '}', '', sub( '\\\\name{', '', docco[1])) %&% '.Rd'
+    if( length( grep( '^\\.', fname)))
+      fname <- '01' %&% fname
+    if( README.goes.first && length( grep( '^README', fname)))
+      fname <- '00' %&% fname
     cat( doc2Rd( i), file=file.path( dir., package, 'man', fname), sep='\n')
-    if( regexpr( '^\\.', fname)>0) # get round RCMD CHECK bug by duplicating file...
-      cat( doc2Rd( i), file=file.path( dir., package, 'man', 'X' %&% fname), sep='\n')
   }
   
-  # Rdindex( file.path( dir., package, 'man'), file.path( )
+  if( new.index && require( tools)) 
+    Rdindex( file.path( dir., package, 'man'), file.path( dir., package, 'INDEX'))
 
   invisible( NULL)
 }
@@ -1671,7 +1675,7 @@ stop( "couldn't make directories")
 "from.here" <-
 function( EOF=as.character( NA)) {
   f1 <- tempfile()
-  cat( 'FILENAME: ', f1, '\n')
+#  cat( 'FILENAME: ', f1, '\n')
   cat( readLines.mvb( current.source(), EOF=EOF), file=f1, sep='\n')
   c1 <- file( f1)
   class( c1) <- c( 'selfdeleting.file', class( c1))
@@ -2990,7 +2994,7 @@ function( con = stdin(), n = -1, ok = TRUE, EOF=as.character( NA)) {
 
 "README.mvbutils" <-
 function() 
-  help( '.README.mvbutils')
+  help( 'README.mvbutils')
 
 
 "reattach.placeholder" <-
@@ -3313,6 +3317,18 @@ stop( geterrmessage())
 }
 
 
+"strip.missing" <-
+function( obs) {
+  sp <- sys.frame( mvb.sys.parent())
+  for( i in obs) {
+    get.i <- get( i, sp)
+    if( try( mode( get.i), silent=TRUE) %is.a% 'try-error')
+      obs <- obs %except% i
+  }
+  obs
+}
+
+
 "task.home" <-
 function(fname) {
   if(!missing(fname)) {
@@ -3376,8 +3392,8 @@ function ()
 
 "write.mvb.tasks" <-
 function( tasks=get( 'tasks', env=env), env=.GlobalEnv, dir=attr( env, 'path'))  
-  cat( 'tasks <- ', deparse( as.call( c( as.name( 'c'), tasks))), 
-    file=file.path( dir, 'tasks.R'))
+  cat( '\ntasks <- ', deparse( as.call( c( as.name( 'c'), tasks))), 
+    file=file.path( dir, 'tasks.R'), append=TRUE)
 
 
 "write.sourceable.function" <-

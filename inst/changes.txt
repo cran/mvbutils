@@ -1,0 +1,12 @@
+4/1/2004: minor changes to documentation, for 'foodweb' and 'README.mvbutils'. The latter is mostly concerned with ESS use.
+
+6/1/2004: changed '.First.lib' so it no longer incorrectly complains about missing 'tasks' when 'tasks' is actually present but without an element named "mvbutils".
+
+6/1/2004: changed 'write.mvb.tasks' so that it *appends* the new tasks vector to the file "tasks.R". This makes it easier to retrieve old task lists that get accidentally screwed up.
+
+18/2/2004: changed 'formalize.package' so that it puts README.xxx documentation into 00README.xxx.Rd files rather than duplicating it. 
+
+  Also removed '.README.mvbutils' which is now superfluous (use README.mvbutils instead).
+
+	Also minor bug fix to .First.lib, allowing 'mvbutils' itself to be used as a task.
+	

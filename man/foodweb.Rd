@@ -6,7 +6,7 @@
 \title{Shows which functions call what}
 \description{\code{foodweb} is applied to a group of functions (e.g. all those in a workspace); it produces a graphical display showing the hierarchy of which functions call which other ones. This is handy, for instance, when you have a great morass of functions in a workspace, and want to figure out which ones are meant to be called directly. \code{callers.of(funs)} and \code{callees.of(funs)} show which functions directly call, or are called directly by, \code{funs}.}
 \usage{
- foodweb( funs, where=1, charlim=80, prune=funs, rprune, ancestors=TRUE,
+ foodweb( funs, where=1, charlim=80, prune=character(0), rprune, ancestors=TRUE,
  descendents=TRUE, plotting =TRUE, plotmath=FALSE,
  generics=c( "c","print","plot", "["), lwd=0.5, xblank=0.18,
  border="transparent", boxcolor="white", textcolor="black",

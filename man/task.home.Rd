@@ -1,6 +1,6 @@
 \name{task.home}
 \alias{task.home}
-\title{Organizing \R workspaces}
+\title{Organizing R workspaces}
 \description{Returns file path to current task, or to a file in that task.}
 \usage{
 task.home()
