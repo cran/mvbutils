@@ -1,6 +1,7 @@
 \name{mvb.sys.parent}
 \alias{mvb.sys.parent}
 \alias{mvb.sys.nframe}
+\alias{mvb.parent.frame}
 \alias{mvb.match.call}
 \alias{mvb.nargs}
 \alias{mvb.sys.call}
@@ -11,6 +12,7 @@
 \usage{
 mvb.sys.parent(n=1)
 mvb.sys.nframe()
+mvb.parent.frame(n=1)
 mvb.match.call(definition = sys.function(mvb.sys.parent()),
  call = sys.call(mvb.sys.parent()), expand.dots = TRUE)
 mvb.nargs()
@@ -42,6 +44,6 @@ ff.system( 27, b=4) # eval( expr, envir, enclos) !!!
 ff.mvb <- function(\dots) eval( quote( mvb.sys.call()), envir=sys.frame( sys.nframe()))
 ff.mvb( 27, b=4) # ff.mvb( 27, b=4)
 }
-\seealso{ \code{\link{sys.parent}}, \code{\link{sys.nframe}}, \code{\link{match.call}}, \code{\link{nargs}}, \code{\link{sys.call}}, \code{\link{sys.function}}, \code{\link{sys.on.exit}}}
+\seealso{ \code{\link{sys.parent}}, \code{\link{sys.nframe}}, \code{\link{parent.frame}}, \code{\link{match.call}}, \code{\link{nargs}}, \code{\link{sys.call}}, \code{\link{sys.function}}, \code{\link{sys.on.exit}}}
 \author{Mark Bravington}
 \keyword{programming}

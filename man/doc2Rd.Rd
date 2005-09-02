@@ -2,8 +2,8 @@
 \alias{doc2Rd}
 \title{Converts flat documentation to Rd format}
 \description{For functions whose \code{help} documentation is stored as a \code{doc} attribute; the text in the \code{doc} attribute is converted into a Rd format character vector. The documentation of the \pkg{mvbutils} package and the \pkg{debug} package was produced this way.}
-\usage{ doc2Rd( fun)}
-\arguments{\item{ fun}{function object, or character string that names a function.}}
+\usage{ doc2Rd( text)}
+\arguments{\item{ text}{character vector of documentation, or a function with a \code{doc} attribute.}}
 \value{Character vector containing the text as it would appear in an Rd file. Use \code{cat} with \code{sep="\\\\n"} to display this.}
 \details{
 Flat-format (plain-text) documentation in \code{doc} attributes can be displayed by the replacement \code{help} in \code{mvbutils} (see \code{\link{dochelp}}). For informal purposes, you can write such documentation any way you want. However, if you want to use \code{doc2Rd} to convert it to Rd format, the documentation must follow the rules below. At first sight, these might seem worse than having to learn how to write "native" Rd format, but in practice they are very simple. Check the file "sample.fun.rrr" in the "demo" subdirectory to see how it's done. The formal description below is harder to follow.
@@ -45,7 +45,7 @@ Any "*emphatic*" constructions (no quotes, just the asterisks) will go into emph
 \examples{
 \dontrun{
 ## Needs a function with the right kind of "doc" attr
-text.doc <- doc2Rd( "source.mvb")
+text.doc <- doc2Rd( source.mvb)
 cat( doc2Rd( doc2Rd), sep="\\n")
 }
 }

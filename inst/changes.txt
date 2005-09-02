@@ -9,4 +9,20 @@
   Also removed '.README.mvbutils' which is now superfluous (use README.mvbutils instead).
 
 	Also minor bug fix to .First.lib, allowing 'mvbutils' itself to be used as a task.
+
+7/3/2004: added 'mvb.parent.frame' to complement 'mvb.sys.parent' etc.
+
+7/2/2005: added support for lazy-loading of individual objects ("cacheing") in 'mlazy' etc.
+
+  Added support for image files that aren't just ".Rdata"-- in particular, for "R/all.rda" files in packages, and lazy-loading databases in "R" subdirectories. The latter is pretty experimental though.
+
+  Fixed buggy 'on.exit' in 'mlocal' functions; use 'local.on.exit' instead
+  
+  Added 'make.internal.doc' and 'make.NAMESPACE' for formalizing packages
+  
+  Changed 'create.backups' to only create new backup files; made it automatic in 'Save.pos'
+  
+  Fixed various things broken by R2.0, including the flatdoc extensions to 'help' (which had stopped the entire help system working).
+  
+11/2/2005: NAMESPACEd it
 	

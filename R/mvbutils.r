@@ -75,7 +75,36 @@ function (x, what)
 
 "%matching%" <-
 function( x, patt) 
-  unique( unlist( lapply( patt, grep, x=x, value=TRUE)))
+  unique( unlist( lapply( patt, grep, x=as.character( x), value=TRUE)))
+
+
+"%such.that%" <-
+function( a, b)
+  a[ eval( do.call( 'substitute', list( substitute( b), list( '.'=quote( a)))),  list( a=a), enclos=sys.frame( mvb.sys.parent()) )]
+
+
+"%SUCH.THAT%" <-
+function( a, b) {
+  if( !length( a))
+return( a)
+  fun <- function( .) .
+  body( fun) <- substitute( b)
+  environment( fun) <- sys.frame( sys.parent())
+  ind <- logical( length( a))
+  for( i in seq( along=a))
+    ind[ i] <- fun( a[ i])
+  a[ ind]
+}
+
+
+"%that.are.in%" <-
+function( a, b) 
+  a[ a %in% b]
+
+
+"%that.match%" <-
+function( x, patt) 
+  unique( unlist( lapply( patt, grep, x=as.character( x), value=TRUE)))
 
 
 "%upto%" <-
@@ -98,6 +127,7 @@ function( x, cond) {
     mum <- sys.frames()[[ mum]]
     
   cond <- eval( substitute( cond), x, enclos=mum)
+  cond[ is.na( cond)] <- FALSE
   x[ cond,]
 }
 
@@ -126,12 +156,18 @@ function( libname, pkgname) {
       set.path.attr( pos.to.env( index( search( ) == "package:" %&% 
           pkgname)[1]), tasks["mvbutils"])
 
+    setup.mcache( .GlobalEnv) # in case of cached objects in ROOT, which 'load' won't understand
+
     if( option.or.default( 'mvbutils.replacements', TRUE)) {
       assign.to.base( "help", hack.help())
       assign.to.base( "library", hack.library( ))
     }
   }
 }
+
+
+".onLoad" <-
+function( libname, pkgname) .First.lib( libname, pkgname)
 
 
 "as.data.frame.I" <-
@@ -194,6 +230,16 @@ function( x, what=lapply( named( x),
   }
   
   invisible( NULL)
+}
+
+
+"attach.mlazy" <-
+function( dir, pos=2,
+    name='data:' %&% attr( .GlobalEnv, 'name') %&% ':' %&% basename( dir)) {
+  attach( list(), pos=pos, name=name)
+  e <- pos.to.env( pos)
+  attr( e, 'path') <- dir <- task.home( dir)
+  load.refdb( envir=e) # does nothing if no file
 }
 
 
@@ -260,102 +306,70 @@ function( funs, fw=foodweb( plotting=FALSE)) {
 
 
 "cd" <-
-function(to, execute.First=TRUE, execute.Last=TRUE) {
+function (to, execute.First = TRUE, execute.Last = TRUE) {
   need.to.promote.on.failure <- FALSE
   on.exit({
-        if( need.to.promote.on.failure)
-          promote.2.to.1()
-        if( !is.null( wd <- attr( .GlobalEnv, 'path')))
-          setwd( wd)
-        if( .Path[ length( .Path)] != wd) { # failsafe-- the prompt should reflect what's really attached
-          if( any( .Path == wd))
-            .Path <<- .Path[ 1:max( index( .Path==wd))]
-          else
-            .Path <<- c( '??'=character( 0), '??'=wd)
-        }
-        cdprompt()
-      })
+    if (need.to.promote.on.failure) promote.2.to.1()
+    if (!is.null(wd <- attr(.GlobalEnv, "path"))) setwd(wd)
+    if (.Path[length(.Path)] != wd) {
+      .Path <<- if (any(.Path == wd)) 
+          .Path[1:max(index(.Path == wd))] 
+        else 
+          c("??" = character(0), "??" = wd)
+    }
+    cdprompt()
+  })
+  orig.path <- attr(.GlobalEnv, "path")
+  if (is.null(orig.path) || !my.all.equal(orig.path, .Path[length(.Path)]))
+stop("problem with taskly status of .GlobalEnv!")
 
-  orig.path <- attr( .GlobalEnv, 'path')
-  if( is.null( orig.path) || !my.all.equal( orig.path, .Path[ length( .Path)]))
-stop( 'problem with taskly status of .GlobalEnv!')
-
-  if(missing(to))
+  if (missing(to))
     to <- get.cd.from.menu()
-  else
-    to <- substitute( to)
+  else to <- substitute(to)
+  to <- strsplit(deparse(to), "/", FALSE)[[1]]
+  if (to[1] == "0")
+    to <- c(rep("..", length(.Path) - 1), to[-1])
+  to <- to %except% "."
+  if (!length(to))
+return(invisible())
 
-# Parse input string: NB that R interprets a/b/c as function calls!
-  to <- strsplit( deparse( to), '/', FALSE)[[1]]
-  if( to[1]=="0")
-    to <- c( rep( "..", length( .Path)-1), to[-1])
-  to <- to %except% '.' # you never know what the user will do
+  ii <- to[-length(to)] != ".." & to[-1] == ".."
+  ii <- c(ii, FALSE) | c(FALSE, ii)
+  to <- to[!ii]
+  if (!length(to))
+return(invisible())
 
-  if( !length( to))
-return( invisible())
+  if (to[1] == ".." && length(.Path) == 1)
+stop("Can't move backwards from ROOT!")
 
-# Eliminate 'a/..' sillinesses
-  ii <- to[-length(to)]!='..' & to[ -1] == '..'
-  ii <- c( ii, FALSE) | c( FALSE, ii)
-  to <- to[ !ii]
+  #save.image() # replaced by...
+  Save.pos( 1) # 12/04, to work with all.rda & lazyLoad
 
-  if( !length( to))
-return( invisible())
-
-# Can we even start?
-  if( to[1]=='..' && length( .Path)==1)
-stop( "Can't move backwards from ROOT!")
-
-#  # Next bit of code is complicated because 'debug' may be top workspace!
-#  pos.of.debug.package <- function( x) {
-#      att <- attributes( pos.to.env( x))
-#      x[ identical( att$name, 'debug') || identical( names( att$path), 'debug')]
-#    }
-#  where.is.Save <- find( 'Save', num=TRUE)
-#  if( length( where.is.Save)) 
-#    where.is.Save <- unlist( lapply( where.is.Save, pos.of.debug.package))
-#  if( length( where.is.Save)) {
-#    Save <- get( 'Save', where.is.Save)
-#    Save() }
-#  else
-  save.image() # KISS
-  
-  if( FALSE && is.nonzero( getOption( 'change.history.with.cd')))
+  if (FALSE && is.nonzero(getOption("change.history.with.cd")))
     savehistory()
-
   need.to.promote.on.failure <- TRUE
-
-# Backwards
-  if( to[1]=='..') {
-    cd..( 1)
-    for( i in 1 %upto% sum( to=='..'))
-      cd..( 2)
-  } else # demote current top
-    load.mvb( file.path( orig.path, '.RData'), names( orig.path), pos=2, attach=TRUE, path=orig.path)
-
-# Parent of next-to-promote (if any) is now in position 2
-
-# Clear the top out; it will have been re-attached at 2 or in 'placeholder' if required
-  remove( list=objects( pos=1, all=TRUE), pos=1)
-  attributes( .GlobalEnv) <- list() # clear name and path
-
-  if( length( to)) {
-  # Attaches
-    n.attaches <- length( to)
-    if( n.attaches>1)
-      for( i in 2:n.attaches) {
-        cd.load( to[ 1], pos=2, attach.new=TRUE)
+  if (to[1] == "..") {
+    cd..(1)
+    for (i in 1 %upto% sum(to == "..")) 
+      cd..(2)
+  }
+  else 
+    load.mvb( get.image.filename( orig.path), names(orig.path),
+      pos = 2, attach = TRUE, path = orig.path)
+  remove(list = objects(pos = 1, all = TRUE), pos = 1)
+  attributes(.GlobalEnv) <- list()
+  if (length(to)) {
+    n.attaches <- length(to)
+    if (n.attaches > 1)
+      for (i in 2:n.attaches) {
+        cd.load(to[1], pos = 2, attach.new = TRUE)
         to <- to[-1]
-      } # for-loop of attaches
-
-  # Now have to load the final attach into position 1
-    cd.load( to[ 1], pos=1, attach.new=FALSE)
-    if( is.nonzero( getOption( 'change.history.with.cd')))
+      }
+    cd.load(to[1], pos = 1, attach.new = FALSE)
+    if (is.nonzero(getOption("change.history.with.cd")))
       loadhistory()
-
     need.to.promote.on.failure <- FALSE
-  # and proceed to 'on.exit' which sets the prompt
-  } # else (i.e. if no attaches) promote.2.to.1 will happen automatically
+  }
 }
 
 
@@ -390,26 +404,27 @@ stop( "Can't cd up; there's a non-task in position 2", call.=FALSE)
 
 "cd.change.all.paths" <-
 function( from.text='0', old.path, new.path) {
-  if( .Platform$OS=='windows')
-    case <- upper.case
-  else
-    case <- function( x) x # case-sensitive
+  case <- if( .Platform$OS=='windows') 
+      upper.case 
+    else 
+      function( x) x # case-sensitive
 
-  cditerate( from.text, cd.change.all.paths.guts, '', old.path=case( old.path), new.path=case( new.path), case=case)
+  cditerate( from.text, cd.change.all.paths.guts, '', old.path=case( old.path), 
+      new.path=case( new.path), case=case)
 }
 
 
 "cd.change.all.paths.guts" <-
 function( found, task.dir, task.name='??', env, old.path, new.path, case) {
   cat( task.name, '\n')
-  if( exists( 'tasks', envir=env) && is.character( tasks)) {
+  if( exists( 'tasks', envir=env, inherits=FALSE) && is.character( tasks)) {
     tasks <- get( 'tasks', envir=env)
     tasks[] <- otasks <- gsub( '\\\\', '/', tasks) # [] to keep names
     tasks[] <- gsub( old.path, new.path, case( tasks))
     if( any( tasks != otasks)) {
       assign( 'tasks', tasks, envir=env)
-      do.call( 'save', list( envir=env, list=objects( envir=env, all=TRUE), 
-          file=file.path( task.dir, '.Rdata')))
+      save.mvb.db( env, get.Rdata.path( task.dir))
+
       if( option.or.default( 'write.mvb.tasks', FALSE))
         write.mvb.tasks( env=env, dir=task.dir)
     }
@@ -420,47 +435,52 @@ function( found, task.dir, task.name='??', env, old.path, new.path, case) {
 
 
 "cd.load" <-
-function( taskname, pos, attach.new, nlocal=sys.parent()) mlocal({
-  if( !exists( 'tasks', where=2, inherits=FALSE))
-    tasks <- character( 0)
-
-  full.path <- tasks[ taskname] # tasks to be found in current search()[2]
-  if( is.na( full.path)) {
-    if( yes.no( 'Task ' %&% taskname %&% ' does not exist yet. Create it? '))
-      full.path <- make.new.cd.task( taskname) # mlocal function
+function (taskname, pos, attach.new, nlocal = sys.parent()) mlocal({
+  if (!exists("tasks", where = 2, inherits = FALSE))
+    tasks <- character(0)
+  full.path <- tasks[taskname]
+  if (is.na(full.path)) {
+    if (yes.no("Task " %&% taskname %&% " does not exist yet. Create it? "))
+      full.path <- make.new.cd.task(taskname)
     else {
-      cat( 'No ') # before the "stop" message
-stop( 'Just exiting cd')
+      cat("No ")
+      stop("Just exiting cd")
     }
   }
-
-  tasks.on.search <- sapply( seq( along=search()),
-      function( x) if( is.null( x <- names( attr( pos.to.env( x), 'path')))) '' else x )
-
-# Save best duplicate
-# Don't look at .GlobalEnv; this confuses if someone does cd( ../self) from self!
-  is.attached <- 1+index( tasks.on.search[-1]==taskname)
-  if( length( is.attached)) {
-    if( length( is.attached)>1)
-      sapply( rev( is.attached)[-1], function( x) detach( pos=x)) # multiple attachments ruthlessly deleted
-    save.pos( is.attached[ 1])
+  tasks.on.search <- sapply(seq(along = search()), 
+      function(x) 
+        if (is.null(x <- names(attr(pos.to.env(x), "path"))))
+          ""
+        else 
+          x
+    )
+  is.attached <- 1 + index(tasks.on.search[-1] == taskname)
+  if (length(is.attached)) {
+    if (length(is.attached) > 1)
+      sapply(rev(is.attached)[-1], function(x) detach(pos = x))
+    Save.pos(is.attached[1])
+    # ...changed 12/04 from 'save.pos' to cope with all.rda & lazyloads
   }
 
-  load.mvb( file.path( full.path, '.RData'), name=taskname, pos=pos, attach.new=attach.new, path=full.path)
+  filename <- get.image.filename( full.path)
+  if( is.na( filename))
+stop( "Can't find an image file to load for '" %&% taskname %&% "'!")
 
-# De-attach duplicates: do this after re-loading so that functions in 'mvbutils' are always available
-  if( length( is.attached)) {
-    ow <- options( warn=-1)
-    on.exit( options( ow))
-    detach( pos=is.attached[1]+attach.new ) # avoid nannyish warnings
-    options( ow)
-    attach( NULL, pos=is.attached[1]+attach.new, name='PLACEHOLDER:' %&% taskname)
+  load.mvb( filename, name = taskname,
+    pos = pos, attach.new = attach.new, path = full.path)
+  if (length(is.attached)) {
+    ow <- options(warn = -1)
+    local.on.exit( options(ow) )
+    detach(pos = is.attached[1] + attach.new)
+    options(ow)
+    attach(NULL, pos = is.attached[1] + attach.new, 
+        name = "PLACEHOLDER:" %&% taskname)
   }
-
-  .Path <<- c( .Path, full.path)
-  if( execute.First && exists( '.First.task', where=pos, inherits=FALSE)) {
-    .First.task <- get( '.First.task', pos=pos, inherits=FALSE)
-    try( .First.task( pos))
+  
+  .Path <<- c(.Path, full.path)
+  if (execute.First && exists(".First.task", where = pos, inherits = FALSE)) {
+    .First.task <- get(".First.task", pos = pos, inherits = FALSE)
+    try(.First.task(pos))
   }
 })
 
@@ -628,7 +648,7 @@ function( from=., from.text=substitute( from), charlim=90) {
 
   answer <- list( funmat=funmat, level=level, x=x, nodes=attr( indices, 'nodes'), 
     node.list=attr( indices, 'node.list'))
-  class( answer) <- 'cdtree'
+  class( answer) <- cq( cdtree, foodweb)
   answer
 }
 
@@ -679,18 +699,18 @@ function( ...) {
 
 
 "create.backups" <-
-function() {
-  t <- task.home( '.Backup.mvb')
-  if( is.dir( t)) {
-    fd <- dir( t)
-    if( length( fd) && any( substring( fd, 1, 2) == 'BU'))
-stop( "Backup files already exist in " %&% t %&% 
-      "! Safety feature: you will need to delete this manually before calling 'create.backups'" )
-    else if( file.exists( t %&% '/index')) # index, if any, is obsolete, so...
-      unlink( t %&% '/index')
-  }
-  
-  sapply( find.funs(), deal.with.backups, where=1)
+function( pos=1) {
+  if( is.null( t <- attr( pos.to.env( pos), 'path')))
+stop( "Don't know what path to use for search environment:" %&% pos)
+
+  mkdir( file.path( t, '.Backup.mvb'))
+  fob <- read.bkind( t)
+
+  # changed 5/4/2005 for speed with mcache
+  epos <- pos.to.env( pos)
+  cand <- lsall( epos) %SUCH.THAT% !bindingIsActive( ., env=epos)
+  cand <- cand %SUCH.THAT% (mode(.)=='function')
+  sapply( cand %except% fob$object.names, deal.with.backups, where=pos)
   invisible( NULL)
 }
 
@@ -751,6 +771,30 @@ return() }
 }
 
 
+"demlazy" <-
+function( ..., what, envir=.GlobalEnv) {
+  if( missing( what))
+    what <- sapply( match.call( expand.dots=FALSE)$..., deparse)
+
+  envir <- as.environment( envir)
+
+  mcache <- attr( envir, 'mcache')
+  what <- what %such.that% (. %in% names( mcache))
+  if( !length( what))
+return()
+
+  for( i in what) {
+    temp <- envir[[ i]]
+    remove( list=i, envir=envir)
+    envir[[ i]] <- temp
+  }
+  
+  file.remove( file.path( attr( envir, 'path'), 'obj' %&% mcache[ what] %&% '.rda'))
+  attr( envir, 'mcache') <- mcache %without.name% what
+  invisible( NULL)
+}
+
+
 "deparse.names.parsably" <-
 function( x) {
   if( typeof( x)=='symbol')
@@ -798,10 +842,9 @@ function( fbody, envir=parent.frame(2)) {
 
 
 "doc2Rd" <-
-function( fun) {
-  if( is.character( fun))
-    fun <- get( fun)
-  text <- attr( fun, 'doc')
+function( text) {
+  if( is.function( text))
+    text <- attr( text, 'doc')
   stopifnot( is.character( text))
   
   tcon <- textConnection( text)
@@ -1052,9 +1095,10 @@ function( topic, doc) {
         current.topic <- doc[[1]] # unwrap list 
   }
 
+  fff <- FALSE # default
   if( has.doc <- is.character( doc)) {
     fff <- tempfile() 
-    on.exit( rm( fff))
+    # on.exit( rm( fff)) not in 2.x
     
     doc <- doc[ regexpr( '^%', doc) < 0] # drop "%" lines
     doc <- strsplit( doc, '\n')
@@ -1063,11 +1107,19 @@ function( topic, doc) {
     doc[ !sapply( doc, length)] <- ''
     #   writeLines( paste( unlist( doc), collapse='\n'), con=fff) # writelines seems to zap empty lines
     cat( paste( unlist( doc), collapse='\n'), file=fff)
-    file.show( fff) 
+    # file.show( fff) 
+    names( fff) <- topic
+    class( fff) <- 'pagertemp'
   } 
   
-  invisible( has.doc)
+#  invisible( has.doc) changed for 2.x
+   invisible( fff)
 }
+
+
+"dont.save" <-
+function() 
+  option.or.default("dont.Save", cq( .packageName, .SavedPlots, last.warning, .Traceback))
 
 
 "dos.or.windows" <-
@@ -1155,10 +1207,10 @@ return( structure( character( 0), for.info='No modifications'))
     cat( name, ': ')
     code <- try( list( value=source.mvb( fix.list$file[ mod], max.n.expr=1)))
     if( inherits( code, 'try-error')) {
-      ff <- eval( substitute( function( ...) stop( my.name %&% ' failed to parse'), 
+      ff <- eval( substitute( function( ...) stop( my.name %&% ' failed to parse'),
           list( my.name=name)))
       attr( ff, 'source') <- readLines( fix.list$file[ mod])
-      bugline <- unpaste( code, ' ')[[1]]
+      bugline <- strsplit( code, ' ')[[1]] # unpaste( code, ' ')[[1]]
       bugline <- bugline[ length( bugline)]
       bugline <- as.numeric( substr( bugline, 1, nchar( bugline)-1))
       attr( ff, 'bug.position') <- c( line=bugline, char=1) }
@@ -1184,24 +1236,62 @@ return( structure( character( 0), for.info='No modifications'))
 
   sl <- search()
   for( i in unique( search.saves))
-    if( (i>1) 
+    if( (i>1)
         && (((.Path[ sl[ i]])!='NA') ||   # ancestor of current task
              !is.null( attr( pos.to.env( i), 'path')))        # library code
         && yes.no( 'Save workspace of "' %&% sl[ i] %&% '"? ')) { # polite to ask
       Save.pos( i)
     }
-    
+
   answer <- unclass( fix.list$name[ modified])
   if( exists( 'tracees', where='mvb.session.info') && any( answer %in% names( tracees))) {
     cat( 'Reapplying trace(s)...')
     lapply( answer[ answer %in% names( tracees)], function( n) mtrace( char.fname=n))
     cat( 'done\n')
   }
-  
+
   # fix.list <<- fix.list[ !modified,]
   fix.list$file.time <- new.file.times # doesn't seem to work in one step
   fix.list <<- fix.list
   answer
+}
+
+
+"find.derefs" <-
+function( envir) {
+  if( is.null( mcache <- attr( envir, 'mcache')))
+    attr( envir, 'mcache') <- mcache <- named( integer( 0))
+  names( mcache) %SUCH.THAT% ( envir[[.]] %is.not.a% 'promise')
+}
+
+
+"find.docholder" <-
+function( funs, pos= unlist( lapply( funs, find, mode='function', numeric.=TRUE))[1]) {
+  named.in.doc <- function( doc) {
+    if( is.null( doc) || !is.character( doc))
+  return( character( 0))
+  
+    doc <- c( doc, ' ') # guarantees blank
+    blank <- seq( along=doc) %except% grep( '[^ ]', doc)
+    namelines <- doc[ 1 %upto% (min( blank)-1)] # 2: to ignore first line
+    namelines <- sub( '^ +', '', namelines) # leading spaces
+    namelines <- gsub( ' +[^ ]+', '', namelines) # keep first word only
+    namelines <- gsub( ' *', '', namelines) # trailing spaces
+    namelines 
+  }
+
+  o <- named( lsall( pos=pos))
+  doclisto <- lapply( o, function( x) named.in.doc( attr( get( x, pos=pos, inherits=FALSE), 'doc')))
+  
+  anso <- lapply( doclisto, '%that.are.in%', funs)
+  anso <- anso[ sapply( anso, length)>0]
+  if( !length( anso))
+    docholders <- list()
+  else {
+    docholders <- split( rep( names( anso), sapply( anso, length)), unlist( anso, use.names=FALSE))
+    docholders[ funs %except% names( docholders)] <- list( character( 0))
+  }
+  docholders
 }
 
 
@@ -1244,11 +1334,13 @@ function( pos=1, doctype=c( 'Rd', 'casual', 'own', 'any')) {
 "find.funs" <-
 function( pos=1, ...) {
 # In this version, "pos" can have length > 1
-  findo <- function( pos) {
-      o <- named( objects(pos=pos, all.names=TRUE, ...))
+  findo <- function( pos2) {
+      o <- named( lsall( pos=pos2, ...))
+      if( !length( o))
+    return( character( 0))
       old.warn <- options( warn=-1)$warn
       on.exit( options( warn=old.warn))
-      keep <- sapply( o, exists, where=pos, mode="function", inherits=FALSE)
+      keep <- sapply( o, exists, where=pos2, mode="function", inherits=FALSE)
       if( !any( keep))
     return( character( 0))
 
@@ -1256,6 +1348,10 @@ function( pos=1, ...) {
       o[keep]
     }
 
+  if( is.environment( pos))
+    pos <- list( pos)
+  else
+    pos <- lapply( pos, as.environment)
   unlist( lapply( pos, findo), use=FALSE)
 }
 
@@ -1439,9 +1535,17 @@ function( x, new=FALSE, install=FALSE) {
   if( is.null( proged) || install)
     proged <- install.proged()
   if( missing( x))
+return( 'Nothing to edit!')
+
+  fixr.guts( as.character( substitute( x)), new=new, proged=proged, fixing=TRUE)
+}
+
+
+"fixr.guts" <-
+function( name, new=FALSE, proged, fixing=TRUE) {
+  if( missing( name))
 return( "Nothing to edit!")
 
-  name <- as.character( substitute( x))
   trace.was.on <- FALSE
 
 # Function to edit, and its name (may be different from 'name' if method)
@@ -1492,7 +1596,7 @@ stop( "Don't know where to put scratch files: none of options( 'edit.scratchdir'
       mtrace( char.fname=name)
     options(old.warn) })
   
-  if( !is.new && !is.null( try.load.from)) # only do backup if task
+  if( fixing && !is.new && !is.null( try.load.from)) # only do backup if task
     deal.with.backups( name, num.load.from)
 
   write.sourceable.function( x, filename)
@@ -1517,10 +1621,12 @@ stop("Couldn't launch editor")
   put.in.session( just.created.window=TRUE)
 
 # Zap duplicates
-  fix.list <<- fix.list[ fix.list$name != name,]
-  fix.list <<- rbind(fix.list,
-      list( name = name, file = filename, where = load.from, dataclass = "function",
-      file.time=unclass( file.info( filename)[1,'mtime'])))
+  if( fixing) {
+    fix.list <<- fix.list[ fix.list$name != name,]
+    fix.list <<- rbind(fix.list,
+        list( name = name, file = filename, where = load.from, dataclass = "function",
+        file.time=unclass( file.info( filename)[1,'mtime'])))
+  }
 
   failed.to.edit <- FALSE
   invisible(NULL)
@@ -1578,10 +1684,10 @@ return( structure( list( funmat=matrix( 0,0,0), x=numeric( 0), level=numeric( 0)
 
 
 "formalize.package" <-
-function( funs=find.funs( where), package, where=1, 
-    dir.=attr( pos.to.env( where), 'path'), 
+function( funs=find.funs( where), package, where=1,
+    dir.=attr( pos.to.env( where), 'path'),
     description.file=file.path( dir., 'DESCRIPTION'),
-    new.index=TRUE, README.goes.first=TRUE) {
+    new.index=TRUE, README.goes.first=TRUE, keep.flatdoc=FALSE) {
   if( is.character( where))
     where <- index( search()==where)[1]
   if( is.na( where))
@@ -1592,19 +1698,19 @@ stop( "Can't figure out 'where'")
     if( is.null( package))
       package <- attr( attr( pos.to.env( where), 'path'), 'names')
     if( !is.character( package) || (length( package) != 1))
-stop( "Can't deduce package name; please set 'package' argument")    
+stop( "Can't deduce package name; please set 'package' argument")
     package <- sub( '.+:', '', package)
   }
-  
+
   if( !all( mkdir( file.path( dir., package, cq( R, man)))))
 stop( "couldn't make directories")
 
   if( file.exists( description.file))
     description <- readLines( con=description.file)
   else
-    description <- c( "Package: ", "Title: What the package does", 
-        "Version: 1.0", "Author: R.A. Fisher", "Description: More about what it does", 
-        "Maintainer: Who to complain to <yourfault@somewhere.net>", 
+    description <- c( "Package: ", "Title: What the package does",
+        "Version: 1.0", "Author: R.A. Fisher", "Description: More about what it does",
+        "Maintainer: Who to complain to <yourfault@somewhere.net>",
         "License: ???") # adapted from 'package.skeleton'
 
   if( regexpr( '^Package:', description[1]) < 0)
@@ -1614,12 +1720,17 @@ stop( "couldn't make directories")
 
   cat( description, file = file.path( package, 'DESCRIPTION'), sep = "\n")
 
+  if( file.exists( changes.file <- file.path( dir., 'changes.txt'))) {
+    mkdir( file.path( package, 'inst'))
+    file.copy( changes.file, file.path( package, 'inst', 'changes.txt'))
+  }
+
   # Augment functions to include all that are named in each others aliasses
   # Next bits from 'find.documented': should be separated into its own function
   named.in.doc <- function( doc) {
     if( is.null( doc) || !is.character( doc))
   return( character( 0))
-  
+
     doc <- c( doc, ' ') # guarantees blank
     blank <- seq( along=doc) %except% grep( '[^ ]', doc)
     namelines <- doc[ 1 %upto% (min( blank)-1)] # 2: to ignore first line
@@ -1638,35 +1749,42 @@ stop( "couldn't make directories")
     cat( '\n"', x, '" <-\n', sep='', file=rfile, append=TRUE)
     x <- get( x, pos=where)
     if( is.function( x)) {
-      attributes( x) <- list( source=attr( x, 'source'))
-      write.sourceable.function( x, rfile, append=TRUE) }
+      if( !keep.flatdoc) # then strip doc (& other?) attributes
+        attributes( x) <- list( source=attr( x, 'source'))
+      write.sourceable.function( x, rfile, append=TRUE, doc.special=FALSE) }
     else
       print( x)
   }
 
-  file.remove( file.path( dir., package, 'R', 
+  file.remove( file.path( dir., package, 'R',
       dir( file.path( dir., package, 'R'), all.files=TRUE))) # clean out oldies
   rfile <- file.path( dir., package, 'R', package %&% '.R')
   # cat( '.packagename <- "', package, '"\n', sep='', file=rfile)
   cat( '# This is package', package, '\n', file=rfile)
   sapply( funs, ff)
-  
+
   # Documentation:
-  file.remove( file.path( dir., package, 'man', 
+  file.remove( file.path( dir., package, 'man',
       dir( file.path( dir., package, 'man'), all.files=TRUE)))
   docfuns <- intersect( funs, find.documented( where, doctype='own'))
   for( i in docfuns) {
-    docco <- doc2Rd( i)
+    docco <- doc2Rd( get( i))
     fname <- sub( '}', '', sub( '\\\\name{', '', docco[1])) %&% '.Rd'
     if( length( grep( '^\\.', fname)))
       fname <- '01' %&% fname
     if( README.goes.first && length( grep( '^README', fname)))
       fname <- '00' %&% fname
-    cat( doc2Rd( i), file=file.path( dir., package, 'man', fname), sep='\n')
+    cat( docco, file=file.path( dir., package, 'man', fname), sep='\n')
   }
-  
-  if( new.index && require( tools)) 
+  cat( file=file.path( dir., package, 'man', package %&% '-internals.Rd'),
+      doc2Rd( make.internal.doc( funs %except% find.documented( where, doctype='any'), package)),
+      sep='\n')
+
+  if( new.index && require( tools))
     Rdindex( file.path( dir., package, 'man'), file.path( dir., package, 'INDEX'))
+
+  if( file.exists( file.path( dir., package, 'NAMESPACE')))
+    make.NAMESPACE()
 
   invisible( NULL)
 }
@@ -1797,6 +1915,65 @@ return( parse( text=to)[[1]])
 }
 
 
+"get.image.filename" <-
+function( full.path) {
+  fpR <- file.path( full.path, 'R')
+  # The if's below ensure no addition if no existo
+  filename <- c( file.path( full.path, '.Rdata'),
+      if( is.dir( fpR)) file.path( fpR, 'all.rda'),
+      if( is.dir( fpR)) dir( fpR, patt='\\.rdb$', full.names=TRUE)[1])
+  while( length( filename) && !is.na( filename[ 1]) && !file.exists( filename[1]))
+    filename <- filename[-1]
+  if( !length( filename))
+    filename <- file.path( full.path, '.Rdata') # back to square 1
+  filename[1]
+}
+
+
+"get.mcache.reffun" <-
+function( whati, envir) {
+  fx <- function( x) NULL
+  body( fx) <- substitute(
+      if( missing( x))
+        qwhati
+      else {
+        mc <- attr( envir, 'mcache')
+        mc[ whati] <- -abs( mc[ whati]) # signal a change
+        attr( envir, 'mcache') <- mc
+        qwhati <<- x
+    }, list( whati=whati, qwhati=as.name( whati)))
+
+  e <- new.env( parent=NULL)
+  e$envir <- envir # doesn't work if I sub envir directly into body( fx)
+  environment( fx) <- e
+  fx
+}
+
+
+"get.mcache.store.name" <-
+function( envir) {
+  lsnc <- lsall( envir=envir, patt='^\\.mcache[0-9]+')
+  if( !length( lsnc))
+    cache.name <- '.mcache0'
+  else
+    cache.name <- lsnc[ order( nchar( lsnc), decreasing=TRUE)[1]]
+  cache.name
+}
+
+
+"get.new.file.numbers" <-
+function( derefs, file.numbers) {
+  had.numbers <- derefs %such.that% (. %in% names( file.numbers))
+  file.numbers <- file.numbers %without.name% derefs
+  derefs <- derefs %except% had.numbers
+  new.file.numbers <- (1 %upto% max( file.numbers)) %except% file.numbers
+  new.file.numbers <- c( new.file.numbers, max( c( 0, file.numbers)) +
+      1 %upto% (length( derefs)-length(new.file.numbers)))[ 1:length(derefs)]
+  names( new.file.numbers) <- derefs
+  new.file.numbers
+}
+
+
 "get.path.list" <-
 function () 
 {
@@ -1815,6 +1992,40 @@ function ()
 }
 
 
+"get.Rdata.path" <-
+function( path) {
+  path <- gsub( '\\\\', '/', path)
+  if (is.dir(path)) {
+    path <- get.image.filename( path)
+    if( regexpr( '\\.rdb$', path) > 0)
+      attr( path, 'mvb.db.type') <- 'LazyLoad'
+  }
+  
+  if( is.null( attr( path, 'mvb.db.type')))
+    attr( path, 'mvb.db.type') <- 'normal'
+  path
+}
+
+
+"get.ref.info" <-
+function( envo, nlocal=sys.parent()) mlocal({
+  if( is.null( cache <- attr( envo, 'cache')))
+    attr( envo, 'cache') <- cache <- new.env( hash=TRUE, envo)
+  lscache <- lsall( cache)
+  refs <- derefs <- promises <- character(0)
+  file.numbers <- numeric( 0)
+  if( length( lscache)) {
+    refs <- names( which( unlist( eapply( envo, inherits, 'mref'))))
+    derefs <- lscache %that.are.in% (ls( envo, all.names=TRUE) %except% refs)
+    prom.func <- function( x) {cache[[x]] %is.a% 'promise'}
+    promises <- names( which( sapply( lscache, prom.func)))
+    fnum.func <- function( x) unclass( envo[[ x]])$nfile
+    if( length( refs))
+      file.numbers <- sapply( refs, fnum.func)
+  }
+})
+
+
 "group" <-
 function( m, ...) {
   l <- list( ...)
@@ -1827,21 +2038,23 @@ function( m, ...) {
 "hack.help" <-
 function() {
   replacement.help <- function( ...) {
-        help <- get( 'base.help', pos='mvb.session.info') # makes error messages clearer
+    help <- get( 'base.help', pos='mvb.session.info') # makes error messages clearer
 
-        mc <- as.list( match.call( expand.dots=TRUE))
-        # Check it's a simple call 
-        if( !is.null( mc$topic) && !is.call( mc$topic) && 
-            is.null( mc$type) && is.null( mc$lib.loc) && is.null( mc$try.all.packages)) {
-          h1 <- try( eval( as.call( mc)), silent=TRUE)
-          if( h1 %is.not.a% 'try-error' || dochelp( as.character( mc$topic))) 
-      return( h1 <- NULL) # success!-- returns nothing visible
-        }
-        
-        eval( as.call( mc)) # either do complicated call, or force crash if simple without 'doc'
-      }
-    
+    mc <- as.list( match.call( expand.dots=TRUE))
+    # Check it's a simple call
+    if( !is.null( mc$topic) && !is.call( mc$topic) &&
+        is.null( mc$type) && is.null( mc$lib.loc) && is.null( mc$try.all.packages)) {
+      h1 <- try( eval( as.call( mc)), silent=TRUE)
+      if( ((h1 %is.not.a% 'try-error') && length( unclass( h1))>0) ||
+          ( (h1 <- dochelp( as.character( mc$topic))) %is.a% 'pagertemp' ))
+  return( h1) # TRUE if dochelp; NULL in 1.9; class( 'help_files_with_topic') in 2.x
+    }
+
+    eval( as.call( mc)) # either do complicated call, or force crash if simple without 'doc'
+  }
+
   formals( replacement.help) <- formals( help)
+  environment( replacement.help) <- .GlobalEnv
   replacement.help
 }
 
@@ -1874,11 +2087,12 @@ seq(along = lvector)[lvector]
 
 
 "install.proged" <-
-function() {
-  cat( 'Must set up program editor information before "fixtp" works.')
+function( option.name='program.editor') {
+  readonly <- ifelse( option.name=='program.reader', 'in read-only mode', '')
+  cat( 'Must set up program editor information before "fixr" works.')
   repeat {
     cat( '\nType whatever you\'d type in a command window to',
-      'invoke your editor on a file called "myfun.r".',
+      'invoke your editor', readonly, 'on a file called "myfun.r".',
       '  For example, on Unix-like systems: myedit myfun.r &',
       '  In Windows, use double quotes around a path if it contains spaces,',
       '  and use \\ not \\\\ or / as the separator.',
@@ -1918,29 +2132,32 @@ return()
 
   edit.scratchdir <- as.vector( edit.scratchdir)[1] 
   
-  backup.fix <- NULL # don't backup by default
-  repeat{
-    cat( 'Automatic backups #1: how many backups per session (0 for no backups)? ')
-    n.per.session <- as.integer( readline())
-    if( is.na( n.per.session) || n.per.session < 0)
-  next
-    if( n.per.session==0)
-  break
-    cat( 'Automatic backups #2: how many sessions to keep last version from? ')
-    n.sessions <- as.integer( readline())
-    if( is.na( n.sessions) || n.sessions<0)
-  next
-    backup.fix <- c( n.sessions, n.per.session)
-  break
-  }
-   
-  o <- substitute( options( program.editor=pe, edit.scratchdir=edit.scratchdir, backup.fix=backup.fix))
+  if( option.name=='program.editor') {
+    backup.fix <- NULL # don't backup by default
+    repeat{
+      cat( 'Automatic backups #1: how many backups per session (0 for no backups)? ')
+      n.per.session <- as.integer( readline())
+      if( is.na( n.per.session) || n.per.session < 0)
+    next
+      if( n.per.session==0)
+    break
+      cat( 'Automatic backups #2: how many sessions to keep last version from? ')
+      n.sessions <- as.integer( readline())
+      if( is.na( n.sessions) || n.sessions<0)
+    next
+      backup.fix <- c( n.sessions, n.per.session)
+    break
+    }
+
+    o <- substitute( options( program.editor=pe, edit.scratchdir=edit.scratchdir, backup.fix=backup.fix))
+  } else
+    o <- substitute( options( program.reader=pe))
   eval( o)
   
   cat( 'You should use "fixr" to make sure that the following appears in your .First:',
     deparse( o), '', sep='\n')
     
-  options()$program.editor
+  options()[[ option.name]]
 }
 
 
@@ -1966,6 +2183,19 @@ function (x)
             val <- x != 0
     }
     val
+}
+
+
+"lazify" <-
+function( path, package, pkgpath) {
+# Taken from tools:::makeLazyLoading
+  e <- new.env( hash=TRUE)
+  load( path, e)
+  file.remove( path)
+  tools:::makeLazyLoadDB( e, file.path( dirname( path), package), compress=TRUE)
+  loaderFile <- file.path( R.home(), "share", "R",
+      ( if( packageHasNamespace( package, dirname( pkgpath))) 'ns') %&% "packloader.R")
+  file.copy( loaderFile, file.path( dirname( path), package), TRUE)
 }
 
 
@@ -2035,23 +2265,54 @@ stop( "Can't work out where to attach library-- no sensible .Path")
 
 
 "load.mvb" <-
-function( filename, name, pos, attach.new, ...) {
-# cat( 'Loading', filename, 'as', name, '\n')
-  if( attach.new)
-    env <- attach( NULL, pos=pos, name=name)
+function (filename, name, pos, attach.new=pos != 1, path, ...) {
+  if (attach.new)
+    env <- attach(NULL, pos = pos, name = name)
   else {
-    env <- pos.to.env( pos)
-    attr( env, 'name') <- name
+    env <- pos.to.env(pos)
+    attr(env, "name") <- name
   }
 
-  load( filename, env=env)
+# This stuff used to be after the load, but load.refdb needs the path attr set
 
-  ll <- list( ...)
-  if( length( ll)) {
-    for( attro in names( ll))
-      attr( env, attro) <- ll[[ attro]]
-#    .Internal( lib.fixup( env, .GlobalEnv))
+  if( rev( splitto <- strsplit( filename, '.', fixed=TRUE)[[1]])[1]=='rdb')
+    lazyLoad( paste( clip( splitto), collapse='.'), envir=env)
+  else
+    load.refdb(filename, env = env, fpath=path)
+
+  attr( env, 'path') <- path
+  ll <- list(...)
+  if (length(ll))
+    for (attro in names(ll)) attr(env, attro) <- ll[[attro]]
+}
+
+
+"load.refdb" <-
+function( file=get.image.filename( fpath), envir, fpath=attr( envir, 'path')) {
+  envir <- as.environment( envir)
+  if( !file.exists( file))
+return()
+
+  load( file, envir)
+  setup.mcache( envir, fpath)
+
+  invisible( lsall( envir))
+}
+
+
+"local.on.exit" <-
+function( expr, add=FALSE) { 
+# Assigns expr to on.exit.code in mlocal manager. See local.return for explanation of 'where'
+# Don't know what should "really" happen if expr is missing but add is TRUE
+
+  subex <- if( missing( expr)) NULL else substitute( expr)
+  where <- get( 'enclos', envir=parent.frame(2))
+  if( add) {
+    oldex <- get( 'on.exit.code', where)
+    subex <- substitute( { oldex; subex }, returnList( oldex, subex))
   }
+    
+  assign( 'on.exit.code', subex, envir=where)
 }
 
 
@@ -2075,14 +2336,24 @@ function( ...) { # Returns its arguments; unnamed arguments are named using depa
     }
   }
 
-# R version. This uses a trick: the call to "eval" that invokes the mlocalized routine containing this call
-# to "local.return", sets up a frame with 3 args including "enclos" which is actually ignored. However I
-# deliberately set this argument in the final call to "eval" inside "mlocal", so that "local.return" knows
-# where to put the answer. This is probably dependent on a quirk of implementation.
-# The need to do this at all, is that loops terminated with a "break" in R _don't_ have the value of the last
-# expression before the break. They do in S.
+# R version. This uses a trick: the call to "eval" that invokes the mlocalized routine 
+# containing this call to "local.return", sets up a frame with 3 args including "enclos" 
+# which is actually ignored. However I deliberately set this argument in the final call 
+# to "eval" inside "mlocal", so that "local.return" knows where to put the answer. This
+# is probably dependent on a quirk of implementation.
+# The need to do this at all, is that loops terminated with a "break" in R _don't_ have
+# the value of the last expression before the break. They do in S.
 
   assign( 'override.answer', mc, envir=get( 'enclos', envir=parent.frame(2)))
+}
+
+
+"lsall" <-
+function( ...) {
+  mc <- match.call( expand.dots=TRUE)
+  mc$all.names <- TRUE
+  mc[[1]] <- as.name( 'ls')
+  eval( mc, parent.frame())
 }
 
 
@@ -2101,13 +2372,88 @@ function( funs=find.funs() %except% find.documented( doctype='Rd'), file=stdout(
 }
 
 
+"make.internal.doc" <-
+function( funs, package) {
+
+  text <- c( "PACKAGE-internal package:PACKAGE\n", funs, "
+Internal functions for PACKAGE
+
+DESCRIPTION
+
+Internal functions for 'PACKAGE', not meant to be called directly.
+
+
+USAGE
+
+",	make.usage.section( funs, NULL), "
+
+KEYWORDS
+
+internal
+")
+	text <- gsub( 'PACKAGE', to.regexpr( package), text)
+	unlist( strsplit( text, '\n'))
+}
+
+
+"make.NAMESPACE" <-
+function( pos=1, path=attr( pos.to.env( pos), 'path')) {
+  if( is.character( pos))
+    pos <- match( pos, search())
+
+  if( is.null( path))
+stop( "Can't find path")
+
+  description <- readLines( file.path( path, 'DESCRIPTION'))
+  imports <- description[ regexpr( '^Depends:', description)>0]
+  imports <- sub( '^Depends:', '', imports)
+  imports <- gsub( '\\([^)]*\\)', '', imports)
+  imports <- gsub( ' *', '', imports)
+  imports <- paste( imports, collapse=',')
+  imports <- strsplit( imports, ',')[[1]]
+  imports <- imports %except% 'R'
+  imports <- paste( imports, collapse=', ')
+
+  owndoc <- find.documented( pos, doctype='own')
+#  internals <- character(0)
+#  for( internaldoc in owndoc[ sapply( owndoc, function( x) regexpr( '-internal', attr( get( x), 'doc')[1])>0)]) {
+#    tc <- unclass( attr( get( internaldoc), 'doc'))[-1]
+#    gap <- index( regexpr( '[^ ]', tc)<0)[1]
+#    internals <- c( internals, gsub( ' +', '', tc[ 1 %upto% (gap-1)]))
+#  }
+  force.exports <- possible.methods <- find.funs( pos)
+  force.exports <- force.exports[ sapply( force.exports,
+      function( x) !is.null( attr( get( x, pos=pos), 'export.me')))]
+  possible.methods <- possible.methods %except% force.exports
+  exports <- unique( c( find.funs( pos) %that.are.in% find.documented( pos), force.exports))
+
+  methods <- list()
+  for( gen in names( .knownS3Generics))
+    methods[[ gen]] <- possible.methods %that.match% ('^' %&% to.regexpr( gen) %&% '\\.')
+  methods <- methods[ sapply( methods, length)>0]
+  exports <- exports %except% unlist( methods, use.names=FALSE)
+  exports <- 'export( "' %&% paste( exports, collapse='",\n"') %&% '")\n'
+
+  for( gen in names( methods))
+    for( meth in substring( methods[[ gen]], nchar( gen)+2))
+      exports <- exports %&% 'S3method( "' %&% gen %&% '", "' %&% meth %&% '")\n'
+
+  path <- file.path( path, sub( '^package:', '', attr( pos.to.env( pos), 'name')))
+  mkdir( path)
+  if( length( imports))
+    exports <- c( 'import( ' %&% imports %&% ')\n', exports)
+  cat( exports, file=file.path( path, 'NAMESPACE'))
+}
+
+
 "make.new.cd.task" <-
 function( task.name, nlocal=sys.parent(), answer, dir.name) mlocal({
   dir.name <- file.path( task.home(), legal.filename( task.name))
   line.end <- ifelse( option.or.default( 'cd.extra.CR', FALSE), '\n', '')
   
   repeat {
-    cat("Default directory = ", dir.name, "\n(names will be expanded relative to ", task.home(), ")\nDirectory: " %&% line.end)
+    cat("Default directory = ", dir.name, "\n(names will be expanded relative to ", task.home(), 
+        ")\nDirectory: " %&% line.end)
     answer <- readline()
     if(answer == "")
       answer <- dir.name
@@ -2137,10 +2483,10 @@ function( task.name, nlocal=sys.parent(), answer, dir.name) mlocal({
   pe2 <- pos.to.env( 2)
   if( option.or.default( 'write.mvb.tasks', FALSE))
     write.mvb.tasks( tasks, pe2)
-  save( list=objects( pos=2, all=TRUE), envir=pe2,
-    file=file.path( attr( pe2, 'path'), '.RData'))
-  if( !file.exists( file.path( dir.name, '.RData')))
-    save( list=character(0), file=file.path( dir.name, '.RData'))
+  Save.pos( 2) #  save( list=objects( pos=2, all=TRUE), envir=pe2, file=file.path( attr( pe2, 'path'), '.RData'))
+  rdata.path <- get.Rdata.path( dir.name)
+  if( !file.exists( rdata.path))
+    save( list=character(0), file=rdata.path)
   names( dir.name) <- task.name
   dir.name
 })
@@ -2156,7 +2502,8 @@ function( funs=find.funs() %except% find.documented( doctype='Rd'), file=stdout(
       y
     }
  funs <- sapply( funs, usage)
- cat( funs, sep='\n', file=file)
+ if( !is.null( file))
+   cat( funs, sep='\n', file=file)
  invisible( funs)
 }
 
@@ -2205,14 +2552,14 @@ function (to.from) {
     if( !is.na( pos))
       Save.pos( pos) # de-mtrace temporarily
     else
-      save( list=ls( env=to.from$env, all.names=TRUE) %except% 
-              option.or.default( 'dont.save', '.packageName'), 
-          file=file.path( to.from$path, '.RData'), envir=to.from$env)
+      save.mvb.db( to.from$env, get.Rdata.path( to.from$path))  # 7/2/2005
   }
-#    eval(substitute(save(list = objects(env = env, all.names = TRUE) %except% '.packageName', 
-#        file = file.path(path, ".RData"))), envir = to.from, 
-#        enclos = to.from$env)
 }
+
+
+"mcachees" <-
+function( envir=.GlobalEnv)
+  if( is.null( mcache <- attr( envir, 'mcache'))) character(0) else names( mcache)
 
 
 "mkdir" <-
@@ -2227,7 +2574,8 @@ function( dirlist) {
     }
     next.dir <- character(0)
     for (i in answer) 
-      if( !is.dir( next.dir <- paste( c( next.dir, i), collapse = "/"))) 
+      if( !is.dir( next.dir <- paste( c( next.dir, i), collapse = "/")) &&
+          !( substring( next.dir, nchar( next.dir), nchar( next.dir))==':')) 
         dir.create(next.dir)
     outcome[dir] <- is.dir(next.dir)
   }
@@ -2235,11 +2583,34 @@ function( dirlist) {
 }
 
 
+"mlazy" <-
+function( ..., what, envir=.GlobalEnv) {
+  if( missing( what))
+    what <- sapply( match.call( expand.dots=FALSE)$..., deparse)
+  if( !length( what))
+return()
+
+  envir <- as.environment( envir)
+
+  what <- what %such.that% (. %in% lsall( envir))
+  if( !length( what)) {
+    warning( 'nothing exists to be mlazyed')
+return()
+  }
+
+  move.to.mcache( what, envir, sys.frame( mvb.sys.parent()))
+  if( !identical( envir, .GlobalEnv))
+    save.refdb( envir=envir) # not until asked
+}
+
+
 "mlibrary" <-
-function ( ..., character.only=FALSE, task, pos=lib.pos(), execute.First=TRUE) {
+function ( ..., character.only=FALSE, logical.return=FALSE, 
+    task, pos=lib.pos(), execute.First=TRUE) {
   if( missing( task)) { # call system version, perhaps with 'pos' specified
     hack.library() # just in case; should be hacked already
-return( library( pos=pos, character.only=character.only, ...))
+return( library( pos=pos, character.only=character.only, 
+    logical.return=logical.return, ...))
   }
 
   # Otherwise use MVB's version
@@ -2258,8 +2629,13 @@ return( library( pos=pos, character.only=character.only, ...))
   pkgname <- paste("package", package, sep = ":")
   task.name <- package
 
-  if( !exists( 'tasks') || is.na( pkgpath <- tasks[ package]))
-return( failed( "Can't find task '" %&% package %&% "'"))
+  if( !exists( 'tasks') || is.na( pkgpath <- tasks[ package])) {
+    warning( "Can't find task '" %&% package %&% "'")
+    if( logical.return)
+return( FALSE)
+    else
+stop()
+  }
 
   names( pkgpath) <- package # important, so "cd" spots it as a task  
   
@@ -2281,8 +2657,11 @@ return( failed( "Can't find task '" %&% package %&% "'"))
   s <- search()
   m <- match( 'package:' %&% task, s, 0)
   if( !m) {
-    warning( "package" %&% task %&% "not loaded")
+    warning( "package '" %&% task %&% "' not loaded")
+    if( logical.return)
 return( FALSE)
+    else
+stop()    
   }
 
   env <- pos.to.env( m)
@@ -2298,7 +2677,7 @@ return( FALSE)
     if (execute.First && exists( ".First.lib", envir = env, inherits = FALSE)) {
       firstlib <- get( ".First.lib", envir = env, inherits = FALSE)
       tt <- try( firstlib( libpath, package))
-      if( inherits( tt, "try-error")) {
+      if( tt %is.a% "try-error") {
         warning(".First.lib failed in" %&% task)
 return( FALSE)  
       }
@@ -2317,23 +2696,19 @@ function( expr) {
   nlocal <- get( 'nlocal', envir=sp.env)
   nlocal.env <- sys.frame( nlocal)
 
-# Save old exit code, clear exit code, arrange tidy-up and re-installation of  old exit code
-# when 'local' is done
-  old.on.exit <- sys.on.exit()[[ nlocal]]
-  if( missing( old.on.exit))
-    old.on.exit <- substitute( on.exit())
-  else
-    old.on.exit <- substitute( on.exit( old.on.exit), list( old.on.exit=old.on.exit))
+# on.exit stuff changed 7/2/2005; looks like old version was for Splus
   on.exit( {
-    eval( sys.on.exit()[[nlocal]], envir=nlocal.env)
+#    eval( sys.on.exit()[[nlocal]], envir=nlocal.env) # zapped
+
 #   Get rid of temporaries
-    remove( list=names( params)[ names( params) %in% (objects( env=nlocal.env, all=TRUE) %except% names( savers))],
-        envir=nlocal.env)
+    remove( list=names( params) %that.are.in% 
+        (lsall( env=nlocal.env) %except% names( savers)), envir=nlocal.env)
 
 #   Restore things hidden by params
     for( i in names( savers))
       assign( i, savers[[ i]], envir=nlocal.env)
-    eval( old.on.exit, envir=nlocal.env) # so old code will execute on return to 'nlocal'
+
+#    eval( old.on.exit, envir=nlocal.env) # so old code will execute on return to 'nlocal' # zapped
   })
 
   eval( expression( on.exit())[[1]], envir=nlocal.env)
@@ -2372,11 +2747,17 @@ function( expr) {
       list( expr=substitute( expr), env=sys.frame(sys.nframe())))
 
 # The business end!
+  on.exit.code <- quote( NULL)
   eval( expr, envir=nlocal.env, enclos=sys.frame( sys.nframe()))
+  
+# New bug fix, 7/2/2005  
+  eval( on.exit.code, envir=nlocal.env, enclos=sys.frame( sys.nframe()))
+  
   if( exists.mvb( 'override.answer', envir=sys.frame( sys.nframe()))) # set by a call to "local.return"
     answer <- override.answer
   if( exists.mvb( 'answer', envir=sys.frame( sys.nframe())))
-    answer # else return NULL. Will only happen if user has a "return" call without "local.return"-- bad practice.
+    answer # else return NULL. Will only happen if user has a "return" call 
+           # without "local.return"-- bad practice.
 }
 
 
@@ -2436,17 +2817,43 @@ return( invisible( character(0))) }
     cat( 'Nothing to move!')
 return( invisible( character(0))) }
 
-  for( i in what) {
+  # Changed 14/3/2004 to cope with mrefs
+  to.mcache <- attr( to$env, 'mcache')
+  from.mcache <- attr( from$env, 'mcache') # replaces info from to$env
+
+  whatrefs <- what %such.that% (. %in% names( from.mcache))
+  mtidy( what=whatrefs, from$env)
+
+  for( i in what %except% whatrefs) {
     assign( i, get( i, env=from$env), envir=to$env)
     move.backup.file( i, old.dir=from$path, new.dir=to$path)
   }
 
+  if( length( whatrefs)) {
+    new.to.mcache <- mupdate.mcache( whatrefs, to.mcache)
+
+    from.obj.files <- file.path( from$path, 'obj' %&% from.mcache[ whatrefs] %&% '.rda')
+    to.obj.files <- file.path( to$path, 'obj' %&% new.to.mcache[ whatrefs] %&% '.rda')
+
+    file.remove( to.obj.files)
+    renamed <- file.rename( from.obj.files, to.obj.files)
+    if( any( !renamed)) 
+      file.copy( from.obj.files[ !renamed], to.obj.files[ !renamed] )
+
+    attr( to$env, 'mcache') <- new.to.mcache
+    setup.mcache( to$env, refs=whatrefs) # change nfile & env
+  }
+
   move.fix.list()
- 
+
   maybe.save.after.move( to)
 
   if( !copy) {
     remove( list=what, envir=from$env)
+    if( length( whatrefs)) {
+      file.remove( from.obj.files)
+      attr( from$env, 'mcache') <- from.mcache %without.name% whatrefs
+    }
     maybe.save.after.move( from)
   }
 
@@ -2506,6 +2913,91 @@ function( nlocal=sys.parent()) mlocal({
 })
 
 
+"move.to.mcache" <-
+function( what, envir, getfrom) {
+  mcache <- attr( envir, 'mcache')
+  if( is.null( mcache))
+    mcache <- numeric(0)
+
+  if( !length( what))
+return( mcache)
+
+  what <- (what %SUCH.THAT% exists( ., envir=envir)) %SUCH.THAT% !bindingIsActive( ., env=envir)
+#  what <- what %SUCH.THAT% exists( ., envir=getfrom, inherits=TRUE)
+
+  ow <- options( warn=-1)
+  on.exit( options( ow))
+  attr( envir, 'mcache') <- mcache <- mupdate.mcache( what, mcache)
+
+  path <- attr( envir, 'path')
+  for( i in what) {
+    # Anything moved to the cache must be saved
+    this.file <- file.path( path, 'obj' %&% mcache[ i] %&% '.rda')
+    save( list=i, file=this.file, envir=getfrom, compress=TRUE)
+
+    fx <- get.mcache.reffun( i, envir)
+    environment( fx)[[ i]] <- envir[[ i]]
+    remove( list=i, envir=envir)
+    suppressWarnings( makeActiveBinding( i, fx, envir))
+  }
+
+return( mcache)
+}
+
+
+"mtidy" <-
+function( ..., what, envir=.GlobalEnv) {
+  if( missing( what))
+    what <- sapply( match.call( expand.dots=FALSE)$..., deparse)
+  if( !length( what))
+return()
+
+  envir <- as.environment( envir)
+  mcache <- attr( envir, 'mcache')
+
+  if( !missing( what)) {
+    what <- what %such.that% ( . %in% lsall( envir))
+    mlazy( what=what %except% names( mcache), envir=envir)
+  } else
+    what <- names( mcache)
+
+  if( !length( what))
+return( invisible( what))
+
+  path <- attr( envir, 'path')
+  if( is.null( path))
+stop( 'environment has no path attribute')
+
+  save.mchanged( what, envir)
+
+  # Replace cachees by new active bindings
+  remove( list=what, envir=envir)
+  setup.mcache( refs=what, envir=envir)
+
+  invisible( what)
+}
+
+
+"mupdate.mcache" <-
+function( what, mcache) {
+  had.num <- what %such.that% (. %in% names( mcache))
+  need.num <- what %except% had.num
+  if( !length( need.num))
+return( mcache)
+
+  if( !length( mcache))
+    new.mcache <- seq( along=need.num)
+  else {
+    new.mcache <- (1 %upto% (max( mcache) + length( need.num))) %except% abs( mcache)
+    new.mcache <- new.mcache[ 1:length( need.num)]
+  }
+
+  names( new.mcache) <- need.num
+
+  c( mcache, new.mcache)
+}
+
+
 "mvb.match.call" <-
 function (definition = sys.function( mvb.sys.parent()), call = sys.call(mvb.sys.parent()), expand.dots = TRUE) 
 .Internal(match.call(definition, call, expand.dots))
@@ -2514,6 +3006,11 @@ function (definition = sys.function( mvb.sys.parent()), call = sys.call(mvb.sys.
 "mvb.nargs" <-
 function() 
   length( sys.calls()[[ mvb.sys.parent()]])-1
+
+
+"mvb.parent.frame" <-
+function (n = 1) 
+  sys.frame( mvb.sys.parent( n))
 
 
 "mvb.sys.call" <-
@@ -2582,7 +3079,8 @@ function (x, y)
 "my.index" <-
 function( var, ...) {
 #  pg <- .Primitive( '[[') # doesn't cope with pairlists
-  pg <- function( x, i) .Primitive( '[[')( as.list( x), i)
+#  pg <- function( x, i) .Primitive( '[[')( as.list( x), i) # screws up e.g. on factors
+  pg <- function( x, i) .Primitive( '[[')( if( is.pairlist( x)) as.list( x) else x, i)
   vv <- as.name( 'var')
   for( i in c(...))
     vv <- call( 'pg', vv, i)
@@ -2731,8 +3229,8 @@ function( x, ...) {
 
 
 "plot.foodweb" <-
-function( x, textcolor, boxcolor, xblank, border, textargs=list(), use.centres=TRUE, color.lines=TRUE, poly.args=list(), 
-    expand.xbox=1.05, expand.ybox=expand.xbox*1.2, plotmath=FALSE, ...) {  
+function( x, textcolor, boxcolor, xblank, border, textargs=list(), use.centres=TRUE, color.lines=TRUE, poly.args=list(),
+    expand.xbox=1.05, expand.ybox=expand.xbox*1.2, plotmath=FALSE, ...) {
   for( ipar in cq( boxcolor, xblank, border, textcolor))
     if( do.call( 'missing', list( ipar)))
       assign( ipar, formals( foodweb)[[ ipar]])
@@ -2747,29 +3245,29 @@ function( x, textcolor, boxcolor, xblank, border, textargs=list(), use.centres=T
   level <- web$level; funmat <- web$funmat; x <- web$x; funs <- names(level)
   n <- length( level)
 
-  if( names(dev.cur()[1])=='graphsheet') {
-    gs <- guiGetCurrMetaDoc( 'GraphSheet')
-    colortab <- guiGetPropertyValue( 'GraphSheet', Name=gs, 'ColorTable')
-    colortab <- unlist( unpaste( colortab, '|'), use=FALSE)
-    boxcolor <- background <- length( colortab)
-#   Can't get background color directly as a number. Make it the negative of the first colour!    
-    background.color <- 255 - as.numeric( unlist( unpaste( colortab[1], ','), FALSE)) 
-    colortab[ background] <- paste( background.color, collapse=',') # '255,255,255'
-    colortab <- paste( colortab, collapse='|')
-    guiModify( 'GraphSheet', Name=gs, ColorTable=colortab)
-  }
+#  if( names(dev.cur()[1])=='graphsheet') {
+#    gs <- guiGetCurrMetaDoc( 'GraphSheet')
+#    colortab <- guiGetPropertyValue( 'GraphSheet', Name=gs, 'ColorTable')
+#    colortab <- unlist( unpaste( colortab, '|'), use=FALSE)
+#    boxcolor <- background <- length( colortab)
+##   Can't get background color directly as a number. Make it the negative of the first colour!
+#    background.color <- 255 - as.numeric( unlist( unpaste( colortab[1], ','), FALSE))
+#    colortab[ background] <- paste( background.color, collapse=',') # '255,255,255'
+#    colortab <- paste( colortab, collapse='|')
+#    guiModify( 'GraphSheet', Name=gs, ColorTable=colortab)
+#  }
 
-  plot( 0:1, c(min(level)-0.5, max( level)+0.5), axes=FALSE, type='n', 
+  plot( 0:1, c(min(level)-0.5, max( level)+0.5), axes=FALSE, type='n',
       xlab='', ylab='', main='')
   from <- rep( 1:n, n)[ funmat>0]
   to <- rep( 1:n, rep(n,n))[ funmat>0]
   same <- round(level[from])== round(level[to])
   if( any( same)) {
-    segments( (x[from[same]]+x[to[same]])/2, level[from[same]]+0.5, 
+    segments( (x[from[same]]+x[to[same]])/2, level[from[same]]+0.5,
         x[ to[same]], level[ to[same]], col=if( color.lines) level[from[same]] else 1 )
-    arrows( x[from[same]], level[from[same]], (x[from[same]]+x[to[same]])/2, 
+    arrows( x[from[same]], level[from[same]], (x[from[same]]+x[to[same]])/2,
         level[from[same]]+0.5, #size=par('cin'), open=TRUE, works in Splus
-        col=if( color.lines) level[from[same]] else 1) 
+        col=if( color.lines) level[from[same]] else 1)
     from <- from[!same]; to <- to[!same] }
 
 # Now just the different-level calls (the vast majority). Used to have arrows
@@ -2788,8 +3286,8 @@ function( x, textcolor, boxcolor, xblank, border, textargs=list(), use.centres=T
     else
       segments( x[from], level[from]-sh[from]/2, x[to], level[to]+sh[to]/2, col=if( color.lines) level[from] else 1)
   }
-    
-#  arrows( x[from], level[from], (x[to]+x[from])/2, 
+
+#  arrows( x[from], level[from], (x[to]+x[from])/2,
 #      (level[from]+level[to])/2, size=par('cin'), open=TRUE)
 
 # Empty boxes for text. Doesn't work in Splus 4.0.
@@ -2798,8 +3296,8 @@ function( x, textcolor, boxcolor, xblank, border, textargs=list(), use.centres=T
     charscale <- par( 'cxy')
   if( is.null( xblank))
     xblank <- 1
-  if( identical( version$language, 'R')) 
-    do.call( 'rect', c( list( x-expand.xbox*sw/2, level-expand.ybox*sh/2, 
+  if( identical( version$language, 'R'))
+    do.call( 'rect', c( list( x-expand.xbox*sw/2, level-expand.ybox*sh/2,
         x+expand.xbox*sw/2, level+expand.ybox*sh/2, border=border, col=boxcolor), poly.args))
   else
     do.call( 'polygon', c( list( rep( x, rep( 5, n))+xblank*charscale[1]*rep( nchar( funs), rep( 5, n))*c(-1,-1,1,1,NA),
@@ -2876,13 +3374,14 @@ function( path) {
   env <- index( sapply( 1:length( search()), function( x) !is.null( spath <- attr( pos.to.env( x), 'path')) && spath==path))[1]
   if( is.na( env)) {
     env <- new.env()
-    load( file=file.path( path, '.RData'), envir=env)
+    attr( env, 'path') <- path
+    load.refdb( file=get.image.filename( path), envir=env)
     saving <- TRUE
   } else {
     env <- pos.to.env( env)
     saving <- if( path != .Path[ length( .Path)]) NA else FALSE # don't explicitly save globalenv
   }
-  obj <- objects( envir=env, all.names=TRUE)
+  obj <- lsall( envir=env)
   list( env=env, saving=saving, obj=obj, path=path)
 }
 
@@ -2914,12 +3413,19 @@ function( x, ...)
   NULL
 
 
+"print.pagertemp" <-
+function( x, ...) {
+  file.show( x, title="mvbutils-style informal help on '" %&% names( x) %&% "'", delete.file=TRUE)
+  put.in.session( just.created.window=TRUE)
+  invisible( x)
+}
+
+
 "promote.2.to.1" <-
-function () 
-{
+function () {
     full.path <- attr(pos.to.env(2), "path")
     detach(2)
-    load(file = file.path(full.path, ".RData"), env = pos.to.env(1))
+    load.mvb( file = get.image.filename( full.path), name=names( full.path), pos=1, path=full.path)
     env <- .GlobalEnv
     attr(env, "path") <- full.path
 }
@@ -2997,15 +3503,28 @@ function()
   help( 'README.mvbutils')
 
 
+"readr" <-
+function( x, install=FALSE) {
+  progrdr <- option.or.default( 'program.reader', NULL)
+  if( is.null( progrdr) || install)
+    progrdr <- install.proged( option.name='program.reader')
+
+  if( missing( x))
+return( 'Nothing to edit!')
+
+  fixr.guts( as.character( substitute( x)), new=FALSE, proged=progrdr, fixing=FALSE)
+}
+
+
 "reattach.placeholder" <-
-function (sn, nlocal = sys.parent()) 
-mlocal({
-    was.attached <- index(search() == "PLACEHOLDER:" %&% sn)[1]
-    if (!is.na(was.attached)) {
-        detach(pos = was.attached)
-        load.mvb(file.path(.Path[length(.Path)], ".RData"), name = "package:" %&% 
-            sn, pos = was.attached, attach.new = TRUE, path = .Path[length(.Path)])
-    }
+function (sn, nlocal = sys.parent()) mlocal({
+  was.attached <- index(search() == "PLACEHOLDER:" %&% sn)[1]
+  if (!is.na(was.attached)) {
+    filename <- get.image.filename( attr( .GlobalEnv, 'path'))
+    detach(pos = was.attached)
+    load.mvb( filename, name = "package:" %&% sn,
+        pos = was.attached, attach.new = TRUE, path = .Path[length(.Path)])
+  }
 })
 
 
@@ -3075,133 +3594,142 @@ return( df1)
 
 "Save" <-
 function() {
-  on.exit( save.image())
-  if( !( 'mvb.session.info' %in% search())) {
-    warn( "Can't find session info")
-return( invisible( NULL))
-  }
-  
-  if( !exists( 'tracees', 'mvb.session.info', inherits=FALSE))
-return( invisible( NULL))
-
-  tracees <- get( 'tracees', 'mvb.session.info', inherits=FALSE)
-  if( !length( tracees) || is.null( names( tracees)))
-return( invisible( NULL))
-
-  in.this <- find.funs() %matching% names( tracees)
-  if( !length( in.this))
-return( invisible( NULL))
-
-  assign( '[[', my.index)
-  tr.body <- list()
-  for( n in in.this) {
-    f <- get( n)
-    old.env <- environment( f)
-    old.attr <- attributes( f)
-    tr.body[[ n]] <- body( f)
-    
-    if( is.recursive( body( f)) && body( f)[[1]]=='{' && length( body( f))>=2 
-        && is.recursive( body( f)[[2]]) 
-        && body(f)[[2,1]]=='return' && length( body( f)[[2]])>1) {
-      if( body( f)[[2,2,1]]=='evaluator')
-        body( f) <- list( body( f)[[3]]) # call to list seems harmless, and avoids problems with function() 9
-      else if( body( f)[[2,2,1]]=='mlocal' && body(f)[[2,2,2,1]]=='evaluator')
-        body( f) <- substitute( mlocal( x), list( x=body( f)[[3]])) 
-        
-      environment( f) <- old.env
-      attributes( f) <- old.attr
-      assign( n, f, pos=1)
-    } # else nothing to do; shouldn't happen?
-  }
-
-  # Don't save .packageName; maybe not .required either?  
-  save( list = ls(envir = .GlobalEnv, all.names = TRUE)
-          %except% option.or.default( 'dont.Save', '.packageName'),  
-      file = '.Rdata', envir = .GlobalEnv)
-  on.exit()
-    
-  for( n in in.this) {
-    f <- get( n)
-    old.env <- environment( f)
-    old.attr <- attributes( f)
-    body( f) <- tr.body[[ n]]
-    environment( f) <- old.env
-    attributes( f) <- old.attr
-    assign( n, f, pos=1)
-  }
-    
-  return( invisible( NULL))        
+  Save.pos( 1)
 }
 
 
-"save.pos" <-
-function( pos, path, ascii=FALSE) {
-  set.pos.and.path()
-  save( list=objects( pos=pos, all.names=TRUE), file=path, ascii=ascii, 
-      envir=pos.to.env( pos))
+"save.mchanged" <-
+function( objs, envir) {
+  path <- attr( envir, 'path')
+  mcache <- attr( envir, 'mcache')
+  mcache <- mcache %such.that% (names(.) %in% lsall( envir))
+
+  changed.objs <- objs %such.that% (mcache[.]<0)
+  if( length( changed.objs)) {
+#		e <- new.env() # looks as if 'e' is unnecessary-- acbins get saved as normal objects
+		for( i in changed.objs) 
+			save( list=i, file=file.path( path, 'obj' %&% -mcache[ i] %&% '.rda'),
+					envir=envir, compress=TRUE)
+
+    mcache[ changed.objs] <- -mcache[ changed.objs]
+  }
+
+  attr( envir, 'mcache') <- mcache
+}
+
+
+"save.mvb.db" <-
+function( env, path, dbtype=attr( path, 'mvb.db.type'), objs, ...) {
+  if( missing( objs))
+    objs <- lsall(envir = env) %except% dont.save()
+
+  if( dbtype=='LazyLoad')  {
+    for( i in objs)
+      get( i, envir=env)
+    save(list = objs, file = path, envir = env, ...)
+    lazify( path, package=sub( '\\.rdb$', '', basename( path)), pkgpath= dirname( dirname( path)))
+  } else
+    save.refdb( path, env, ...)
 }
 
 
 "Save.pos" <-
-function( pos, path, ascii=FALSE) {
+function (pos, path, ascii = FALSE) {
   set.pos.and.path()
-  on.exit( save.pos( pos))
-  
-  if( 'mvb.session.info' %!in% search()) {
-    warn( "Can't find session info")
-return( invisible( NULL))
-  } 
-  
-  if( !exists( 'tracees', 'mvb.session.info', inherits=FALSE))
-return( invisible( NULL))
+#    on.exit(save.pos(pos)) # in R2.0, can't safely default to this
 
-  tracees <- get( 'tracees', 'mvb.session.info', inherits=FALSE)
-  if( !length( tracees) || is.null( names( tracees)))
-return( invisible( NULL))
-
-  in.this <- intersect( find.funs(pos), names( tracees))
-  if( !length( in.this))
-return( invisible( NULL))
-
-  assign( '[[', my.index)
-  tr.body <- list()
-  for( n in in.this) {
-    f <- get( n, pos=pos)
-    old.env <- environment( f)
-    old.attr <- attributes( f)
-    tr.body[[ n]] <- body( f)
-    
-    if( is.recursive( body( f)) && body( f)[[1]]=='{' && length( body( f))>=2 
-        && is.recursive( body( f)[[2]]) 
-        && body(f)[[2,1]]=='return' && length( body( f)[[2]])>1) {
-      if( body( f)[[2,2,1]]=='evaluator')
-        body( f) <- list( body( f)[[3]]) # call to list seems harmless, and avoids problems with function() 9
-      else if( body( f)[[2,2,1]]=='mlocal' && body(f)[[2,2,2,1]]=='evaluator')
-        body( f) <- substitute( mlocal( x), list( x=body( f)[[3]])) 
-        
-      environment( f) <- old.env
-      attributes( f) <- old.attr
-      assign( n, f, pos=pos)
-    } # else nothing to do; shouldn't happen?
+  if ("mvb.session.info" %!in% search()) {
+    warn("Can't find session info")
+return(invisible(NULL))
   }
 
-  # Don't save .packageName; maybe not .required either?  
-  save( list = ls(envir = pos.to.env( pos), all.names = TRUE) 
-          %except% option.or.default( 'dont.Save', '.packageName'),  
-      file = path, envir = pos.to.env( pos), ascii=ascii)
-  on.exit()
-    
-  for( n in in.this) {
-    f <- get( n, pos=pos)
-    old.env <- environment( f)
-    old.attr <- attributes( f)
-    body( f) <- tr.body[[ n]]
-    environment( f) <- old.env
-    attributes( f) <- old.attr
-    assign( n, f, pos=pos)
+  in.this <- character( 0)
+  repeat{ # to allow BREAK
+    if( !exists("tracees", "mvb.session.info", inherits = FALSE))
+  break
+    tracees <- get("tracees", "mvb.session.info", inherits = FALSE)
+    in.this <- lsall(pos) %such.that% (. %in% names(tracees))
+    in.this <- in.this %SUCH.THAT% (mode(.)=='function')
+    if (!length(in.this))
+  break
+    assign("[[", my.index)
+    tr.body <- list()
+    for (n in in.this) {
+      f <- get(n, pos = pos)
+      old.env <- environment(f)
+      old.attr <- attributes(f)
+      tr.body[[n]] <- body(f)
+      if (is.recursive(body(f)) && body(f)[[1]] == "{" && length(body(f)) >= 2 &&
+          is.recursive(body(f)[[2]]) && body(f)[[2, 1]] == "return" &&
+          length(body(f)[[2]]) > 1) {
+        formals(f) <- formals(body(f)[[3]])
+        if (body(f)[[2, 2, 1]] == "evaluator")
+          body(f) <- list(body(f)[[4]])
+        else if (body(f)[[2, 2, 1]] == "mlocal" && body(f)[[2, 2, 2, 1]] == "evaluator")
+          body(f) <- substitute(mlocal(x), list(x = body(f)[[4]]))
+        else if (body(f)[[2, 2, 1]] == "do.in.envir" && is.recursive(body(f)[[2, 2]]$fbody) &&
+            body(f)[[2, 2]]$fbody[[1]] == "evaluator") {
+          if (any(names(body(f)[[2, 2]]) == "envir"))
+            body(f) <- substitute(do.in.envir(envir = this.envir, x),
+               list(this.envir = body(f)[[2, 2]]$envir, x = body(f)[[4]]))
+          else
+            body(f) <- substitute(do.in.envir(x), list(x = body(f)[[3]]))
+        }
+        environment(f) <- old.env
+        attributes(f) <- old.attr
+        assign(n, f, pos = pos)
+      }
+    }
+  break # always
   }
-    
-  return( invisible( NULL))        
+
+  save.mvb.db( pos.to.env( pos), path, mvb.db.type)
+  if( !is.null( option.or.default( 'backup.fix', NULL)))
+    create.backups( pos=pos)
+
+  for (n in in.this) {
+    f <- get(n, pos = pos)
+    old.env <- environment(f)
+    old.attr <- attributes(f)
+    body(f) <- tr.body[[n]]
+    environment(f) <- old.env
+    attributes(f) <- old.attr
+    assign(n, f, pos = pos)
+  }
+  return(invisible(NULL))
+}
+
+
+"save.refdb" <-
+function( file, envir, ...) {
+  if( missing( file)) {
+    path <- attr( envir, 'path')
+    if( !is.dir( path))
+      mkdir( path)
+    file <- get.image.filename( path)
+  }
+
+  mcache <- attr( envir, 'mcache')
+  mcache <- mcache %such.that% (names( .) %in% lsall( envir))
+  attr( envir, 'mcache') <- mcache
+
+  # Housekeep dead files
+  objfiles <- list.files( dirname( file), '^obj[0-9]+\\.rda$')
+  file.remove( objfiles %except% ('obj' %&% mcache %&% '.rda'))
+
+  if( length( mcache)) {
+		cache.name <- get.mcache.store.name( envir) %&% '0' # guaranteed not to exist & to be findable
+		e <- new.env( parent=envir)
+		assign( cache.name, abs( mcache), e) # avoid assigning into envir
+		ans <- save( list = c( cache.name, lsall( envir=envir) %except% c( names( mcache), dont.save())),
+				file=file, envir=e, ...)
+		rm( e) # ?not necessary?
+
+    save.mchanged( names( mcache), envir)
+  } else
+    ans <- save( list=lsall( envir=envir) %except% dont.save(), file=file, envir=envir, ...)
+
+  ans
 }
 
 
@@ -3215,22 +3743,23 @@ function (env, the.path, task.name = character(0))
 
 
 "set.pos.and.path" <-
-function( nlocal=sys.parent()) mlocal({
-  if( !is.numeric( pos))
-    pos <- index( search()==pos)[1]
-
-  if( is.na( pos))
-stop( "Can't figure out what pos '", pos, "' means!")
-
-  if( missing( path)) {
-    path <- attr( pos.to.env( pos), 'path')
-    if( is.null( path)) {
-      cat( 'No obvious place to save it. What is the file path (single slashes only please)? ')
-      path <- readline() }
+function (nlocal = sys.parent()) mlocal({
+  if (!is.numeric(pos))
+    pos <- index(search() == pos)[1]
+  if (is.na(pos))
+stop("Can't figure out what pos '", pos, "' means!")
+  if (missing(path)) {
+    path <- attr(pos.to.env(pos), "path")
+    if (is.null(path))
+    {
+      cat("No obvious place to save it. What is the filename (single slashes only please)? ")
+      path <- readline()
+    }
   }
 
-  if( is.dir( path))
-    path <- file.path( path, '.RData')
+  path <- get.Rdata.path( path)
+  mvb.db.type <- attr( path, 'mvb.db.type')
+  path <- c( path)
 })
 
 
@@ -3243,6 +3772,44 @@ function (a, b)
     else if (all(r == c(0, 1))) 
         1
     else 0
+}
+
+
+"setup.mcache" <-
+function( envir, fpath=attr( envir, 'path'), refs) {
+  envir <- as.environment( envir)
+
+  mcache <- attr( envir, 'mcache') # usually NULL & overwritten by next bit
+  if( missing( refs)) {
+    cache.name <- get.mcache.store.name( envir)
+    if( !exists( cache.name, envir=envir, inherits=FALSE))
+return() # nothing to do; pre-mcache DB
+    mcache <- get( cache.name, envir)
+    refs <- names( mcache)
+    remove( list=cache.name, envir=envir)
+  }
+
+  if( !length( refs)) # post-mcache nothing to do
+return()
+
+  # Create promises to load
+  remove( list=refs %such.that% (. %in% lsall( envir=envir)), envir=envir) # only needed with 'move'
+  for( i in refs) {
+    objfile <- file.path( fpath, 'obj' %&% mcache[ i] %&% '.rda')
+    if( !file.exists( objfile)) {
+      warning( 'Can\'t find file "' %&% objfile %&% '"; deleting object "' %&% i %&% '"')
+      mcache <- mcache %without.name% i
+    } else {
+      fx <- get.mcache.reffun( i, envir)
+      efx <- environment( fx)
+      # For efficiency (?), do this via promise, rather than directly coding 'if(!loaded)' in fx
+      subbo <- substitute( { load( file, e); e[[i]]}, list( e=efx, file=objfile, i=i))
+      do.call( 'delayedAssign', list( x=i, value=subbo, eval.env=efx, assign.env=efx))
+      suppressWarnings( makeActiveBinding( i, fx, envir))
+    }
+  }
+
+  attr( envir, 'mcache') <- mcache
 }
 
 
@@ -3355,11 +3922,6 @@ function (x)
 }
 
 
-"unpaste" <-
-function (string, sep) 
-strsplit(string, sep, FALSE)
-
-
 "upper.case" <-
 function (s) 
 {
@@ -3397,7 +3959,7 @@ function( tasks=get( 'tasks', env=env), env=.GlobalEnv, dir=attr( env, 'path'))
 
 
 "write.sourceable.function" <-
-function( x, con, append=FALSE, print.name=FALSE) {
+function( x, con, append=FALSE, print.name=FALSE, doc.special=TRUE) {
   if( is.character( con))
     con <- file( con)
   if( need.to.close <- !isOpen( con))
@@ -3407,9 +3969,9 @@ function( x, con, append=FALSE, print.name=FALSE) {
     sink( con)
     on.exit( sink())
   }
-  
+
   on.exit( if( need.to.close) try( close( con)), add=TRUE)
-  
+
   if( print.name) {
     xn <- x
     if( !is.character( x)) {
@@ -3437,13 +3999,16 @@ stop( "Can't figure out what name to print")
 
   if( length( natts)) {
     # Treat class "docattr" attributes specially. Non-character doc's (references) are OK.
-    freeforms <- natts[ sapply( atts, 'inherits', 'docattr') ]
-      
+    freeforms <- if( doc.special)
+        natts[ sapply( atts, 'inherits', 'docattr') ]
+      else
+        character( 0)
+
     for( iatt in natts %except% freeforms)
-      cat( ',', iatt, '=', 
+      cat( ',', iatt, '=',
           paste( deparse.names.parsably( atts[[ iatt]]), collapse=' '), '\n')
 
-    if( length( freeforms)) { # bizarre syntax of next line is to avoid misleading a syntax-highlighting editor 
+    if( length( freeforms)) { # bizarre syntax of next line is to avoid misleading a syntax-highlighting editor
       if( any( freeforms=='doc'))
         freeforms <- c( freeforms %except% 'doc', 'doc') # move doc to last
       eof.markers <- '<<end of ' %&% freeforms %&% '>>'
@@ -3452,15 +4017,15 @@ stop( "Can't figure out what name to print")
         while( any( atts[[ iatt]] == eof.markers[ iatt]))
           eof.markers[ iatt] <- paste( eof.markers[ iatt], '<', iatt, '>', sep='')
 #      eof.markers[ length( eof.markers)] <- '' # default for doc; help syntax highlighters
-      cat( ',', paste( freeforms %&% '=flatdoc( EOF="' %&% eof.markers %&% '")', 
+      cat( ',', paste( freeforms %&% '=flatdoc( EOF="' %&% eof.markers %&% '")',
           collapse=',\n'), ')\n', sep='')
       for( iatt in freeforms)
         cat( atts[[iatt]], eof.markers[ iatt], sep='\n') } # last one will be end of doc
     else
       cat( ')')
     cat( '\n')
-  } 
-  
+  }
+
   cat("\n")
 }
 

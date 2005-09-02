@@ -1,10 +1,12 @@
 \name{fixr}
 \alias{fixr}
+\alias{readr}
 \alias{FF}
 \title{Editing functions}
-\description{\code{fixr} opens a function in your preferred text editor. Control returns immediately to the \R command line, so you can keep working in \R and can be editing several functions simultaneously (cf \code{edit}). A session-duration list of files/functions being edited is maintained, so that the function can be easily sourced back in to the right workspace, either by calling \code{FF()} or automatically on file change. There is an optional automatic text backup facility.}
+\description{\code{fixr} opens a function in your preferred text editor. Control returns immediately to the \R command line, so you can keep working in \R and can be editing several functions simultaneously (cf \code{edit}). A session-duration list of files/functions being edited is maintained, so that the function can be easily sourced back in to the right workspace, either by calling \code{FF()} or automatically on file change. There is an optional automatic text backup facility. \code{readr} also opens a file in your text editor, but in read-only mode, and doesn't update the backups or the list of functions being edited.}
 \usage{
  fixr( x, new=FALSE, install=FALSE)
+ readr( x, install=FALSE)
  FF()
 }
 \arguments{
@@ -19,6 +21,8 @@ ESS users will not be very interested in \code{fixr}, even if they use \code{cd}
 }
 \details{
 When \code{fixr} is run for the first time (or if you set \code{install=TRUE}), it will ask you for some basic information about your text editor. In particular, you'll need to know what to type to invoke your text editor from the command shell (MS-DOS prompt on Windows) on a specific file. After supplying these details, \code{fixr} will launch the editor and print a message showing some \code{options} (\code{"backup.fix"}, \code{"edit.scratchdir"} and \code{"program.editor"}), that will need to be set in your \code{.First}. function-- which you can do via \code{fixr(.First)}.
+
+\code{readr} requires a similar installation process. To get the read-only feature, you'll need to add some kind of option/switch on the command line that invokes your text editor; not all text editors support this feature. Similarly to \code{fixr}, you'll need to set \code{options( program.reader=<<something>>)} in your \code{.First}; the installation process will tell you what to use.
 
 \code{fixr} creates a blank function template if none existed, or if \code{new=TRUE} is specified.
 

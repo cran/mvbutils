@@ -4,11 +4,12 @@
 \description{\code{mlibrary} lets you use tasks as informal proto-packages. The documentation etc. requirements are much less stringent than for proper packages.}
 \usage{
 # Usual: mlibrary( task=)
-mlibrary( \dots, character.only=FALSE, task, pos=lib.pos(), execute.First=TRUE)
+mlibrary( \dots, character.only=FALSE, logical.return=FALSE, task, pos=lib.pos(), execute.First=TRUE)
 }
 \arguments{
 \item{ task}{an unquoted character string naming a task.}
 \item{ character.only}{if TRUE, \code{task} will be interpreted as a normal quoted character string.}
+\item{ logical.return}{if TRUE and there is a "fatal" problem, FALSE will be returned; if FALSE and there is a "fatal" problem, an error will occur.}
 \item{ pos}{a position on the search path; no reason not to use the default}
 \item{ execute.First}{if FALSE, don't execute any \code{.First.lib} code. ?Is this working?}
 \item{ \dots}{other arguments as for \code{library}}

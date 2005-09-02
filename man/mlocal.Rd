@@ -26,7 +26,7 @@ If you call \code{return} in an \code{mlocal} function, you must call \code{\lin
 
 Frame-dependent functions (sys.parent()) etc. will not do what you expect inside an \code{mlocal} function. In \R 1.8 at least, you need to shift the normal index by 3 to get what you'd expect, so that \code{sys.call(-3)} inside an \code{mlocal} function will return the call to the \code{mlocal} function, and \code{sys.function( sys.parent(3))} will return the \code{mlocal} function definition. You can get the expected results for the \emph{caller} via \code{mvb.sys.parent} with no shift, etc.-- unless the caller is itself an \code{mlocal} function.
 
-\code{on.exit} works as you might expect, i.e. in the \code{mlocal} function only. Calls to \code{on.exit} in the \code{mlocal} function will \emph{not} alter the exit code in the caller.
+\code{on.exit} \emph{doesn't} work properly, \emph{contrary} to what previous \code{mlocal} documentation said (the scoping is wrong, though often this doesn't matter). If you want to have exit code in the \code{mlocal} function itself, use \code{\link{local.on.exit}}. I can't find any way to set the exit code in the calling function from within an \code{mlocal} function.
 
 See R-news 2001 \#3 (1/3) for another closely related approach to "macros".
 }
@@ -60,6 +60,6 @@ ffin <- function( i, nlocal=sys.parent()) mlocal( a <- a+i )
 ffout <- function( ivec) \{ a <- 0; sapply( ivec, ffin, nlocal=sys.nframe()) \}
 ffout( 1:3) # 1 3 6
 }
-\seealso{ \code{\link{local.return}}, \code{\link{do.in.envir}}, and R-news 1/3}
+\seealso{ \code{\link{local.return}}, \code{\link{local.on.exit}}, \code{\link{do.in.envir}}, and R-news 1/3}
 \author{Mark Bravington}
 \keyword{programming}

@@ -8,7 +8,8 @@
 
 \itemize{
 \item Hierarchical organization of projects and sub-projects, allowing switching within a single \R session, searching and moving objects through the hierarchy, objects in ancestor projects always visible from child (sub)projects, etc. See \code{\link{cd}}.
-\item Improved function editing facilities, interfacing with whichever text editor you prefer. The \R command line is not frozen while editing, and you can have multiple edit windows open. There is also a complete automatic backup system, with (as a side-effect) the ability to sort objects by date. See \code{\link{fixr}}.
+\item Improved function editing facilities, interfacing with whichever text editor you prefer. The \R command line is not frozen while editing, and you can have multiple edit windows open. There is also a complete automatic text backup system, with (as a side-effect) the ability to sort functions by date. See \code{\link{fixr}}.
+\item "Lazy loading" for individual objects, allowing fast & efficient access to collections of biggish objects where only a few objects are used at a time. See \code{\link{mlazy}}.
 \item Support for flat-format (plain-text) documentation, stored along with a function and editable at the same time, and viewable through normal \code{help}. Automatic conversion to Rd format is available if certain rules are followed. See \code{\link{flatdoc}}.
 \item Support for nesting of \code{source} calls, and for interspersing \R code and data in the same file. See \code{\link{source.mvb}}.
 \item Support for easy macro-like functions which act in their caller's environment (see also RNews 1/3), and for "dynamically scoped" functions. See \code{\link{mlocal}} and \code{\link{do.in.envir}}.
@@ -42,7 +43,7 @@ On loading, the present version of \code{mvbutils} overwrites two system functio
 
 If you are certain that you \emph{don't} want these replacements, set \code{options(mvbutils.replacements=FALSE)} before loading \code{mvbutils}. However, this will prevent \code{cd} and the flat-documentation help from working properly.
 
-For ESS users: I'm not an Emacs user and so haven't tried ESS with the \pkg{mvbutils} package myself, but a read-through of the ESS documentation suggests that a couple of ESS variables may need changing to get the two working optimally. Please check the ESS documentation for further details on these points. I will update this helpfile when I have more info on what works.
+For ESS users: I'm not an Emacs user and so haven't tried ESS with the \pkg{mvbutils} package myself, but a read-through of the ESS documentation suggests that a couple of ESS variables may need changing to get the two working optimally. Please check the ESS documentation for further details on these points. I will update this helpfile when/if I receive more feedback on what works.
 
 \itemize{
 \item \code{cd} changes the search list, so you may need to alter "ess-change-sp-regex" in ESS.
@@ -52,6 +53,6 @@ For ESS users: I'm not an Emacs user and so haven't tried ESS with the \pkg{mvbu
 
 Display bugs: if you have a buggy Unix display where \code{readline()} always returns the cursor to the start of the line, overwriting any prompt, then try \code{options( cd.extra.CR=TRUE)}.
 }
-\seealso{ \code{\link{cd}}, \code{\link{fixr}}, \code{\link{flatdoc}}, \code{\link{dochelp}}, \code{\link{formalize.package}}, \code{\link{source.mvb}}, \code{\link{mlocal}}, \code{\link{do.in.envir}}, \code{\link{foodweb}}, \code{\link{clip}}, \code{\link{mvbutils-operators}}, \code{\link{mvbutils-utils}}, package \pkg{debug}}
+\seealso{ \code{\link{cd}}, \code{\link{fixr}}, \code{\link{mlazy}}, \code{\link{flatdoc}}, \code{\link{dochelp}}, \code{\link{formalize.package}}, \code{\link{source.mvb}}, \code{\link{mlocal}}, \code{\link{do.in.envir}}, \code{\link{foodweb}}, \code{\link{clip}}, \code{\link{mvbutils-operators}}, \code{\link{mvbutils-utils}}, package \pkg{debug}}
 \author{Mark Bravington}
 \keyword{documentation}

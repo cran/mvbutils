@@ -2,12 +2,13 @@
 \alias{write.sourceable.function}
 \title{Sourceable code for functions with flat-format documentation}
 \description{Works like "write" for functions without flat documentation (i.e. without a "doc" attribute). If a "doc" attribute exists, the file is written in a form allowing it to be edited and then read back in with "source.mvb"; the "doc" attribute is given as free-form text following the function definition.}
-\usage{write.sourceable.function( x, con, append=FALSE, print.name=FALSE)}
+\usage{write.sourceable.function( x, con, append=FALSE, print.name=FALSE, doc.special=TRUE)}
 \arguments{
 \item{ x}{function object (or the name of a function) to be output}
 \item{ con}{a connection or filename}
 \item{ append}{if "con" is not already open, should it be appended to rather than overwritten?}
 \item{ print.name}{should output start with \code{"NAME" <-} (where NAME is deduced from \code{x})?}
+\item{ doc.special}{TRUE if \code{doc} attribute is to be printed as flat doc-- assumes readback via \code{source.mvb}}
 }
 \details{
 If \code{x} is unquoted and \code{print.name=TRUE}, the name is obtained from \code{deparse( substitute( x))}. If \code{x} is a character string, the name is \code{x} itself and the function printed is \code{get(x)}.
