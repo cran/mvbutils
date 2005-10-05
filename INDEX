@@ -1,36 +1,36 @@
-as.data.frame.I                                   Coerce to data.frame, preserving mode of columns
-autoFF                                            Callback function for automatic updates of edited functions.
-cd                                                Organizing R workspaces
-cdfind                                            Hierarchy-crawling functions for cd-organized workspaces
-cdprompt                                          Support routine for cd-organized workspace hierarchy.
-do.in.envir                                       Modify a function's scope
-doc2Rd                                            Converts flat documentation to Rd format
-dochelp                                           Documentation
-extract.named                                     Create variables from corresponding named list elements
-find.documented                                   Support for flat-format documentation
-fix.order                                         Shows functions sorted by date of edit
-fixr                                              Editing functions
-flatdoc                                           Flat-format documentation
-foodweb                                           Shows which functions call what
-formalize.package                                 Create a simple formal package from an informal package
-get.backup                                        Text backups of function source code
-load.refdb                                        Cacheing objects for lazy-load access
-local.on.exit                                     Macro-like functions
-local.return                                      Macro-like functions
-make.NAMESPACE                                    Auto-create a NAMESPACE file
-mlazy                                             Cacheing objects for lazy-load access
-mlibrary                                          Loading and listing of informal packages
-mlocal                                            Macro-like functions
-move                                              Organizing R workspaces
-mvb.sys.parent                                    Functions to Access the Function Call Stack
-mvbutils-operators                                Utility operators
-mvbutils-utils                                    Miscellaneous utilities
-my.index                                          Arbitrary-level retrieval from and modification of recursive objects
-readLines.mvb                                     Read text lines from a connection
-README.mvbutils                                   How to use mvbutils
-Save                                              Save R objects
-setup.mcache                                      Cacheing objects for lazy-load access
-source.mvb                                        Read R code and data from a file or connection
-strip.missing                                     Exclude "missing" objects
-task.home                                         Organizing R workspaces
-write.sourceable.function                         Sourceable code for functions with flat-format documentation
+README.mvbutils                      How to use mvbutils
+as.data.frame.I                      Coerce to data.frame, preserving mode of columns
+autoFF                               Callback function for automatic updates of edited functions.
+cd                                   Organizing R workspaces
+cdfind                               Hierarchy-crawling functions for cd-organized workspaces
+cdprompt                             Support routine for cd-organized workspace hierarchy.
+do.in.envir                          Modify a function's scope
+doc2Rd                               Converts flat documentation to Rd format
+dochelp                              Documentation
+extract.named                        Create variables from corresponding named list elements
+find.documented                      Support for flat-format documentation
+fix.order                            Shows functions sorted by date of edit
+fixr                                 Editing functions
+flatdoc                              Flat-format documentation
+foodweb                              Shows which functions call what
+formalize.package                    Create a simple formal package from an informal package
+get.backup                           Text backups of function source code
+load.refdb                           Cacheing objects for lazy-load access
+local.on.exit                        Macro-like functions
+local.return                         Macro-like functions
+make.NAMESPACE                       Auto-create a NAMESPACE file
+mlazy                                Cacheing objects for lazy-load access
+mlibrary                             Loading and listing of informal packages
+mlocal                               Macro-like functions
+move                                 Organizing R workspaces
+mvb.sys.parent                       Functions to Access the Function Call Stack
+mvbutils-operators                   Utility operators
+mvbutils-utils                       Miscellaneous utilities
+my.index                             Arbitrary-level retrieval from and modification of recursive objects
+readLines.mvb                        Read text lines from a connection
+Save                                 Save R objects
+setup.mcache                         Cacheing objects for lazy-load access
+source.mvb                           Read R code and data from a file or connection
+strip.missing                        Exclude "missing" objects
+task.home                            Organizing R workspaces
+write.sourceable.function            Sourceable code for functions with flat-format documentation

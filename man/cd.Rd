@@ -30,21 +30,40 @@ You can create a fully hierarchical structure, with subtasks within subtasks wit
 
 A task can have \code{.First.task} and/or \code{.Last.task} functions, which get called immediately after \code{cd}ing into the task from its parent, or immediately before \code{cd}ing back to its parent, respectively (see ARGUMENTS). These can be useful for dynamic loading, attaching & detaching datasets, etc., and facilitate the use of tasks as informal libraries/packages (see also \code{flatdoc} and \code{mlibrary}).
 
-Formal and semi-formal packages can also be tasks. For example, my \code{debug} and \pkg{handy} packages are loaded by \code{\link{mlibrary}} when I start \R (in my \code{.First}), but are also linked into my task hierarchy. This lets me \code{cd(debug)} when I intend to create or remove a number of functions in \code{debug}. It's also useful to be able to have subtasks below such packages, e.g. so that probably-obsolete functions can be moved there pending a final decision. When you \code{cd} to something that's already attached as a package, \code{search()} will show e.g. "PLACEHOLDER:debug" in the position formerly occupied by the package; when you \code{cd} back up, the package will return to the placeholder slot. \code{mlibrary} is not fussy about package requirements; you can use \code{mlibrary} to attach any task as a package, without going through the complex package-building procedures required by \code{library}. You can use \code{\link{flatdoc}} to add informal documentation to the help system. If & when you decide to turn an informal package into a proper CRAN-able \R package, you might find \code{formalize.package} useful.
+Formal and semi-formal packages can also be tasks. For example, my \code{debug} and \pkg{handy} packages are loaded by \code{\link{mlibrary}} when I start \R (in my \code{.First}), but are also linked into my task hierarchy. This lets me \code{cd(debug)} when I intend to create or remove a number of functions in \code{debug}. It's also useful to be able to have subtasks below such packages, e.g. so that probably-obsolete functions can be moved there pending a final decision. When you \code{cd} to something that's already attached as a package, \code{search()} will show e.g. "PLACEHOLDER:debug" in the position formerly occupied by the package; when you \code{cd} back up, the package will return to the placeholder slot. \code{mlibrary} is not fussy about package requirements; you can use \code{mlibrary} to attach any task as a package, without going through the complex package-building procedures required by \code{library}. You can use \code{\link{flatdoc}} to add informal documentation to the help system. If & when you decide to turn an informal package into a proper CRAN-able \R package, you might find \code{\link{formalize.package}} useful.
+}
+\section{How it works}{
+The mechanism underlying the tree structure is very simple: each task that has any subtasks will contain a character vector called \code{tasks}, whose names are the \R names of the tasks, and whose elements are the corresponding disk directories. Your ROOT task need contain no more than a \code{.First} function and a \code{tasks} object.
+
+You can manually modify the \code{tasks} vector, and sometimes this is essential. If you decide to move a disk directory, for example, you can manually change the corresponding element of \code{tasks} to reflect the change. (Though if you are moving a whole task hierarchy, e.g. when migrating to a new machine, consult \code{cd.change.all.paths}.) You can also rename a task very easily, via something like
+
+\code{names( tasks)[ names( tasks)=="my.old.name"] <- "my.new.name"}
+
+You can use similar methods to "reparent" a subtask without changing the directory structure.
+
+There is (deliberately, to avoid accidents) no completely automatic way of removing tasks. To "hide" a task from the \code{cd} system, you first need to be \code{cd}ed to its parent; then remove the corresponding element of the \code{tasks} object, most easily via e.g.
+
+\code{tasks <- tasks \%without.name\% "mysubtask"}
+
+If you want to remove the directories corresponding to "mysubtask", you have to do so manually, either in the operating system or (for the brave) in \R code.
+
+Remember to \code{Save()} at some point after manually modifying \code{tasks}.
 }
 \section{Options}{
 Various \code{options()} can be set, as follows. Remember to put these into your \code{.First} function, too.
 
 \code{write.mvb.tasks=TRUE} causes a sourceable text representation of the \code{tasks} object to be maintained in each directory, in the file \code{tasks.r}. This helps in case you accidentally wipe out the .Rdata file and lose track of where the child tasks live. To create these text representations for the first time throughout the hierarchy, call \code{cd.write.mvb.tasks(0)}. You need to put the the \code{options} call in your \code{.First}.
 
-\code{options(abbreviate.cdprompt(n))} controls the length of the prompt string. Only the first \code{n} characters of all ancestral task names will be shown. For example, \code{n=1} would replace the prompt \code{long.task.name/data/funcs>} with \code{l/d/funcs>}.
+\code{abbreviate.cdprompt=n} controls the length of the prompt string. Only the first \code{n} characters of all ancestral task names will be shown. For example, \code{n=1} would replace the prompt \code{long.task.name/data/funcs>} with \code{l/d/funcs>}.
+
+\code{mvbutils.update.history.on.cd=FALSE} will prevent automatic saving & reloading of the history file when \code{cd} is called.
+
+\code{cd} checks the \env{R\_HISTFILE} environment variable and, if unset, sets it to \code{file.path( getwd()), ".Rhistory")}. This (combined with the \code{mvbutils} replacement of the standard versions of \code{savehistory} and \code{loadhistory}-- see \code{\link{README.mvbutils}}) ensures that the same history file is used throughout an \R session (and throughout all \R sessions, if you always start \R in the same directory). My experience is that a single master history file is safer. However, if you want to override this behaviour-- e.g. if you want to use a separate history file for each task-- call something like \code{Sys.putenv( R_HISTFILE=".Rhistory")} \emph{before} the \emph{first} use of \code{cd}.
 }
 \note{
 \code{cd} always calls \code{Save} before attaching a child task on top or moving back up the hierarchy. \code{cd} also calls \code{setwd} so that file searches will default to the task directory (see also \code{task.home}).
 
 \code{cd} is only meant to be called interactively, and has only been tested in that context.
-
-The mechanism underlying the tree structure is very simple: each task that has any subtasks will contain a character vector called \code{tasks}, whose names are the \R names of the tasks, and whose elements are the corresponding disk directories. Your ROOT task need contain no more than a \code{.First} function and a \code{tasks} object. If you decide to move a disk directory, you can manually change the corresponding element of \code{tasks}. If you are moving a whole task hierarchy, e.g. when migrating to a new machine, consult \code{cd.change.all.paths}.
 
 \code{cd} will issue a warning and refuse to move back up the hierarchy if it detects a non-task attached in position 2. You will need to manually detach any such objects before \code{cd}ing back up, or write a \code{.Last.task} function to automatically do the detaching.
 

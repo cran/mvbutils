@@ -14,7 +14,7 @@
 
 7/2/2005: added support for lazy-loading of individual objects ("cacheing") in 'mlazy' etc.
 
-  Added support for image files that aren't just ".Rdata"-- in particular, for "R/all.rda" files in packages, and lazy-loading databases in "R" subdirectories. The latter is pretty experimental though.
+  Added support for image files that aren't just called ".Rdata"-- in particular, for "R/all.rda" files in packages, and lazy-loading databases in "R" subdirectories. The latter is pretty experimental though.
 
   Fixed buggy 'on.exit' in 'mlocal' functions; use 'local.on.exit' instead
   
@@ -24,5 +24,11 @@
   
   Fixed various things broken by R2.0, including the flatdoc extensions to 'help' (which had stopped the entire help system working).
   
-11/2/2005: NAMESPACEd it
+11/2/2005: NAMESPACEd it and removed a couple of superfluous functions.
+
+10/5/2005: Fixed a bug with 'Save' and changed the history file mechanisms.
+
+  Changed the default in 'option.or.default' to NULL.
+  
+  Fixed some bugs wrto operators in 'formalize.package', plus some doco infelicities.
 	

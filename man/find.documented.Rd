@@ -5,10 +5,10 @@
 \description{Finds functions with flat-format documentation.}
 \usage{
 find.documented( pos=1, doctype=c( "Rd", "casual", "own", "any"))
-find.docholder( funs, pos=<<search env containing funs>>)
+find.docholder( funs, pos=)
 }
 \arguments{
-\item{ pos}{search path position(s), numeric or character. In \code{find.documented}, any length; in \code{find.docholder}, only \code{pos[1]} will be used.}
+\item{ pos}{search path position(s), numeric or character. In \code{find.documented}, any length. In \code{find.docholder}, only \code{pos[1]} will be used, and \code{pos} defaults to where \code{funs} are found.}
 \item{ doctype}{Defaults to "Rd". If supplied, it is partially matched against the choices in USAGE. "Rd" functions are named in the alias list at the start of any \code{doc} attribute of a function in \code{pos} (see \code{\link{doc2Rd}}); "casual" functions have their own \code{doc} attribute, and will be found by the replacement of \code{help}; "own" functions (a subset of "casual") have their own character-mode \code{doc} attribute, and are suitable for \code{doc2Rd}; "any" combines \code{casual} and \code{Rd}.}
 \item{ funs}{names of objects whose documentation you're trying to find.}
 }

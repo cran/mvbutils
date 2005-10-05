@@ -34,12 +34,14 @@ On loading, \code{mvbutils} creates a new environment in the search path, called
 }
 }
 \note{
-On loading, the present version of \code{mvbutils} overwrites two system functions: \code{library} and \code{help}. The modifications should have no side-effects, and/but I hope to be able to avoid them altogether in future versions of \R. Briefly:
+On loading, the present version of \code{mvbutils} overwrites a few system functions: \code{library}, \code{help}, and \code{savehistory}, and \code{loadhistory}. The modifications should have [almost] no side-effects, and/but I hope to be able to avoid them altogether in future versions of \R. Briefly:
 
 \itemize{
 \item \code{library} is modified so that its default \code{pos} argument becomes a call to \code{lib.pos()}. This means that packages get attached just below ROOT rather than always in position 2 (needed by \code{cd});
 \item \code{help} is modified so that, if system \code{help} can't find help for a simple object (not a method or package), it will look for the \code{doc} attribute of that object (if any) and display it in a pager using \code{dochelp}.
 }
+
+- \code{savehistory} and \code{loadhistory} are modified so that they use the \env{R\_HISTFILE} environment variable if it set. This can be set dynamically during an \R session using \code{Sys.putenv}. Standard \R behaviour is to respect \env{R\_HISTFILE} iff it is set \emph{before} the \R session starts. Note that, by default, \code{cd} will on first use set \env{R\_HISTFILE} to what it thinks is the ROOT task, so that same the history file will be used throughout the session; see \code{\link{cd}} if you want to change this.
 
 If you are certain that you \emph{don't} want these replacements, set \code{options(mvbutils.replacements=FALSE)} before loading \code{mvbutils}. However, this will prevent \code{cd} and the flat-documentation help from working properly.
 
@@ -47,7 +49,7 @@ For ESS users: I'm not an Emacs user and so haven't tried ESS with the \pkg{mvbu
 
 \itemize{
 \item \code{cd} changes the search list, so you may need to alter "ess-change-sp-regex" in ESS.
-\item \code{cd} also changes the prompt, so you may need to alter "inferior-ess-prompt". Prompts have the form WORD1/WORD2/\dots/WORDn> where WORDx regexp-matches the string \code{"^[a-zA-Z][a-zA-Z._0-9]*$"}
+\item \code{cd} also changes the prompt, so you may need to alter "inferior-ess-prompt". Prompts have the form WORD1/WORD2/\dots/WORDn> where WORDx is a letter followed by one or more letters, underscores, periods, or digits.
 \item \code{move} can add/remove objects in workspaces other than the top one, so if ESS relies on stored internal summaries of "what's where", these may need updating.
 }
 

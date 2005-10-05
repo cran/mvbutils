@@ -159,6 +159,8 @@ function( libname, pkgname) {
     setup.mcache( .GlobalEnv) # in case of cached objects in ROOT, which 'load' won't understand
 
     if( option.or.default( 'mvbutils.replacements', TRUE)) {
+      assign.to.base( "savehistory", hack.history( 'save'))
+      assign.to.base( 'loadhistory', hack.history( 'load'))
       assign.to.base( "help", hack.help())
       assign.to.base( "library", hack.library( ))
     }
@@ -345,8 +347,12 @@ stop("Can't move backwards from ROOT!")
   #save.image() # replaced by...
   Save.pos( 1) # 12/04, to work with all.rda & lazyLoad
 
-  if (FALSE && is.nonzero(getOption("change.history.with.cd")))
+	if( !nchar( Sys.getenv( 'R_HISTFILE')))
+		Sys.putenv( R_HISTFILE=file.path( getwd(), '.Rhistory'))
+
+  if( option.or.default( 'mvbutils.update.history.on.cd', TRUE))
     savehistory()
+    
   need.to.promote.on.failure <- TRUE
   if (to[1] == "..") {
     cd..(1)
@@ -366,7 +372,8 @@ stop("Can't move backwards from ROOT!")
         to <- to[-1]
       }
     cd.load(to[1], pos = 1, attach.new = FALSE)
-    if (is.nonzero(getOption("change.history.with.cd")))
+
+    if( option.or.default( 'mvbutils.update.history.on.cd', TRUE))
       loadhistory()
     need.to.promote.on.failure <- FALSE
   }
@@ -1780,8 +1787,17 @@ stop( "couldn't make directories")
       doc2Rd( make.internal.doc( funs %except% find.documented( where, doctype='any'), package)),
       sep='\n')
 
-  if( new.index && require( tools))
-    Rdindex( file.path( dir., package, 'man'), file.path( dir., package, 'INDEX'))
+  if( new.index && require( tools)) {
+    index.file <- file.path( dir., package, 'INDEX')
+    Rdindex( file.path( dir., package, 'man'), index.file)
+    # Rdindex won't put README.mypackage first, so will need to fix it
+    index.stuff <- scan( index.file, what='', sep='\n')
+    if( README.goes.first && length( i <- grep( '^README\\.' %&% package, index.stuff))) {
+      i <- i[1]
+      index.stuff <- index.stuff[ c( i, (1:length( index.stuff)) %except% i)]
+      cat( index.stuff, sep='\n', file=index.file)
+    }
+  }
 
   if( file.exists( file.path( dir., package, 'NAMESPACE')))
     make.NAMESPACE()
@@ -2056,6 +2072,18 @@ function() {
   formals( replacement.help) <- formals( help)
   environment( replacement.help) <- .GlobalEnv
   replacement.help
+}
+
+
+"hack.history" <-
+function( which=cq( load, save)[1]) {
+# Returns modified 'loadhistory' or 'savehistory' so that file checks R_HISTFILE by default
+  whichhistory <- get( which %&% 'history')
+  e1 <- environment( whichhistory)
+  formals( whichhistory)$file <- quote( 
+      if( nchar( histfile <- Sys.getenv( 'R_HISTFILE'))) histfile else '.Rhistory')
+  environment( whichhistory) <- e1
+  whichhistory
 }
 
 
@@ -2374,8 +2402,13 @@ function( funs=find.funs() %except% find.documented( doctype='Rd'), file=stdout(
 
 "make.internal.doc" <-
 function( funs, package) {
-
-  text <- c( "PACKAGE-internal package:PACKAGE\n", funs, "
+  # xfuns is to cope with operators,
+  # whose names start with %. This is interpreted as a "don't-show-rest-of-line" 
+  # by the standard flatdoc system, and is removed by 'doc2Rd'.
+  # So we need to add a 
+  xfuns <- ifelse( regexpr( '^%', funs)>0, '%', '') %&% funs
+  text <- c( "PACKAGE-internal package:PACKAGE\n", 
+      xfuns, "
 Internal functions for PACKAGE
 
 DESCRIPTION
@@ -2495,10 +2528,16 @@ function( task.name, nlocal=sys.parent(), answer, dir.name) mlocal({
 "make.usage.section" <-
 function( funs=find.funs() %except% find.documented( doctype='Rd'), file=stdout()) {
   usage <- function( x) { 
-      y <- clip( deparse( args( x)))
-      y <- sub( '^ +', ' ', y)
-      y[1] <- sub( '^function ', to.regexpr( x), y[1])
-      y <- paste( y, collapse='')
+      if( regexpr( '^%.*%', x)>0) {
+        # Assumes binary op with no defaults
+        y <- names( formals( get( x)))   
+        y <- paste( y[1], x, y[2], sep=' ')
+      } else {
+				y <- clip( deparse( args( x)))
+				y <- sub( '^ +', ' ', y)
+				y[1] <- sub( '^function ', to.regexpr( x), y[1])
+				y <- paste( y, collapse='') 
+			}
       y
     }
  funs <- sapply( funs, usage)
@@ -3127,12 +3166,11 @@ function (x)
 
 
 "option.or.default" <-
-function (opt.name, default) 
-{
-    value <- getOption(opt.name)
-    if (!is.null(value)) 
-        value
-    else default
+function (opt.name, default=NULL) {
+  value <- getOption(opt.name)
+  if (!is.null(value)) 
+    value
+  else default
 }
 
 
@@ -3649,9 +3687,14 @@ return(invisible(NULL))
   break
     tracees <- get("tracees", "mvb.session.info", inherits = FALSE)
     in.this <- lsall(pos) %such.that% (. %in% names(tracees))
-    in.this <- in.this %SUCH.THAT% (mode(.)=='function')
+    pe <- pos.to.env( pos)
+    in.this <- in.this %SUCH.THAT% (mode(pe[[.]])=='function')
     if (!length(in.this))
   break
+    # Should maybe change this to assign into a temp envir born by pe
+    # Then we never end up zapping the original
+    # I think save.mvb.db can cope
+    
     assign("[[", my.index)
     tr.body <- list()
     for (n in in.this) {

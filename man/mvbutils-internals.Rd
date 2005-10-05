@@ -1,6 +1,6 @@
 \name{mvbutils-internal}
 \alias{mvbutils-internal}
-\alias{**\%}
+\alias{\%**\%}
 \alias{.First.lib}
 \alias{.onLoad}
 \alias{as.docattr}
@@ -35,6 +35,7 @@
 \alias{get.ref.info}
 \alias{group}
 \alias{hack.help}
+\alias{hack.history}
 \alias{hack.library}
 \alias{install.proged}
 \alias{is.nonzero}
@@ -71,7 +72,7 @@
 \title{Internal functions for mvbutils}
 \description{Internal functions for \code{mvbutils}, not meant to be called directly.}
 \usage{
-**\%(x, y)
+x \%**\% y
 .First.lib(libname, pkgname)
 .onLoad(libname, pkgname)
 as.docattr(x)
@@ -106,6 +107,7 @@ get.Rdata.path(path)
 get.ref.info(envo, nlocal = sys.parent())
 group(m, \dots)
 hack.help()
+hack.history(which = cq(load, save)[1])
 hack.library()
 install.proged(option.name = "program.editor")
 is.nonzero(x)

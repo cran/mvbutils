@@ -2,7 +2,7 @@
 \alias{make.NAMESPACE}
 \title{Auto-create a NAMESPACE file}
 \description{Called by \code{\link{formalize.package}} for would-be packages that have an existing NAMESPACE file and that have been informally documented using \code{\link{flatdoc}}. It tries to work out which packages should be imported, which functions are meant to be exported, and which should be registered as S3 methods.}
-\usage{make.NAMESPACE( pos=1, path=attr( pos.to.env( pos), \code{path}))}
+\usage{make.NAMESPACE( pos=1, path=attr( pos.to.env( pos), "path"))}
 \arguments{
 \item{ pos}{character or numeric position on search path}
 \item{ path}{directory where proto-package lives}

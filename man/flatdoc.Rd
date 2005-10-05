@@ -3,7 +3,12 @@
 \title{Flat-format documentation}
 \description{\code{flatdoc} lets you edit plain-text documentation in the same file as your function definition. The documentation can be completely informal, or can be close to the standard on-screen appearance of \R help files (and if so can be converted to actual Rd files by \code{doc2Rd}). This can be useful for your own notes, for informal distribution, and for formal distribution when you are trying to avoid managing dozens of separate source and documentation files.}
 \synopsis{flatdoc( EOF="<<end of doc>>")}
-\usage{structure( function( \dots) \{body\}, doc=flatdoc( EOF="<<end of doc>>"))}
+\usage{
+# ALWAYS use it like this:
+# structure( function( \dots) \{body\}, doc=flatdoc( EOF="<<end of doc>>"))
+# NEVER use it like this:
+flatdoc( EOF="<<end of doc>>")
+}
 \arguments{
 \item{ EOF}{character string showing when plain text ends, as in \code{readlines.mvb}}
 \item{ body}{replace with your function code}
