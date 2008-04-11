@@ -23,7 +23,7 @@ create.backups( pos=1)
 \details{
 \code{fixr} and \code{FF} are able to maintain text-file backups of source code, in a directory ".Backup.mvb" below the task directory. The directory will contain a file called "index", plus files BU1, BU2, etc. "index" shows the correspondence between function names and BUx files. Each BUx file contains multiple copies of the source code, with the oldest first. Even if a function is removed (or \code{move}d) from the workspace, its BUx file and "index" entry are not deleted.
 
-The number of backups kept is controlled by \code{options(backup.fix)}, a numeric vector of length 2. The first element is how many backups to keep from the current \R session. The second is how many previous \R sessions to keep the final version of the source code from. Older versions get discarded. I use \code{c(5,2)}. If you want to use the backup facility, you'll need to set this option in your \code{.First}. If the option is not set, no backups happen. If set, then every call to \code{Save} or \code{Save.pos} will create backups for all previously-unbackupped functions, by automatically calling \code{create.backups}. \code{create.backups} can also be called manually, to create the backup directory, index, and backup files for all functions in the currently-top task.
+The number of backups kept is controlled by \code{options(backup.fix)}, a numeric vector of length 2. The first element is how many backups to keep from the current R session. The second is how many previous R sessions to keep the final version of the source code from. Older versions get discarded. I use \code{c(5,2)}. If you want to use the backup facility, you'll need to set this option in your \code{.First}. If the option is not set, no backups happen. If set, then every call to \code{Save} or \code{Save.pos} will create backups for all previously-unbackupped functions, by automatically calling \code{create.backups}. \code{create.backups} can also be called manually, to create the backup directory, index, and backup files for all functions in the currently-top task.
 
 \code{restore.all.backups} always restores to the current workspace, regardless of where it is restoring from. This is a safety feature. If you screw up the .Rdata file in task \code{mytask} and want to restore the functions in it from backups, the safe way to do it is to \code{cd(mytask)}, then \code{cd(restore)} to create a subtask, then \code{restore.all.backups()} to create "masking" versions in \code{mytask/restore}. Then you can check the restorees and \code{move( what=<<some or all>>, ., ..)} to put them back into \code{mytask}. Set \code{overwrite.by.default=TRUE} in the \code{move} call if you don't want to check each file. The more risky way is just to \code{cd(mytask)} and \code{restore.all.backups(1)}-- this will overwrite any more recent versions that you may want to keep.
 
@@ -38,11 +38,11 @@ The function \code{\link{fix.order}} uses the access dates of backup files to li
 ## Need some backups first
 get.backup( "myfun", "package:myfun")[[1]] # returns most recent backup only
 cat( get.backup( "myfun", "package:myfun", zap=FALSE)[[1]][1])
-# shows "myfun" <- function\dots
+# shows "myfun" <- function...
 # restore.all.backups(1) # really don't run this
 }
 }
-\seealso{ \code{\link{fixr}}, \code{\link{cd}}, \code{\link{move}}}
+\seealso{\code{\link{fixr}}, \code{\link{cd}}, \code{\link{move}}}
 \author{Mark Bravington}
 \keyword{programming}
 \keyword{utilities}

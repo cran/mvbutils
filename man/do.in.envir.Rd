@@ -4,8 +4,8 @@
 \description{\code{do.in.envir} lets you write a function whose scope (enclosing environment) is defined at runtime, rather than by the environment in which it was defined.}
 \usage{
 # Use only as wrapper of function body, like this:
-# my.fun <- function(\dots) do.in.envir( fbody, envir=)
-# \dots should be the arg list of "my.fun"
+# my.fun <- function(...) do.in.envir( fbody, envir=)
+# ... should be the arg list of "my.fun"
 # fbody should be the code of "my.fun"
 do.in.envir( fbody, envir=parent.frame(2)) # Don't use it like this!
 }
@@ -14,7 +14,7 @@ do.in.envir( fbody, envir=parent.frame(2)) # Don't use it like this!
 \item{ envir}{the environment to become the function's enclosure}
 }
 \details{
-By default, a \code{do.in.envir} function will have, as its enclosing environment, the environment in which it was \emph{called}, rather than \emph{defined}. It can therefore read variables in its caller's frame directly (i.e. without using \code{get}), and can assign to them via \code{<<-}. It's also possible to use \code{do.in.envir} to set a completely different enclosing environment; this is exemplified by some of the functions in \code{debug}, such as \code{go}.
+By default, a \code{do.in.envir} function will have, as its enclosing environment, the environment in which it was \bold{called}, rather than \bold{defined}. It can therefore read variables in its caller's frame directly (i.e. without using \code{get}), and can assign to them via \code{<<-}. It's also possible to use \code{do.in.envir} to set a completely different enclosing environment; this is exemplified by some of the functions in \code{debug}, such as \code{go}.
 
 Note the difference between \code{do.in.envir} and \code{mlocal}; \code{mlocal} functions evaluate in the frame of their caller (by default), whereas \code{do.in.envir} functions evaluate in their own frame, but have a non-standard enclosing environment defined by the \code{envir} argument.
 
@@ -32,10 +32,10 @@ fff( 9) # 12; ffdie wouldn't know about abcdef without the do.in.envir call
 # Show sys.call issues
 # Note that the "envir" argument in this case makes the
 # "do.in.envir" call completely superfluous!
-ffe <- function(\dots) do.in.envir( envir=sys.frame( sys.nframe()), sys.call( -5))
+ffe <- function(...) do.in.envir( envir=sys.frame( sys.nframe()), sys.call( -5))
 ffe( 27, b=4) # ffe( 27, b=4)
 }
-\seealso{ \code{\link{mlocal}}}
+\seealso{\code{\link{mlocal}}}
 \author{Mark Bravington}
 \keyword{programming}
 \keyword{utilities}

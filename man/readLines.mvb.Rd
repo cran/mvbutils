@@ -2,7 +2,9 @@
 \alias{readLines.mvb}
 \title{Read text lines from a connection}
 \description{Reads text lines from a connection (just like \code{readLines}), but optionally only until a specfied string is found.}
-\usage{ readLines.mvb( con=stdin(), n=-1, ok=TRUE, EOF=as.character( NA))}
+\usage{
+readLines.mvb( con=stdin(), n=-1, ok=TRUE, EOF=as.character( NA))
+}
 \arguments{
 \item{ con}{A connection object or a character string.}
 \item{ n}{integer. The (maximal) number of lines to read. Negative values indicate that one should read up to the end of the connection.}
@@ -18,5 +20,5 @@ the.data <- readLines.mvb( tt, EOF="d")
 unlink( tt)
 the.data # [1] "a" "b" "c"
 }
-\seealso{ \code{\link{source.mvb}}, \code{\link{current.source}}, \code{\link{flatdoc}}}
+\seealso{\code{\link{source.mvb}}, \code{\link{current.source}}, \code{\link{flatdoc}}}
 \keyword{IO}

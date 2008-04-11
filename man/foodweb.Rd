@@ -1,26 +1,25 @@
 \name{foodweb}
 \alias{foodweb}
-\alias{plot.foodweb}
 \alias{callers.of}
 \alias{callees.of}
+\alias{plot.foodweb}
 \title{Shows which functions call what}
 \description{\code{foodweb} is applied to a group of functions (e.g. all those in a workspace); it produces a graphical display showing the hierarchy of which functions call which other ones. This is handy, for instance, when you have a great morass of functions in a workspace, and want to figure out which ones are meant to be called directly. \code{callers.of(funs)} and \code{callees.of(funs)} show which functions directly call, or are called directly by, \code{funs}.}
 \usage{
- foodweb( funs, where=1, charlim=80, prune=character(0), rprune, ancestors=TRUE,
- descendents=TRUE, plotting =TRUE, plotmath=FALSE,
- generics=c( "c","print","plot", "["), lwd=0.5, xblank=0.18,
- border="transparent", boxcolor="white", textcolor="black",
- color.lines=TRUE, highlight="red", \dots)
- plot.foodweb(x, textcolor, boxcolor, xblank, border, textargs = list(),
- use.centres = TRUE, color.lines = TRUE, poly.args = list(),
- expand.xbox = 1.05, expand.ybox = expand.xbox * 1.2, plotmath = FALSE, \dots)
- callers.of( funs, fw=foodweb( plotting=FALSE))
- callees.of( funs, fw=foodweb( plotting=FALSE))
+foodweb( funs, where=1, charlim=80, prune=character(0), rprune, ancestors=TRUE,
+descendents=TRUE, plotting =TRUE, plotmath=FALSE,
+generics=c( "c","print","plot", "["), lwd=0.5, xblank=0.18,
+border="transparent", boxcolor="white", textcolor="black",
+color.lines=TRUE, highlight="red", ...)
+\method{plot}{foodweb}(x, textcolor, boxcolor, xblank, border, textargs = list(),
+use.centres = TRUE, color.lines = TRUE, poly.args = list(),
+expand.xbox = 1.05, expand.ybox = expand.xbox * 1.2, plotmath = FALSE, ...) # plot.foodweb
+callers.of( funs, fw=foodweb( plotting=FALSE))
+callees.of( funs, fw=foodweb( plotting=FALSE))
 }
 \arguments{
 \item{ funs}{character vector OR (in \code{foodweb} only) the result of a previous \code{foodweb} call}
-In \code{foodweb} but not \code{calle..}, \code{funs} defaults to \code{find.funs(where)}
-\item{ where}{position(s) on search path}
+\item{ where}{position(s) on search path, or an environment, or a list of environments}
 \item{ charlim}{controls maximum number of characters per horizontal line of plot}
 \item{ prune}{character vector. If omitted, all \code{funs} will be shown; otherwise, only ancestors and descendants of functions in \code{prune} will be shown. Augments \code{funs} if required.}
 \item{ rprune}{regexpr version of \code{prune}; \code{prune <- funs \%matching\% rprune}. Does NOT augment \code{funs}. Overrides \code{prune} if set.}
@@ -36,13 +35,13 @@ In \code{foodweb} but not \code{calle..}, \code{funs} defaults to \code{find.fun
 \item{ textcolor}{of each object}
 \item{ color.lines}{will linking lines be coloured according to the level they originate at?}
 \item{ highlight}{seemingly not used}
-\item{ \dots}{passed to \code{plot.foodweb} and thence to \code{par}}
+\item{ ...}{passed to \code{plot.foodweb} and thence to \code{par}}
 \item{ textargs}{not currently used}
 \item{ use.centres}{where to start/end linking lines. \code{TRUE} is more accurate but less tidy with big webs.}
 \item{ expand.xbox}{how much horizontally bigger to make boxes relative to text?}
 \item{ expand.ybox}{how much vertically bigger to ditto?}
 \item{ poly.args}{other args to \code{rect} when boxes are drawn}
-\item{ fw}{an object of class \code{foodweb}, or the \code{funmat} element thereof (see VALUE)}
+\item{ fw}{an object of class \code{foodweb}, or the \code{funmat} element thereof (see \bold{Value})}
 \item{ x}{a foodweb (as an argument to \code{plot.foodweb})}
 }
 \details{
@@ -60,11 +59,10 @@ If the display from \code{foodweb} is unclear, try \code{foodweb( .Last.value, c
 }
 \value{
 \code{foodweb} returns an object of (S3) class \code{foodweb}. This has three components:
-\item{ funmat}{a matrix of 0's and 1's showing what (row) calls what (column). The \code{dimnames} are the function names.}
-\item{ x}{shows the x-axis location of the centre of each function's name in the display, in \code{par("usr")} units}
-\item{ level}{shows the y-axis location of the centre of each function's name in the display, in \code{par("usr")} units. For small numbers of functions, this will be an integer; for larger numbers, there will some adjustment around the nearest integer}
-Apart from graphical annotation, the main useful thing is \code{funmat}, which can be used to work out the "pecking order" and e.g. which functions directly call a given function.
-\code{callers.of} and \code{callees.of} return a character vector of function names.
+funmat: a matrix of 0's and 1's showing what (row) calls what (column). The \code{dimnames} are the function names.
+x: shows the x-axis location of the centre of each function's name in the display, in \code{par("usr")} units
+level: shows the y-axis location of the centre of each function's name in the display, in \code{par("usr")} units. For small numbers of functions, this will be an integer; for larger numbers, there will some adjustment around the nearest integer
+Apart from graphical annotation, the main useful thing is \code{funmat}, which can be used to work out the "pecking order" and e.g. which functions directly call a given function. \code{callers.of} and \code{callees.of} return a character vector of function names.
 }
 \examples{
 foodweb( ) # functions in .GlobalEnv
@@ -74,13 +72,13 @@ foodweb( c( find.funs("package:mvbutils"), "paste"))
 foodweb( find.funs("package:mvbutils"), prune="paste")
 # only those parts of the tree connected to "paste";
 # NB that funs <- unique( c( funs, prune)) inside "foodweb"
-foodweb( where='package:mvbutils', rprune="aste")
+foodweb( where="package:mvbutils", rprune="aste")
 # doesn't include "paste" as it's not in "mvbutils", and rprune doesn't augment funs
-foodweb( where='package:mvbutils', rprune="name") # does work
+foodweb( where="package:mvbutils", rprune="name") # does work
+foodweb( where=asNamespace( "mvbutils")) # secret stuff
 fw <- foodweb( where="package:mvbutils")
 fw$funmat # a big matrix
 callers.of( "mlocal", fw)
 callees.of( find.funs() \%matching\% "name", fw)
 }
-\author{Mark Bravington}
-\keyword{utilities}
+\keyword{misc}

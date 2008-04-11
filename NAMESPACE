@@ -1,6 +1,6 @@
-import( utils)
- export( "%!in%",
+export( "%!in%",
 "%&%",
+"%**%",
 "%downto%",
 "%except%",
 "%in.range%",
@@ -9,6 +9,7 @@ import( utils)
 "%is.not.a%",
 "%is.not.an%",
 "%matching%",
+"%not.in%",
 "%such.that%",
 "%SUCH.THAT%",
 "%that.are.in%",
@@ -16,8 +17,12 @@ import( utils)
 "%upto%",
 "%where%",
 "%without.name%",
+"add.flatdoc.to",
+"as.cat",
 "as.data.frame.I",
+"assign.to.base",
 "attach.mlazy",
+"autoedit",
 "autoFF",
 "callees.of",
 "callers.of",
@@ -27,6 +32,7 @@ import( utils)
 "cdfind",
 "cditerate",
 "cdprompt",
+"cdregexpr",
 "cdtree",
 "clip",
 "cq",
@@ -37,6 +43,9 @@ import( utils)
 "do.in.envir",
 "doc2Rd",
 "dochelp",
+"docskel",
+"dont.lock.me",
+"dont.lockBindings",
 "empty.data.frame",
 "exists.mvb",
 "expanded.call",
@@ -47,11 +56,15 @@ import( utils)
 "find.funs",
 "fix.order",
 "fixr",
+"fixtext",
 "flatdoc",
 "foodweb",
-"formalize.package",
 "from.here",
+"full.path",
 "get.backup",
+"hack",
+"help2flatdoc",
+"Hours",
 "index",
 "is.dir",
 "legal.filename",
@@ -59,17 +72,25 @@ import( utils)
 "load.refdb",
 "local.on.exit",
 "local.return",
+"localfuncs",
 "lsall",
+"lsize",
+"maintain.packages",
+"make.arguments.section",
 "make.NAMESPACE",
+"make.usage.section",
 "masked",
 "masking",
+"massrep",
 "mcachees",
+"Minutes",
 "mkdir",
 "mlazy",
-"mlibrary",
 "mlocal",
 "move",
 "mtidy",
+"multinsert",
+"multirep",
 "mvb.match.call",
 "mvb.nargs",
 "mvb.parent.frame",
@@ -84,27 +105,41 @@ import( utils)
 "my.index.exists",
 "named",
 "option.or.default",
+"patch.installed",
 "pos",
+"pre.install",
 "put.in.session",
 "readLines.mvb",
-"README.mvbutils",
 "readr",
+"remove.from.package",
 "restore.all.backups",
 "returnList",
+"rm.pkg",
 "safe.rbind",
 "Save",
 "Save.pos",
+"search.for.regexpr",
+"search.task.trees",
+"Seconds",
+"set.presave.hook.mvb",
 "setup.mcache",
 "source.mvb",
 "strip.missing",
 "task.home",
 "to.regexpr",
+"unmaintain.packages",
+"write.NAMESPACE",
 "write.sourceable.function",
-"yes.no")
-S3method( "print", "cat")
-S3method( "print", "cdtree")
-S3method( "print", "docattr")
-S3method( "print", "nullprint")
-S3method( "print", "pagertemp")
-S3method( "plot", "cdtree")
-S3method( "plot", "foodweb")
+"yes.no",
+".Last.lib"
+)
+S3method( print, cat)
+S3method( print, cdtree)
+S3method( print, docattr)
+S3method( print, nullprint)
+S3method( print, pagertemp)
+S3method( plot, cdtree)
+S3method( plot, foodweb)
+import( utils)
+import( tools)
+

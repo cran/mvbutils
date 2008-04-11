@@ -2,26 +2,36 @@
 \alias{find.documented}
 \alias{find.docholder}
 \title{Support for flat-format documentation}
-\description{Finds functions with flat-format documentation.}
+\description{\code{find.documented} locates functions that have flat-format documentation; the functions and their documentation can be separate, and are looked for in all the environments in \code{pos}, so that functions documented in one environment but existing in another will be found. \code{find.docholder} says where the documentation for one or more functions is actually stored. Both \code{find.documented} and \code{find.docholder} check two types of object for documentation: (i) functions with "doc" attributes, and (ii) character-mode objects whose name ends in ".doc"}
 \usage{
-find.documented( pos=1, doctype=c( "Rd", "casual", "own", "any"))
-find.docholder( funs, pos=)
+find.documented( pos=1, doctype=c( "Rd", "casual", "own", "any"),
+  only.real.objects=TRUE)
+find.docholder( what, pos=find( funs[1]))
 }
 \arguments{
-\item{ pos}{search path position(s), numeric or character. In \code{find.documented}, any length. In \code{find.docholder}, only \code{pos[1]} will be used, and \code{pos} defaults to where \code{funs} are found.}
+\item{ pos}{search path position(s), numeric or character. In \code{find.documented}, any length. In \code{find.docholder}, only \code{pos[1]} will be used; it defaults to where the first element of \code{funs} is found.}
 \item{ doctype}{Defaults to "Rd". If supplied, it is partially matched against the choices in USAGE. "Rd" functions are named in the alias list at the start of any \code{doc} attribute of a function in \code{pos} (see \code{\link{doc2Rd}}); "casual" functions have their own \code{doc} attribute, and will be found by the replacement of \code{help}; "own" functions (a subset of "casual") have their own character-mode \code{doc} attribute, and are suitable for \code{doc2Rd}; "any" combines \code{casual} and \code{Rd}.}
-\item{ funs}{names of objects whose documentation you're trying to find.}
+\item{ only.real.objects}{If TRUE, only return names of things that exist somewhere in the \code{pos} environments. FALSE means that other things such as the name of helpfiles might be returned, too.}
+\item{ what}{names of objects whose documentation you're trying to find.}
 }
 \value{
 \item{ find.documented}{Character vector of function names.}
-\item{ find.docholder}{list whose names are \code{funs}; each element is a character vector showing which objects have documentation for the named object. Normally you'd expect either 0 or 1 entries in the character vector; more than 1 would imply duplication.}
+\item{ find.docholder}{list whose names are \code{what}; element \code{i} is a character vector showing which objects hold documentation for \code{what[i]}. Normally you'd expect either 0 or 1 entries in the character vector; more than 1 would imply duplication.}
 }
 \note{
-\code{doctype="Rd"} looks for the alias names, i.e. the first word of all lines occurring before the first blank line. This may include non-existent objects.
+\code{doctype="Rd"} looks for the alias names, i.e. the first word of all lines occurring before the first blank line. This may include non-existent objects, but these are checked for and removed.
 
 Start informal documentation (i.e. not intended for \code{doc2Rd}) with a blank line to avoid confusion.
 }
-\seealso{ \code{\link{doc2Rd}}, \code{\link{dochelp}}}
+\examples{
+# First create some flatdoc documentation in .GlobalEnv...
+# ... by unpacking the helpfile for operator defns in mvbutils
+some.doc <- help2flatdoc( "mvbutils-operators",
+  attr( as.environment( "package:mvbutils"), "path"))
+find.documented( list( .GlobalEnv, asNamespace( "mvbutils")))
+# ... should see lots of '\%...\%'-type operators
+}
+\seealso{\code{\link{flatdoc}}, \code{\link{doc2Rd}}, \code{\link{dochelp}}}
 \author{Mark Bravington}
 \keyword{documentation}
 \keyword{programming}

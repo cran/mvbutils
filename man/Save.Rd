@@ -2,24 +2,26 @@
 \alias{Save}
 \alias{Save.pos}
 \title{Save R objects}
-\description{These function resemble \code{save} and \code{save.image}, with two main differences. First, any functions which have been \code{mtrace}d (see the \pkg{debug} package) will be temporarily untraced during saving (though the \pkg{debug} package is not needed to run them). Second, \code{Save} and \code{Save.pos} know how to deal with lazy-loaded objects set up via \code{\link{mlazy}}. \code{Save()} is like \code{save.image()} \code{Save.pos(i)} saves all objects from the \code{i}th position on the search list in the corresponding ".Rdata" file (or "all.rda" file for image-loading packages, or "*.rdb/*.rdx" for lazyloading packages). There is less flexibility in the arguments than for the system equivalents.}
+\description{These function resemble \code{save} and \code{save.image}, with two main differences. First, any functions which have been \code{mtrace}d (see the \pkg{debug} package) will be temporarily untraced during saving (though the \pkg{debug} package is not needed to run them). Second, \code{Save} and \code{Save.pos} know how to deal with lazy-loaded objects set up via \code{\link{mlazy}}. \code{Save()} is like \code{save.image()}. \code{Save.pos(i)} saves all objects from the \code{i}th position on the search list in the corresponding ".Rdata" file (or "all.rda" file for image-loading packages, or "*.rdb/*.rdx" for lazyloading packages). There is less flexibility in the arguments than for the system equivalents.}
 \usage{
 Save()
 Save.pos( pos, path, ascii=FALSE)
 }
 \arguments{
-\item{ pos}{character or numeric position on search path}
-\item{ path}{directory or file to save into (see DETAILS).}
-\item{ ascii}{file type, as per \code{\link{save}}}
+\item{  pos}{string or numeric position on search path, or environment (e.g. \code{..mypack} if "mypack" is a maintained-package).}
+\item{  path}{directory or file to save into (see \bold{Details}).}
+\item{  ascii}{file type, as per \code{\link{save}}}
 }
 \details{
-If a function \code{f} is saved while \code{mtrace}d and then restored into a different \R session, there will be an error message when you try to run \code{f}. Assuming that the \pkg{debug} package is loaded, this can be fixed by \code{mtrace(f,FALSE)} or \code{mtrace(f)} if you really want to debug \code{f}. However, you can avoid the problem in the first place by always calling \code{Save} and \code{Save.pos}; this is faster than manually untracing and retracing, and avoids losing any breakpoints. If you use the \code{cd} system in \code{mvbutils}, you will rarely need to call \code{Save.pos} directly; \code{cd}, \code{move} and \code{FF} will do it for you.
+There is a safety provision in \code{Save} and \code{Save.pos}, which is normally invisible to the user, but can be helpful if there is a failure during the save process (for example, if the system shuts down unexpectedly). The workspace image is first saved under a name such as "n.Rdata" (the name will be adapted to avoid clashes if necessary). Then, if and only if the new image file has a different checksum to the old ".Rdata" file, the old file will be deleted and the new one will be renamed ".Rdata"; otherwise, the new file will be deleted. This also means that the ".Rdata" file will not be updated at all if there have been no changes, which may save time when synchronizing file systems or backing up.
+
+If a function \code{f} is saved while \code{mtrace}d and then restored into a different R session, there will be an error message when you try to run \code{f}. Assuming that the \pkg{debug} package is loaded, this can be fixed by \code{mtrace(f,FALSE)} or \code{mtrace(f)} if you really want to debug \code{f}. However, you can avoid the problem in the first place by always calling \code{Save} and \code{Save.pos}; this is faster than manually untracing and retracing, and avoids losing any breakpoints. If you use the \code{cd} system in \code{mvbutils}, you will rarely need to call \code{Save.pos} directly; \code{cd}, \code{move} and \code{FF} will do it for you.
 
 To exclude objects from saving, store their names in \code{options( dont.save)}. The default exclusion if the option is not set, is \code{c( ".packageName", ".SavedPlots", "last.warning", ".Traceback")}; good additions might be \code{last.warning} and \code{.Last.value}.
 
 \code{path} is normally inferred from the \code{path} attribute of the \code{pos} workspace. If no such attribute can be found (e.g. if the attached workspace was a list object), you will be prompted. If \code{path} is a directory, the file will be called ".Rdata" if that file already exists, or \code{R/all.rda} if that exists, or \code{R/*.rbd} for lazy loads if that exists; and if none of these exist already, then the file will be called \code{.Rdata} after all. If you specify \code{path}, it must be a complete directory path or file path (i.e. it will not be interpreted relative to a \code{path} attribute).
 }
-\seealso{ \code{\link{save}}, \code{\link{save.image}}, mtrace in package \pkg{debug}, \code{\link{mlazy}}}
+\seealso{\code{\link{save}}, \code{\link{save.image}}, \code{ mtrace} in package \pkg{debug}, \code{\link{mlazy}}}
 \examples{
 \dontrun{
 Save() #

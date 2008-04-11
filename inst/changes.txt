@@ -8,7 +8,7 @@
 
   Also removed '.README.mvbutils' which is now superfluous (use README.mvbutils instead).
 
-	Also minor bug fix to .First.lib, allowing 'mvbutils' itself to be used as a task.
+  Also minor bug fix to .First.lib, allowing 'mvbutils' itself to be used as a task.
 
 7/3/2004: added 'mvb.parent.frame' to complement 'mvb.sys.parent' etc.
 
@@ -31,4 +31,27 @@
   Changed the default in 'option.or.default' to NULL.
   
   Fixed some bugs wrto operators in 'formalize.package', plus some doco infelicities.
-	
+
+1/7/2005: Allow relative paths in task directories, of the form ./subtask
+
+  Fixed semibug where user changes task directory name outside R, then tries to 'cd' to it.
+  
+26/7/2005: 'fixr' etc now cope with text objects (stored as character vectors) as well as functions.
+
+6/8/2005: fixed bug in 'FF' whereby the end of the source code would be lost from functions whose syntax is "accidentally" complete .
+
+15/8/2005: 'cd' now does not change the old .Rdata file at all unless necessary; this reduces overhead when trying to keep multiple machines in synch. Further, objects '.Random.seed', '.Traceback', and 'last.warning' are automatically 'mlazy'ed on 'cd'. This *DOES* mean that the .Rdata file is *NO LONGER* guaranteed to contain *all* the objects in a workspace even if the user hasn't directly called 'mlazy'. To transfer all the objects, you need to copy all the "obj{n}.rda" files as well as .Rdata.
+
+9/9/2005: fixed bug in replacement 'help' that was screwing up 'help.search' on MACs with AQUA.
+
+13/9/2005: altered 'formalize.package' to handle "blah-package" documentation and "changes.txt" object or file.
+
+2/11/2005: base 'save.image' now overwritten by default, to call 'Save' instead. This ensures that quitting via 'q()' works OK. 'Save' will not be called if 'save.image' is invoked with non-standard parameters.
+
+13/12/2005: 'foodweb' now works with 'where=<<environment>>', e.g. 'where=asNamespace( "stats")' (changed 'called.by' too)
+
+14/12/2005: 'mlazy' now by default saves cached objects into a subdirectory called "mlazy". Also, you can now 'mlazy' an object called "x" or "mc"-- formerly, these two names (only) would not have worked.
+
+  Bug fix in 'formalize.package'-- no longer creates "internal" documentation for '.First.lib', '.onLoad', or '.onAttach'.
+  
+  The seemingly alarming warning "MVBUTILS-- no 'tasks' vector found in ROOT", encountered when 'mvbutils' is loaded in a context without the 'cd' system in place, has been removed.
