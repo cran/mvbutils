@@ -5,7 +5,7 @@
 \title{Read R code and data from a file or connection}
 \description{\code{source.mvb} works like \code{source(local=TRUE)}, except you can intersperse free-format data into your code. \code{current.source} returns the connection that's currently being read by \code{source.mvb}, so you can redirect input accordingly. To do this conveniently inside \code{read.table}, you can use \code{from.here} to read the next lines as data rather than R{} code.}
 \usage{
-source.mvb( con, envir=parent.frame(), max.n.expr=Inf, echo, prompt.echo, evaluate=TRUE)
+source.mvb( con, envir=parent.frame(), max.n.expr=Inf, echo, prompt.echo, evaluate=TRUE, debug.script=FALSE)
 current.source()
 from.here( EOF=as.character(NA)) # Don't use it like this!
 # Use "from.here" only inside "read.table", like so: read.table( file=from.here( EOF=), ...)
@@ -17,6 +17,7 @@ from.here( EOF=as.character(NA)) # Don't use it like this!
 \item{ echo}{logical; defaults to \code{option.or.default( "verbose", FALSE)}}
 \item{ prompt.echo}{what to show before the first line of each echoed command.}
 \item{ evaluate}{TRUE if you want the text to be evaluated, rather than just parsed expression-by-expression (in which case, the last parsed statement is returned).}
+\item{ debug.script}{FALSE, unless TRUE if you want to debug the script itself. Requires the \pkg{debug} package.}
 \item{ EOF}{line which terminates data block; lines afterwards will again be treated as R{} statements.}
 \item{ ...}{other args to \code{read.table}}
 }

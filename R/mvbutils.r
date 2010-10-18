@@ -130,7 +130,7 @@ if (from <= to) from:to else numeric(0)
 
 "%where%" <-
 function( x, cond) {
-  # x is data.frame; cond is expression to evaluate, subbing first in x then in caller
+  # x is coerced to data.frame; cond is expression to evaluate, subbing first in x then in caller
   # Example: if x has a column 'stuff'
   # x %where% (stuff < 3)
   # is the same as x[ x$stuff<3,]
@@ -142,7 +142,7 @@ function( x, cond) {
   else
     mum <- sys.frames()[[ mum]]
     
-  cond <- eval( substitute( cond), x, enclos=mum)
+  cond <- eval( substitute( cond), as.data.frame( x), enclos=mum)
   cond[ is.na( cond)] <- FALSE
   x[ cond,]
 }
@@ -209,7 +209,7 @@ return() # create only once per session
   evalq( {
       maintained.packages <- originals.mp <- dont.lock.envs <- presave.hooks <- list()
       fix.list<- empty.data.frame( name= , file= , where=, where.type=, dataclass='',
-          file.time=0)
+          has.source=FALSE, file.time=0)
       dont.lock.envnames <- character(0) },
     env=nsenv)
 
@@ -284,7 +284,7 @@ return() # create only once per session
         mc <- c( quote( base.save.image), mc)
         eval( as.call( mc), sys.parent())
       } else # length(mc)==0 => default params anyway
-        Save()
+        mvbutils::Save()
     }
   formals( hack.save.image) <- formals( save.image)
   assign.to.base.opt( "save.image", hack.save.image)
@@ -318,11 +318,15 @@ function( x=NULL, char.x=NULL, pkg=NULL, env=NULL) {
     
   if( is.null( char.x))
     char.x <- as.character( substitute( x))
-  
-  text <- docskel( x=x, char.x=char.x, env=env)
-  class( text) <- 'docattr'
-  if( is.null( x))
-    x <- env[[ char.x]]
+
+  if( is.function( x)) { # TRUE except for fixr( existing.general.object)
+    text <- docskel( x=x, char.x=char.x, env=env)
+    class( text) <- 'docattr'
+    if( is.null( x))
+      x <- env[[ char.x]]
+  } else
+    text <- as.cat( '# Your scriptlet goes here...')
+    
   attr( x, 'doc') <- text
   x
 }
@@ -1079,11 +1083,11 @@ return() }
   ow <- options( warn = -1)
   previous.backups <- readLines( filename)
   options( ow)
-  fun.type <- has.source( where[[name]])
+  char.type <- !has.source( where[[name]])
   
   if( length( previous.backups)) {
     line.breaks <- index( previous.backups == infeasible.R.line)
-    if( !fun.type) {
+    if( char.type) {
       # Line after infeasible is number of lines until next infeasible 
       next.break <- line.breaks <- line.breaks[ 1]
       repeat{ 
@@ -1108,11 +1112,14 @@ warning( "Stuffed backup for " %&% name %&% "; keeping extra stuff")
   }
   cat( c( previous.backups, infeasible.R.line, "SESSION=" %&% unclass( session.start.time)),
       file = filename, sep = "\n")
-  if( fun.type)
+  if( where[[name]] %is.a% 'function')
     write.sourceable.function( where[[ name]], filename, append = TRUE,
         print.name = TRUE, xn=name)
-  else 
+  else if( char.type) 
     cat( length( where[[name]]), where[[name]], file=filename, sep='\n', append=TRUE)
+  else # general
+    cat( '`' %&% name %&% '` <- local(', 
+        attr( where[[name]], 'source'), ') # end local', file=filename, sep='\n', append=TRUE)
 }
 
 
@@ -1235,12 +1242,12 @@ function( text, file=NULL, append=formals(cat)$append, warnings.on=TRUE, Rd.vers
     }
     
     # Prepare to ignore other section-like lines-- just bold them
-    seclines <- grep( '^([A-Z][a-z0-9 ]*[a-zA-Z0-9])(\\([Ss]\\))?:$', text)
+    seclines <- grep( '^([.]*[A-Z][a-z0-9 ]*[a-zA-Z0-9])(\\([Ss]\\))?:$', text)
     text[ seclines] <- '*' %&% seclines %&% '*'
-    seclines <- grep( '^[A-Z][A-Z0-9.]+(\\(S\\))?$', text)    
+    seclines <- grep( '^[.]*[A-Z][A-Z0-9.]+(\\(S\\))?$', text)    
     text[ seclines] <- '*' %&% seclines %&% '*'
 
-    # Add DESCRIPTION field, containing everthing:
+    # Add DESCRIPTION field, containing everything:
     text <- multinsert( text, first.blank, list( c( 'Documentation for ' %&% text[1], '', 
         'DESCRIPTION', '')))
         
@@ -1254,25 +1261,32 @@ function( text, file=NULL, append=formals(cat)$append, warnings.on=TRUE, Rd.vers
     }
   }
   
-  # Global sub of colonized section titles to caps
-  seclines <- grep( '^([A-Z][a-z0-9]*[a-zA-Z0-9])(\\([Ss]\\))?:$', text)
-  text[ seclines] <- sub( ' ', '.', substring( text[ seclines], 1, 1) %&% 
-      toupper( substring( text[ seclines], 2, nchar( text[ seclines])-1)), fixed=TRUE)
+  # Subsections are like sections, but the line starts with 1 or more periods
+  # Global sub of colonized section & subsection titles to caps
+  seclines <- grep( '^[.]*[A-Z][a-zA-Z0-9.]*(\\([Ss]\\))?:$', text)
+  text[ seclines] <- toupper( sub( ': *$', '', text[ seclines]))
 
-  # Global sub of refs to section titles-- AUTHOR(S) as well as AUTHOR
-  sectitles <- grep( '^[A-Z][A-Z0-9.]+(\\(S\\))?$', text, value=TRUE)
+  # Old version looks peculiar:
+  #seclines <- grep( '^[.]*([A-Z][a-z0-9]*[a-zA-Z0-9])(\\([Ss]\\))?:$', text)
+  #text[ seclines] <- sub( ' ', '.', substring( text[ seclines], 1, 1) %&% 
+  #    toupper( substring( text[ seclines], 2, nchar( text[ seclines])-1)), fixed=TRUE)
+
+
+  # Global sub of refs to (sub)section titles-- AUTHOR(S) as well as AUTHOR
+  sectitles <- grep( '^[.]*[A-Z][A-Z0-9.]+(\\(S\\))?$', text, value=TRUE)
   for( secti in sectitles) {
     # tricky in case secti ends with .
-    text <- gsub( '\\b([Ss])ee ' %&% to.regexpr( secti) %&% '($|\\W)', 
-        '\\1ee *' %&% substring( secti, 1, 1) 
-        %&% tolower( gsub( '.', ' ', gsub( '\\.$', '', 
-        substring( secti, 2)), fixed=TRUE)) %&% '*\\2', 
+    text <- gsub( '\\b([Ss])ee (also )?' %&% to.regexpr( sub( '^[.]*', '', secti)) %&% '($|\\W)', 
+        '\\1ee \\2*' %&% sub( '^[.]*(.).*', '\\1', secti) %&% 
+            tolower( gsub( '.', ' ', gsub( '\\.$', '', 
+        sub( '^[.]*.', '', secti)), fixed=TRUE)) %&% '*\\3', 
         text)
-    text <- gsub( '\\b' %&% to.regexpr( secti) %&% ' \\(qv\\)', '*' %&% substring( secti, 1, 1)
+    text <- gsub( '\\b' %&% to.regexpr( sub( '^[.]*', '', secti)) %&% 
+        ' \\(qv\\)', '*' %&% sub( '^[.]*(.).*', '\\1', secti)
         %&% tolower( gsub( '.', ' ', gsub( '\\.$', '', 
-        substring( secti, 2)), fixed=TRUE)) %&% '*', text)
+        sub( '^[.]*.', '', secti)), fixed=TRUE)) %&% '*', text)
   }
-
+  
   tcon <- textConnection( text)
   on.exit( close( tcon))
   Rd <- character( 0)
@@ -1289,16 +1303,28 @@ function( text, file=NULL, append=formals(cat)$append, warnings.on=TRUE, Rd.vers
   }
   
   out <- function( string, string2, strip.spaces.at.start=FALSE) {
+      # length( string)>1 with keyword blocks
+      if( length( string)==1 && grepl( '^subsection[{]', string)) {
+        new.nesting <- nchar( sub( 'subsection[{]([.]*).*', '\\1', string))
+        new.nesting <- min( new.nesting, nesting + 1)
+        string <- sub( '[{][.]*', '{', string)
+      } else
+        new.nesting <- 0
+      if( new.nesting <= nesting)
+        Rd <<- c( Rd, rep( '}', 1+nesting-new.nesting))
+        
+      nesting <<- new.nesting
+      
       if( !missing( string2)) {
         if( strip.spaces.at.start)
           string2 <- sub( '^ +', '', string2)
 
-        string2 <- 
-          if( length( string2)==1)
-            string <- paste( '\\', string, '{', string2, '}', sep='')
-          else
-            string <- c( '\\' %&% string %&% '{', string2, '}')
-      }
+        string <- if( length( string2)==1)
+          paste( '\\', string, '{', string2,  sep='') # no closing brace
+        else
+          c( '\\' %&% string %&% '{', string2) # no closing brace
+      } else
+        string[ length( string)] <- sub( '[}] *$', '', string[ length( string)]) # final keyword
       Rd <<- c( Rd, string)
     } # out function
 
@@ -1334,7 +1360,7 @@ function( text, file=NULL, append=formals(cat)$append, warnings.on=TRUE, Rd.vers
         if( blank.stop && !nzchar( new.line))
       break
         # Check for field names
-        if( length( grep( '^[A-Z][A-Z0-9.]+(\\(S\\))?$', new.line))) {
+        if( length( grep( '^[.]*[A-Z][A-Z0-9.-]+(\\(S\\))?$', new.line))) {
           # replace AUTHOR(S) by AUTHOR
           pushBack(  sub( '(S)', '', new.line, fixed=TRUE), tcon)
       break
@@ -1425,7 +1451,7 @@ function( text, file=NULL, append=formals(cat)$append, warnings.on=TRUE, Rd.vers
         if( EOF)
       break
         # Check for field names
-        if( length( grep( '^[A-Z][A-Z0-9.]+$', new.line))) {
+        if( length( grep( '^[.]*[A-Z][A-Z0-9.-]+$', new.line))) {
           pushBack(  new.line, tcon)
       break
         }
@@ -1471,16 +1497,27 @@ function( text, file=NULL, append=formals(cat)$append, warnings.on=TRUE, Rd.vers
     }
 
   nice.title <- function( section.title) {
-      section.title <- gsub( '\\.', ' ', section.title)
-      substring( section.title, 1, 1) <- upper.case( substring( section.title, 1, 1))
+      # Now handles subsections too, which start with a sequence of periods
+      # section.title <- gsub( '\\.', ' ', section.title)
+      # substring( section.title, 1, 1) <- upper.case( substring( section.title, 1, 1))
+      section.title <- sub( '^([.]*)(.)', '\\1\\U\\2', section.title, perl=TRUE)
+      section.title <- sub( '^([.]*).*', '\\1', section.title) %&% 
+          gsub( '.', ' ', sub( '^[.]*', '', section.title), fixed=TRUE)
+
       section.title
     }
+
+  sectionize <- function( niced.up.title) {
+    field.name <- if( substring( niced.up.title, 1, 1) == '.') 'subsection' else 'section'
+    sprintf( '%s{%s}', field.name, niced.up.title)
+  }
 
 #  fields <- cq( description, usage, synopsis, arguments, arguments., value, details, examples,
 #      author, references, note, see.also, keywords)
 #  fields <- c( fields, 'author(s)')
 
 # Code starts here
+  nesting <- -1
   name <- strsplit( line(), ' ')[[1]][1]
   out( 'name', name)
   overall.name <- name
@@ -1528,7 +1565,8 @@ function( text, file=NULL, append=formals(cat)$append, warnings.on=TRUE, Rd.vers
       value=,
       arguments= out( next.field, list.block(FALSE, auto.link=!is.null( def.valids))),
       keywords= out( '\\keyword{' %&% keyword.block() %&% '}'),
-      out( 'section{' %&% nice.title( next.field) %&% '}',
+      out( sectionize( nice.title( next.field)),
+      #out( 'section{' %&% nice.title( next.field) %&% '}',
                   itemize( insert.para.breaks( block( auto.link=!is.null( def.valids)))))
     )
     
@@ -1540,18 +1578,10 @@ function( text, file=NULL, append=formals(cat)$append, warnings.on=TRUE, Rd.vers
     # but it didn't work with funny characters anyway
   } # while new field
 
+  Rd <- c( Rd, rep( '}', 1+nesting))
 #  Rd <- Rd[ nchar( Rd)>0]
 
-# Post-process to set /dontrun examples:
-  dontrun <- grep( "^## +(DON'T|NOT) +RUN\\b", Rd, ignore.case=TRUE)
-  if( length( dontrun)) {
-    end.dontrun <- grep( "^## +END( +| *\\( *)(DON'T|NOT) +RUN\\b", Rd, ignore.case=TRUE)
-    if( (length( end.dontrun) != length( dontrun)) || !all( diff( c( t( 
-        matrix( c( dontrun, end.dontrun), ncol=2)))) > 0))
-      warning( "Unmatched DON'T RUN block in doc with header:\n" %&% text[1]) # chaos likely later...
-    Rd[ dontrun] <- '\\dontrun{'
-    Rd[ end.dontrun] <- '}'
-  }
+  Rd <- setup.dontruns( Rd)
 
   methodize.USAGE() # sigh
 
@@ -1594,7 +1624,7 @@ function( text, file=NULL, append=formals(cat)$append, warnings.on=TRUE, Rd.vers
   if( is.Rd2 && check.legality && getRversion() >= '2.10.0') {
     # parse_Rd unreliable in 2.9.x so only do this in 2.10 onwards, regardless of Rd.version
     ow <- options( warn=2)
-    check.file <- tempfile( overall.name)
+    check.file <- tempfile( legal.filename( overall.name))
     on.exit( { options( ow); unlink( check.file)}, add=TRUE)
     cat( Rd, sep='\n', file=check.file)
     p1 <- try( parse_Rd( check.file))  # warning => error
@@ -1745,6 +1775,32 @@ function (...)
 }
 
 
+"env.name.string" <-
+function( env){
+stopifnot( env %is.an% 'environment')
+  namio <- attr( env, 'name')
+  if( is.null( namio))
+    namio <- names( attr( env, 'path'))
+  namio <- if( is.null( namio) || !is.character( namio) || length( namio)<1) '' else namio[1]
+  namio <- namio %&% capture.output( print( env))[1]
+return( namio)
+}
+
+
+"eval.scriptlet" <-
+function (expr, envir = parent.frame(), enclos = if (is.list(envir) || 
+    is.pairlist(envir)) parent.frame() else baseenv()){
+  force( envir)
+  force( enclos)
+  eval( expr, envir, enclos)
+}
+
+
+"everyth" <-
+function( x, by=1, from=1)
+  x[ seq( from=from, by=by, length=(length( x)-from+by) %/% by)]
+
+
 "exists.mvb" <-
 function (x, pos = -1, envir = pos.to.env(pos), frame, mode = "any", inherits = FALSE) {
   if (!missing(frame)) 
@@ -1785,6 +1841,62 @@ function( l, to=parent.frame()) {
 }
 
 
+"fast.read.fwf" <-
+function( file, width, 
+    col.names=if( !is.null( colClasses)) names( colClasses) else 'V' %&% 1:ncol( fields),  
+    colClasses=character(0), na.strings=character(0L), tz='', ...) {
+  fs <- file.info( file)$size
+  if( is.na( tail( width, 1))) {
+    # Determine padding at EOL experimentally
+    lengo <- 2*sum( abs( width))
+    repeat {
+      if( lengo > fs)
+stop( "Can't find enough newlines")
+      reado <- readChar( file, lengo)
+      fullw <- regexpr( '\\n', reado, 0)
+      if( fullw > 0)
+    break
+      lengo <- lengo * 2
+    }
+    width <- c( clip( width), -( fullw - sum( abs( clip( width)))))
+  } else if( tail( width, 1) < 0)
+    width <- c( clip( width), tail( width, 1) - 1) # EOL char
+  else
+    width <- c( width, -1) # 1 char for EOL
+  acw <- abs( width)
+  nl <- fs %/% sum( acw)
+  if( fs %% sum( acw) != 0)
+stop( "Line length mismatch")
+
+  fields <- readChar( file, rep( acw, nl))
+  dim( fields) <- c( length( width), nl)
+  fields <- t( fields[ width>0,])
+  dimnames( fields)[[2]] <- col.names
+  df <- data.frame( matrix( 0, nl, 0)) # must have correct number of rows
+
+  # For col classes, methods package may be needed, but 
+  # ...if so will usually have been loaded already, and 
+  # ...if not we don't want to bother
+  
+  # Defeat the RCMD CHECK NANNY which is getting a bit bloody above itself
+  libr.sodding.ary <- library
+  methas <- if( 'package:methods' %in% search()) get( 'as', 'package:methods') else 
+      function( x, y) { libr.sodding.ary( methods); {get( 'as', 'package:methods')}(x, y) }
+  
+  for( fi in col.names)
+        df[[fi]] <- if (is.na(colClasses[fi])) 
+            type.convert(fields[,fi], as.is = TRUE, dec = '.', na.strings = na.strings)
+        else if (colClasses[fi] == "factor") 
+            as.factor(fields[,fi])
+        else if (colClasses[fi] == "Date") 
+            as.Date(fields[,fi])
+        else if ( grepl( '^POSIXct', colClasses[fi]))
+            as.POSIXct(fields[,fi], tz=tz, format=sub( '^POSIXct', '', colClasses[fi]))
+        else methas(data[[fi]], colClasses[fi])
+  df    
+}
+
+
 "FF" <-
 function() {
   # Check list of filenames to see if they've been updated
@@ -1805,7 +1917,7 @@ return( structure( character( 0), for.info='No modifications (but some updated f
     name <- unclass( fix.list$name)[ mod]
     cat( name, ': ')
     stuffed <- FALSE
-    if( length( grep( '\\<character\\>', fix.list$dataclass[ mod]))) {
+    if( !fix.list$has.source[ mod]) { # grepl( '\\<character\\>', fix.list$dataclass[ mod])) {
       ff <- readLines( fix.list$file[ mod])
       the.class <- strsplit( fix.list$dataclass[ mod], ',', fixed=TRUE)[[1]] %except% 'character'
       if( !length( the.class))
@@ -1814,19 +1926,28 @@ return( structure( character( 0), for.info='No modifications (but some updated f
       cat( 'OK\n')
     } else {
       # Could be anything... 
+      should.be.func <- grepl( '\\<function\\>', fix.list$dataclass[ mod])
       source.code <- readLines( fix.list$file[ mod]) # everything incl. any errors
-      mt <- new.env( parent=asNamespace( 'mvbutils')) # limit damage
-      code <- try( list( value=source.mvb( fix.list$file[ mod], max.n.expr=1, envir=mt)))
+      mt <- new.env( parent=.GlobalEnv) # asNamespace( 'mvbutils')) # limit damage
+      code <- try( list( value=source.mvb( fix.list$file[ mod], max.n.expr=1, envir=mt,
+          debug.script=!should.be.func)))
 
       if( code %is.a% 'try-error') {
         stuffed <- TRUE
-        ff <- eval( substitute( function( ...) stop( my.name %&% 'failed to parse'),
-            list( my.name=name)))
+        ff <- if( should.be.func)
+            eval( substitute( function( ...) stop( my.name %&% 'failed to parse'),
+                list( my.name=name)))
+          else
+            list( 'Scriptlet for "' %&% name %&% '" failed to parse')
         attr( ff, 'source') <- source.code
       } else {
         ff <- code$value
+        if( is.null( ff)) {
+          warning( 'Scriptlet for "' %&% name %&% '" generates NULL; replacing with list()')
+          ff <- list()
+        }
         if( !is.function( ff))
-          attr( ff, 'source') <- source.code
+          attr( ff, 'source') <- as.cat( source.code)
         cat( 'OK\n')
       }
     }
@@ -1900,6 +2021,18 @@ function( nlocal=sys.parent()) mlocal({
     w[ use] <- lapply( where.att[ use], pos.to.env)
   }
 })
+
+
+"file.path.as.absolute" <-
+function( x) {
+  # file_path_as_absolute rejects nonexistent paths-- ANNOYING, UNNECESSARY!!
+  # Another hack required
+  fpa <- file_path_as_absolute
+  e <- new.env( parent=environment( fpa))
+  e$stop <- function( ...) 0
+  environment( fpa) <- e
+  fpa( x)
+}
 
 
 "find.and.get" <-
@@ -2079,7 +2212,7 @@ function( pos=1, ..., exclude.mcache=TRUE, mode='function') {
 
 
 "find.lurking.envs" <-
-function( obj, trace=FALSE){
+function( obj, delve=FALSE, trace=FALSE){
   listo <- list( quote( obj))
   out.str <- character(0)
   out.size <- numeric( 0)
@@ -2089,7 +2222,9 @@ function( obj, trace=FALSE){
       print( listo[[1]])
     thing <- eval( listo[[1]])
     out.str <- c( out.str, deparse( listo[[1]])[1])
-    if( is.environment( thing)) {
+    if( missing( thing)) {
+      out.size <- c( out.size, object.size( formals( sys.function())$obj))
+    } else if( is.environment( thing)) {
       out.str[ length( out.str)] <- paste( out.str[ length( out.str)], 
         sub( 'environment', '', format( thing)))
       out.size <- c( out.size, Inf)
@@ -2100,8 +2235,15 @@ function( obj, trace=FALSE){
       
       if( is.recursive( thing)) {
         if( is.function( thing)) {
-          nonmis <- sapply( formals( thing), function( x) !is.name( x) || nzchar( as.character( x)))
-          listo <- c( listo, substitute( environment( x), list( x=listo[[1]])) ) #, 
+          listo <- c( listo, substitute( environment( x), list( x=listo[[1]])))
+          if( delve)
+            listo <- c( listo,
+              substitute( body( x), list( x=listo[[1]])))
+            # FORMALS???
+            # nonmis <- sapply( formals( thing), 
+            #              function( x) !is.name( x) || nzchar( as.character( x)))
+
+            
               #lapply( names( formals( thing))[ nonmis], function( y) substitute( formals( x)$y, 
               #    list( x=listo[[1]], y=as.name( y)))), 
               #substitute( body( x), list( x=listo[[1]])))
@@ -2410,9 +2552,11 @@ stop( "Don't know where to put scratch files:" %&%
   if( fixing && !new && type.load.from %in% cq( package, task) && has.source( x))
     deal.with.backups( name, load.from) # takes env or number
 
-  if( has.source( x))
+  if( x %is.a% 'function')
     write.sourceable.function( x, filename)
-  else
+  else if( has.source( x))
+    cat( attr( x, 'source'), file=filename, sep='\n')
+  else # text object
     cat( x, file=filename, sep='\n')
 
 #  OK <- shell( proged(name, filename), translate=TRUE, wait = FALSE) # shell doesn't work on Linux
@@ -2433,7 +2577,9 @@ stop("Couldn't launch editor")
     fix.list <<- fix.list[ fix.list$name != name | fix.list$where != name.load.from,]
     fix.list <<- rbind(fix.list,
         list( name = name, file = filename, where = name.load.from, where.type= type.load.from,
-        dataclass = paste( c( class( x), if( is.character( x)) 'character'), collapse=','),
+        has.source=has.source( x),
+        dataclass = paste( unique( c( class( x), 
+            if( is.character( x)) 'character')), collapse=','),
         file.time=unclass( file.info( filename)[1,'mtime'])))
   }
 
@@ -2550,72 +2696,112 @@ function( x, ...) {
 
 
 "fixup.DLLs" <-
-function( in.memory, ipath, rpath, pkg, use.newest=FALSE, nlocal=sys.parent()) mlocal({
+function( in.memory, ipath, rpath, spath, pkg, use.newest=FALSE, nlocal=sys.parent()) mlocal({
   suffix <- '[.]' %&% (if( .Platform$OS.type=='windows') '(dll|DLL)' else 'so') %&% '$'
 
   dlls1 <- sort( dir( rpath, patt=suffix))
-  dlls2 <- suppressWarnings( sort( dir( file.path( rpath, 'libs'), patt=suffix)))
-  dlls <- c( dlls1, dlls2)
-  dll.paths <- c( file.path( rpath, dlls1), file.path( rpath, 'libs', dlls2))
+  libs <- 'libs'
+  dlls2 <- suppressWarnings( sort( dir( file.path( rpath, 'inst', libs), patt=suffix)))
+  
+  # R 2.12: DLLs in arch subfolder under "/libs" which... 
+  # ... will be ref'd by 'libs' object, which controls installation dir...
+  # ... Otherwise (pre 2.12), 'libs' is just "libs" folder
+  # Allow any storage arrangement in task package
+  # 2.12+: If task DLLs found *not* in subarch, assume the installed versions go to the current subarch
+  if( nzchar( .Platform$r_arch)) {
+    libs <- file.path( libs, .Platform$r_arch)
+    dlls3 <- suppressWarnings( sort( dir( file.path( rpath, 'inst', libs), patt=suffix)))
+  } else
+    dlls3 <- character( 0)
+  
+  dlls <- c( dlls1, dlls2, dlls3)
+  dll.paths <- c( file.path( rpath, dlls1), file.path( rpath, 'inst', 'libs', dlls2), 
+      file.path( rpath, 'inst', libs, dlls3))
   names( dll.paths) <- dlls
+
+  # Definitely overwrite the versions in the source package
+  if( length( dll.paths)) {
+    mkdir( file.path( spath, 'inst', libs)) # probably should build into mvb.file.copy
+    mvb.file.copy( dll.paths, file.path( spath, 'inst', libs, dlls))
+  }
   
   if( !is.null( ipath)) {
-    if( is.dir( ipath.libs <- file.path( ipath, 'libs')))
+    if( is.dir( ipath.libs <- file.path( ipath, libs)))
       idlls <- sort( dir( ipath.libs, patt=suffix))
     else
       idlls <- character(0)
-    inst.dll.paths <- file.path( ipath, 'libs', idlls)
+    inst.dll.paths <- file.path( ipath.libs, idlls)
     names( inst.dll.paths) <- idlls
     
-    # New DLLs in source get copied; new DLLs in inst get deleted
-    use.source <- dlls %except% idlls # provisionally, ones to replace
+    # New DLLs in raw get copied; new DLLs in inst get deleted
+    use.raw <- dlls %except% idlls # provisionally, ones to replace
 
     if( length( both <- intersect( idlls, dlls))) {
-      # dir results are sorted, so will be in same order for inst & source
-      
-      # Used to use MD5 but timestamp seems better
-      #md5source <- sapply( dll.paths[ both], md5sum)
-      #md5inst <- sapply( inst.dll.paths[ both], md5sum)
-      # diff <- both[ md5inst != md5source]
-      
-      time.source <- file.info( dll.paths[ both])$mtime
+      time.raw <- file.info( dll.paths[ both])$mtime
       time.inst <- file.info( inst.dll.paths[ both])$mtime
-      names( time.source) <- names( time.inst) <- both
+      md5.raw <- md5sum( dll.paths[ both])
+      md5.inst <- md5sum( inst.dll.paths[ both])
+      names( time.raw) <- names( time.inst) <- 
+          names( md5.raw) <- names( md5.inst) <- both
 
-      if( use.newest) { 
-        if( length( newer.inst <- both[ time.source < time.inst])) {
+      if( use.newest) { # also make sure files have different contents
+        if( length( newer.inst <- both[ (time.raw < time.inst) & (md5.raw != md5.inst) ])) {
           mvb.file.copy( inst.dll.paths[ newer.inst], dll.paths[ newer.inst], overwrite=TRUE)
+          # raw package-- in case overwritten already by older vers in raw task package!
           mvb.file.copy( inst.dll.paths[ newer.inst], 
-              file.path( rpath, pkg, 'inst', 'libs', newer.inst), overwrite=TRUE)
+              file.path( spath, 'inst', libs, newer.inst), overwrite=TRUE)
         }
       }
 
-      # If source is newer, handle below via 'use.source'  
-      use.source <- c( use.source, both[ time.source > time.inst])
+      # If raw is newer, handle below via 'use.raw'  
+      use.raw <- c( use.raw, both[ time.raw > time.inst])
     } # if duplicated
+    
+    not.installed.yet <- use.raw %except% names( inst.dll.paths)
+    inst.dll.paths[ not.installed.yet] <- file.path( ipath.libs, not.installed.yet)
 
     # in.memory=TRUE for reloading DLLs as appropriate-- always TRUE in current code
     # Unload / unlink
-    if( length( use.source)) {
-      # unload, replace, reload
-      if( in.memory)
-        lapply( getLoadedDLLs()[ sub( '.dll', '', use.source, ignore.case=TRUE)], 
-            function( x) try( if( !is.null( x)) 
-            dyn.unload( x[['path']]), silent=TRUE))
-      mvb.file.copy( dll.paths[ use.source], file.path( ipath, 'libs', use.source), 
-          overwrite=TRUE)
-      if( in.memory)
-        lapply( inst.dll.paths[ use.source], dyn.load)
-    }
+    
+    try.dyn.load <- function( x) try( dyn.load( x))
+    try.dyn.unload <- function( x) try( dyn.unload( x))
+    try.library.dynam.load <- function( x) try( library.dynam( 
+        sub( '[.]' %&% file_ext( x) %&% '$', '', basename( x)), package=pkg, lib.loc=dirname( ipath)))
+    try.library.dynam.unload <- function( x) try( library.dynam.unload( 
+        sub( '[.]' %&% file_ext( x) %&% '$', '', basename( x)), package=pkg, lib.loc=dirname( ipath)))
+    # DLLs could be loaded either via dyn.load or library.dynam; the latter is now recommended. 
+    # ... Assume 'library.dynam' for new DLLs, and only assume 'dyn.load' if there's definite evidence!
 
-    # DLLs in inst that now shouldn't be (because not in source):
+    ldlist <- sapply( library.dynam(), '[[', i='path')
+    loadeds <- sapply( getLoadedDLLs(), '[[', i='path')
+
+    if( length( use.raw)) {
+      # Unload, replace, reload
+      
+      via.dyn.loads <- (loadeds %that.are.in% inst.dll.paths[ use.raw]) %except% ldlist
+      via.library.dynams <- inst.dll.paths[ use.raw] %except% via.dyn.loads
+      
+      if( in.memory) {
+        lapply( via.dyn.loads %that.are.in% loadeds, try.dyn.unload)
+        lapply( via.library.dynams %that.are.in% loadeds, try.library.dynam.unload)
+      } # if in.memory
+      
+      mvb.file.copy( dll.paths[ use.raw], inst.dll.paths[ use.raw], overwrite=TRUE)
+      
+      if( in.memory) {
+        lapply( via.library.dynams, try.library.dynam.load)
+        lapply( via.dyn.loads, try.dyn.load)
+      }
+    } # if changed dlls in raw package
+
+    # DLLs in inst that now shouldn't be (because not in raw):
     inxs.dlls <- idlls %except% dlls 
     
     # Ones with source shouldn't be zapped either
     if( is.dir( file.path( rpath, 'src'))) {
       src.files <- dir( file.path( rpath, 'src'), patt='[.](c|cc|cpp|C|f|f90|f95|m|mm|M)$')
       if( length( src.files)) {
-        # Include mypack.c-- though I recommend naming your 
+        # Include mypack.c-- though I recommend naming your dynlibs specifically, not with pkgname
         src.files <- c( src.files, pkg %&% '.c')
         src.dlls <- to.regexpr( sub( '[.][^.]*$', '', src.files)) # strip ext 
         src.dlls <- src.dlls %&% suffix # prepare for match
@@ -2623,10 +2809,10 @@ function( in.memory, ipath, rpath, pkg, use.newest=FALSE, nlocal=sys.parent()) m
       }
     }
     
-    lapply( getLoadedDLLs()[ sub( '.dll', '', use.source, ignore.case=TRUE)],
-    function( x) try( if( !is.null( x))
-        dyn.unload( x[['path']]), silent=TRUE))
-    file.remove( file.path( ipath, 'libs', inxs.dlls))
+    lapply( inst.dll.paths[ inxs.dlls] %that.are.in% (loadeds %except% ldlist), try.dyn.unload)
+    lapply( inst.dll.paths[ inxs.dlls] %that.are.in% ldlist, try.library.dynam.unload)
+
+    file.remove( inst.dll.paths[ inxs.dlls])
   }
 })
 
@@ -2697,7 +2883,7 @@ function( nlocal=sys.parent()) mlocal({
   # Work out which Rd files are new
   # md5sum is incredibly fast for this!
   
-  manpath <- file.path( spath, subdir, 'man')
+  manpath <- file.path( spath, 'man')
   Rd.files <- dir( manpath, patt='[.]Rd$')
   new.Rd.info <- md5sum( file.path( manpath, Rd.files))
   names( new.Rd.info) <- Rd.files
@@ -2716,7 +2902,8 @@ function( nlocal=sys.parent()) mlocal({
     load( Rd.info.file) # creates old.Rd.info
   else {
     old.Rd.info <- rep( -1, length( uaf))
-    names( old.Rd.info) <- uaf %&% '.Rd'
+    # Next reflects fossilized bug in %&%: should return ch(0) if any arg is len 0
+    names( old.Rd.info) <- if( length( uaf)) uaf %&% '.Rd' else uaf
   }
   
   zipped <- file.exists( file.path( ipath, 'help', 'Rhelp.zip'))
@@ -2768,7 +2955,7 @@ function( nlocal=sys.parent()) mlocal({
 
   if( length( files.to.update)) {
     fnew <- sub( '[.]Rd$', '', files.to.update)
-    full.fnew <- file.path( rpath, 'man', fnew %&% '.Rd')
+    full.fnew <- file.path( spath, 'man', fnew %&% '.Rd')
 
     # from .build_Rd_db:    
     enco <- try( tools:::.get_package_metadata( ipath, FALSE)["Encoding"])
@@ -2782,7 +2969,7 @@ function( nlocal=sys.parent()) mlocal({
         file.remove( file.path( ipath, 'help', pkg %&% c( '.rdb', '.rdx')))
         
       # Next routine is smart about updating
-      testo <- try( tools:::.install_package_Rd_objects( rpath, ipath, enco=enco)) 
+      testo <- try( tools:::.install_package_Rd_objects( spath, ipath, enco=enco)) 
       # ...try() should only be to trap any errors with user's own Rd files..?
 
       # Fastest to get aliases from parsed Rd
@@ -2794,8 +2981,8 @@ function( nlocal=sys.parent()) mlocal({
       names( alias.files) <- alias
       .saveRDS( alias.files, file.path( ipath, 'help', 'aliases.rds'))
       
-      tools:::.install_package_Rd_indices( rpath, ipath)
-      tools:::.writePkgIndices( rpath, ipath)
+      tools:::.install_package_Rd_indices( spath, ipath)
+      tools:::.writePkgIndices( spath, ipath)
     } else {
       text.fnew <- file.path( ipath, 'help', fnew)
       html.fnew <- file.path( ipath, 'html', fnew %&% '.html')
@@ -2843,7 +3030,7 @@ function( nlocal=sys.parent()) mlocal({
 
       # Alias info
       for( ifnew in fnew) {
-        filio <- readLines( file.path( rpath, 'man', ifnew %&% '.Rd'))
+        filio <- readLines( file.path( spath, 'man', ifnew %&% '.Rd'))
         sections <- grep( '^[\\][A-Za-z0-9]+\\{', filio) # }
         namas <- sections[ grep( '^[\\](name|alias)[{]', filio[ sections])]
         not.namas <- c( sections %except% namas, Inf)
@@ -2865,7 +3052,7 @@ function( nlocal=sys.parent()) mlocal({
   old.Rd.info <- new.Rd.info
   save( old.Rd.info, file=Rd.info.file)
   
-  # help.search index... TO DO I guess
+  # help.search index... TO DO I guess... now obsolete post R-2.10, phew
 })
 
 
@@ -2999,6 +3186,21 @@ function( path, start='.'){
     spath <- spath[ -( first.parent + -1:0)]
 
   paste( spath, collapse='/')
+}
+
+
+"generic.dll.loader" <-
+function( libname, pkgname){
+   # Generic DLL loader
+   dll.path <- file.path( libname, pkgname, 'libs')
+   if( nzchar( subarch <- .Platform$r_arch))
+     dll.path <- file.path( dll.path, subarch)
+   this.ext <- paste('[.]', .Platform$dynlib.ext,'$', sep="")
+
+   dlls <- dir( dll.path, pattern=this.ext, full=FALSE)
+   names( dlls) <- dlls
+   if( length( dlls)) 
+     lapply( dlls, function( x) library.dynam( sub( this.ext, '', x), package=pkgname, lib.loc=libname))
 }
 
 
@@ -3156,7 +3358,7 @@ function( whati, envir) {
 
 "get.mcache.store.name" <-
 function( envir) {
-  lsnc <- lsall( envir=envir, patt='^\\.mcache[0-9]+')
+  lsnc <- lsall( envir=envir, patt='^\\.mcache[0-9]+$')
   if( !length( lsnc))
     cache.name <- '.mcache0'
   else
@@ -3426,8 +3628,17 @@ stop( "No help found for " %&% fun.name)
 
   myhead <- c( '', text[ is.heading])[ 1+cumsum( is.heading)]
 
-  is.argdef <- myhead=='ARGUMENTS' & nc>0 & nc.prev==0 & regexpr( '^[^ ]+: ', text)>0
+  is.argdef <- myhead=='ARGUMENTS' & nc>0 & nc.prev==0 & 
+      regexpr( '^( *[[:alpha:]]+,)* *[[:alpha:]]+ *: ', text)>0
   text[ is.argdef] <- ' ' %&% text[ is.argdef]
+  
+  if( any( is.argdef)) {
+    # Nonblank lines right after an argdef, ie before next blank line, should be joined to previous
+    is.argdef.contline <- !is.argdef & 
+        (most.recent( is.argdef) > most.recent( nc==0))
+    text[ is.argdef.contline] <- sub( '^ +', ' ', text[ is.argdef.contline])
+  }
+  
   start.cont <- (myhead %not.in% cq( USAGE, EXAMPLES)) & nc.prev==0 & nc>0 & nc.next>0
   mid.cont <- (myhead %not.in% cq( USAGE, EXAMPLES)) & nc>0 & nc.prev>0
   end.cont <- (myhead %not.in% cq( USAGE, EXAMPLES)) & nc.prev >0 & nc>0 & nc.next==0
@@ -3590,6 +3801,15 @@ function (x)
 }
 
 
+"is.package.installed" <-
+function(package, ...) {
+  # Taken from R.utils whatever that is
+  # thanks to Henrik Bengtsson for the tip
+  path <- system.file(package=package)
+  (path != "")
+}
+
+
 "lazify" <-
 function( path, package, pkgpath) {
 # Taken from tools:::makeLazyLoading
@@ -3691,10 +3911,10 @@ function( name, path, task.tree, autopatch=TRUE){
     maintained.packages <<- maintained.packages %without.name% name
   }
   
-  if( exists( '.onLoad', e, mode='function')) {
+  if( exists( '.onLoad', e, mode='function')) 
     setHook( packageEvent( name, 'onLoad'), no.lazyLoad.hook, 'prepend')
-    setHook( packageEvent( name, 'attach'), no.lazyLoad.attach.hook, 'prepend')
-  }
+  # And whether namespaced or not:  
+  setHook( packageEvent( name, 'attach'), no.lazyLoad.attach.hook, 'prepend')
 }
 
 
@@ -3811,10 +4031,10 @@ function( ...) {
 function( envir=.GlobalEnv){
   envir <- as.environment( envir)
   mcache <- attr( envir, 'mcache')
-  mcs <- names( mcache)
+  mcs <- names( mcache) %that.are.in% lsall( envir)
 
-  if( length( mcache)) {
-    mcfiles <- file.path( attr( envir, 'path'), 'mlazy', 'obj' %&% abs( mcache) %&% '.rda')
+  if( length( mcs)) {
+    mcfiles <- file.path( attr( envir, 'path'), 'mlazy', 'obj' %&% abs( mcache[ mcs]) %&% '.rda')
     mcsize <- file.info( mcfiles)$size
     names( mcsize) <- mcs
   } else
@@ -4499,6 +4719,15 @@ function( expr) {
 }
 
 
+"most.recent" <-
+function( lvec) {
+stopifnot( is.logical( lvec))
+  nmax <- length( lvec)
+  ivec <- index( lvec)
+  rep( c( 0, ivec), diff( c( 1, ivec, nmax+1)))
+}
+
+
 "move" <-
 function( x='.', from='.', to='.', what, overwrite.by.default=FALSE, copy=FALSE) {
   if( !missing( what)) {
@@ -4580,6 +4809,7 @@ return( invisible( character(0))) }
   }
 
   if( length( whatrefs)) {
+    mkdir( file.path( to$path, 'mlazy')) # otherwise file.rename below won't work
     # mcache not applicable to loaded packages, phew
     new.to.mcache <- mupdate.mcache( whatrefs, to.mcache, from$env)
 
@@ -4733,7 +4963,7 @@ return()
     what <- what %such.that% ( . %in% lsall( envir))
     mlazy( what=what %except% names( mcache), envir=envir)
   } else
-    what <- names( mcache)
+    what <- names( mcache) %such.that% ( . %in% lsall( envir))
 
   if( !length( what))
 return( invisible( what))
@@ -5087,6 +5317,14 @@ function (pkg, force = FALSE)
 function( var, ...) {
 #  pg <- .Primitive( '[[') # doesn't cope with pairlists
 #  pg <- function( x, i) .Primitive( '[[')( as.list( x), i) # screws up e.g. on factors
+  if( getRversion() >= '2.12') {
+    cc <- unlist( list( ...))
+    if( length( cc))
+return( (baseenv()$'[[')( var, cc))
+    else
+return( var)
+  }
+    
   pg <- function( x, i) .Primitive( '[[')( if( is.pairlist( x)) as.list( x) else x, i)
   vv <- as.name( 'var')
   for( i in c(...))
@@ -5096,22 +5334,29 @@ function( var, ...) {
 
 
 "my.index.assign" <-
-function (var, ..., value) 
-{
-    i <- c(...)
-    if (length(i) < 2) 
-        return(.Primitive("[[<-")(var, i, value))
-    pa <- .Primitive("[[<-")
-    pg <- .Primitive("[[")
-    vario <- as.name("var")
-    for (ii in i[-length(i)]) vario <- call("pg", vario, ii)
-    callio <- substitute(value, env = parent.frame())
-    for (ii in rev(i)) {
-        callio <- call("pa", vario, ii, callio)
-        if (length(vario) > 1) 
-            vario <- vario[[2]]
-    }
-    return(eval(callio))
+function (var, ..., value) {
+  if( getRversion() >= '2.12') {
+    cc <- unlist( list( ...))
+    if( length( cc))
+return( (baseenv()$'[[<-')( var, cc, value))
+    else
+return( value)
+  }
+  
+  i <- c(...)
+  if (length(i) < 2) 
+return(.Primitive("[[<-")(var, i, value))
+  pa <- .Primitive("[[<-")
+  pg <- .Primitive("[[")
+  vario <- as.name("var")
+  for (ii in i[-length(i)]) vario <- call("pg", vario, ii)
+  callio <- substitute(value, env = parent.frame())
+  for (ii in rev(i)) {
+    callio <- call("pa", vario, ii, callio)
+    if (length(vario) > 1) 
+      vario <- vario[[2]]
+  }
+  return(eval(callio))
 }
 
 
@@ -5300,7 +5545,7 @@ function(...){
 "patch.installed" <-
 function( pkg, character.only=FALSE, force.all.docs=FALSE, help.patch=TRUE, DLLs.only=FALSE,
     update.installed.cache=option.or.default( 'mvb.update.installed.cache', TRUE),
-    pre.inst=TRUE, Rd.version=NULL, subdir=pkg){
+    pre.inst=TRUE, Rd.version=NULL, dir.above.source=NULL){
 ########################  
   if( !character.only)
     pkg <- as.character(substitute( pkg))
@@ -5311,7 +5556,7 @@ function( pkg, character.only=FALSE, force.all.docs=FALSE, help.patch=TRUE, DLLs
 
   if( pre.inst)
     pre.install( pkg, character.only=TRUE, force.all.docs=force.all.docs, Rd.version=Rd.version, 
-        subdir=subdir)
+        dir.above.source=dir.above.source)
 
   find.pkg <- index( search()=='package:' %&% pkg)[1]
   ipath <- if( !is.na( find.pkg))
@@ -5337,30 +5582,33 @@ stop( "Can't find path of installed package '" %&% pkg %&% "'")
   if( is.null( rpath))
 stop( "Can't find path of raw package '" %&% pkg %&% "'")
 
+  spath <- if( is.null( dir.above.source))
+      rpath 
+    else
+      file.path.as.absolute( dir.above.source)
+  spath <- file.path( spath, pkg)
+
   # DLLs
-  spath <- rpath
-  fixup.DLLs( TRUE, ipath, rpath, pkg, use.newest=TRUE)
+  fixup.DLLs( TRUE, ipath, rpath, spath, pkg, use.newest=TRUE)
   
   if( DLLs.only)
 return( invisible( NULL))  
-
-  rpath <- file.path( rpath, subdir)
   
   # inst and demo files
   localfuncs( 'update.installed.dir')
   update.installed.dir( 'demo')
-  if( is.dir( file.path( rpath, 'inst'))) {
+  if( is.dir( file.path( spath, 'inst'))) {
     update.installed.dir( 'inst', '.', FALSE)
-    inst.dirs <- unique( sub( '/[^/]+$', '', dir( file.path( rpath, 'inst'), recursive=TRUE)))
+    inst.dirs <- unique( sub( '/[^/]+$', '', dir( file.path( spath, 'inst'), recursive=TRUE)))
     for( id in inst.dirs)
       update.installed.dir( file.path( 'inst', id), sub( '^[^/]+/', '', id), FALSE)
   }
   
   # R functions
-  if( !file.exists( from <- file.path( rpath, 'R', 'funs.rda')))
+  if( !file.exists( from <- file.path( spath, 'R', 'funs.rda')))
 stop( "No 'funs.rda' file available for quick reinstall")
 
-  if( file.exists( nsfile <- file.path( rpath, 'NAMESPACE'))) {
+  if( file.exists( nsfile <- file.path( spath, 'NAMESPACE'))) {
     file.copy( nsfile, file.path( ipath, 'NAMESPACE'), TRUE)
   } else
     suppressWarnings( unlink( file.path( ipath, 'NAMESPACE'))) # changed to non-NAMESPACE package!
@@ -5385,7 +5633,7 @@ stop( "Before 'patch.install'ing a namespaced package, it should either be loade
   } # loader files may not be used
 
   if( !lazy.loading) { # Raw source
-    src <- readLines( file.path( rpath, 'R', pkg %&% '.R'))
+    src <- readLines( file.path( spath, 'R', pkg %&% '.R'))
     src <- c( ".packageName <- '" %&% pkg %&% "'", src)
     cat( src, file=file.path( ipath, 'R', pkg), sep='\n')
   } else
@@ -5415,7 +5663,7 @@ stop( "Before 'patch.install'ing a namespaced package, it should either be loade
   }
   
   # Non-functions
-  if( file.exists( from.nonfuns <- file.path( rpath, 'R', 'sysdata.rda'))) {
+  if( file.exists( from.nonfuns <- file.path( spath, 'R', 'sysdata.rda'))) {
     # As of ~R2.9, extra data *must* be lazy-loaded
     to.nonfuns <- file.path( ipath, 'R', 'sysdata')
     e <- new.env()
@@ -5429,41 +5677,15 @@ stop( "Before 'patch.install'ing a namespaced package, it should either be loade
     #   file.copy( from.nonfuns, to.nonfuns %&% '.rda', TRUE)
   }
 
-#  # mlazy: should be done automatically from the inst subdirectory
-#  if( is.dir( rml <- file.path( rpath, 'mlazy'))) {
-#    if( is.dir( iml <- file.path( ipath, 'mlazy'))) {
-#      # synch files
-#      olds <- dir( iml, patt='#obj[0-9]+[.]rda$')
-#      news <- dir( rml, patt='#obj[0-9]+[.]rda$')
-#      if( length( legacy <- (olds %except% news)))
-#        file.remove( file.path( iml, olds))
-#      if( length( newbies <- (news %except% olds)))
-#        file.copy( file.path( rml, news %except% olds), iml)
-#      
-#      # Check versions
-#      boths <- intersect( news, olds)
-#      newv <- md5sums( file.path( rml, boths))
-#      oldv <- md5sums( file.path( iml, boths))
-#      if( any( newv != oldv))
-#        file.copy( file.path( rml, boths[ newv != oldv]), iml)
-#    } else { # new in source: some mlazy files
-#      mkdir( iml)
-#      file.copy( dir( rml, patt='#obj[0-9]+[.]rda$', full=TRUE), iml)
-#    }
-#  } else { # no mlazy in source
-#    if( is.dir( iml <- file.path( ipath, 'mlazy'))) # legacy
-#      unlink( iml, recursive=TRUE)
-#  }
-
   #fixup.package.info()-- luckily done by:
   #tools:::.vinstall_package_descriptions_as_RDS( sub( '/[^/]+$', '', ipath), pkg)
   owidth <- options( width=72)
   on.exit( options( owidth))
-  tools:::.install_package_description( rpath, ipath)
+  tools:::.install_package_description( spath, ipath)
   if( file.exists( file.path( ipath, 'NAMESPACE')))
     tools:::.install_package_namespace_info( ipath, ipath) 
 
-  rindex <- file.path( rpath, 'INDEX')
+  rindex <- file.path( spath, 'INDEX')
   iindex <- file.path( ipath, 'INDEX')
   if( !identical( md5sum( rindex), md5sum( iindex))) # OK with non-existent files
     mvb.file.copy( rindex, iindex)
@@ -5696,7 +5918,7 @@ function(substrs, mainstrs, any.case = FALSE, names.for.output) {
 
 "pre.install" <-
 function( pkg, character.only=FALSE, force.all.docs=FALSE, Rd.version=NULL, 
-    subdir=pkg, ...) {
+    dir.above.source=NULL, ...) {
   if( !character.only)
     pkg <- as.character(substitute( pkg))
 
@@ -5716,7 +5938,14 @@ stop( "Can't find raw package '" %&% pkg %&% "'")
   # ... move all existing inst/mlazy/obj**.rda files into a tempdir
   # ... and 
   mlazy.temp.dir <- NULL
-  if( is.dir( mlazy.inst.dir <- file.path( dir., subdir, 'inst', 'mlazy'))) {
+  
+  subdir <- if( is.null( dir.above.source))
+      dir.
+    else 
+      file.path.as.absolute( dir.above.source)
+  subdir <- file.path( subdir, pkg)
+    
+  if( is.dir( mlazy.inst.dir <- file.path( subdir, 'inst', 'mlazy'))) {
     # Some fairly paranoid programming here
     tdctr <- 0
     while( file.exists( mlazy.temp.dir <- file.path( dir., 'temp-inst-mlazy' %&% tdctr)))
@@ -5739,9 +5968,9 @@ stop( "Can't find raw package '" %&% pkg %&% "'")
       file.rename( file.path( mlazy.inst.dir, fi), file.path( mlazy.temp.dir, fi))
   }
   
-  unlink( file.path( dir., subdir), recursive=TRUE)
-  if( !all( mkdir( file.path( dir., subdir, cq( R, man, inst)))))
-stop( "couldn't make directories")
+  unlink( file.path( subdir), recursive=TRUE)
+  if( !all( mkdir( file.path( subdir, cq( R, man, inst)))))
+stop( "couldn't make essential directories")
 
   if( file.exists( description.file <- file.path( dir., 'DESCRIPTION'))) {
     # Can't do in one step as gsub strips names
@@ -5763,17 +5992,17 @@ stop( "couldn't make directories")
   if( has.changelog) {
     description[ 'ChangeLog'] <- 'inst/changes.txt'
     if( changes.exists)
-      cat( ewhere$changes.txt, file=file.path( dir., subdir, 'inst', 'changes.txt'), 
+      cat( ewhere$changes.txt, file=file.path( subdir, 'inst', 'changes.txt'), 
           sep='\n')
     else
-      mvb.file.copy( changes.file, file.path( dir., subdir, 'inst', 'changes.txt'), TRUE)
+      mvb.file.copy( changes.file, file.path( subdir, 'inst', 'changes.txt'), TRUE)
   }
 
   # Sometimes makefiles live in the main dir, instead of / as well as in src:
   if( length( makes.in.top <- dir( dir., patt='^Makefile')))
-    mvb.file.copy( file.path( dir., makes.in.top), file.path( dir., subdir, makes.in.top))
+    mvb.file.copy( file.path( dir., makes.in.top), file.path( subdir, makes.in.top))
 
-  fixup.DLLs( TRUE, NULL, dir., subdir)
+  fixup.DLLs( TRUE, NULL, dir., subdir, pkg)
 
   get.nondirs <- function( x, recursive=FALSE) {
       if( is.dir( cdir <- file.path( dir., x))) {
@@ -5838,7 +6067,7 @@ stop( "couldn't make directories")
       nsinfo,
       exclude.funs= c( 'pre.install.hook.' %&% pkg, '.First.task'),
       exclude.data=  c( lsall( ewhere, patt='\\.doc$'),
-          cq( 'forced!exports', .required, tasks, .Traceback, .packageName, last.warning, 
+          cq( 'forced!exports', .required, .Depends, tasks, .Traceback, .packageName, last.warning, 
               .Random.seed, .SavedPlots, .Last.value)),
       task.path=pkg))
   if( is.function( fphook <- ewhere[[ 'pre.install.hook.' %&% pkg]]))
@@ -5846,18 +6075,18 @@ stop( "couldn't make directories")
   extract.named( default.list %without.name% cq( task.path, env))
 
   cat( paste( names( description), description, sep=': '),
-      file = file.path( dir., subdir, 'DESCRIPTION'), sep = '\n')
+      file = file.path( subdir, 'DESCRIPTION'), sep = '\n')
 
   # Straight file copies:
   for( cdir in names( copies))
     if( length( cfiles <- default.list[[cdir]])) {
-      mkdir( file.path( dir., subdir, cdir))
-      mvb.file.copy( file.path( dir., cfiles), file.path( dir., subdir, cdir, 
+      mkdir( file.path( subdir, cdir))
+      mvb.file.copy( file.path( dir., cfiles), file.path( subdir, cdir, 
           basename( cfiles)), TRUE)
     }
     
   # Demo index
-  if( is.dir( demo.dir <- file.path( dir., subdir, 'demo')) && 
+  if( is.dir( demo.dir <- file.path( subdir, 'demo')) && 
       !file.exists( file.path( demo.dir, '00Index'))) {
     # make one!
     demos <- dir( demo.dir, patt='\\.(r|R)$')
@@ -5876,13 +6105,16 @@ stop( "couldn't make directories")
   }
   
   # Zap inst if empty, otherwise R 2.10 complains...
-  if( !length( dir( file.path( dir., subdir, 'inst'), all.files=TRUE) %except% c( '.', '..')))
-    unlink( file.path( dir., subdir, 'inst'), recursive=TRUE)
+  if( !length( dir( file.path( subdir, 'inst'), all.files=TRUE) %except% c( '.', '..')))
+    unlink( file.path( subdir, 'inst'), recursive=TRUE)
     
   # DLLs
   if( length( dll.paths)) {
-    mkdir( file.path( dir., subdir, 'inst', 'libs'))
-    mvb.file.copy( dll.paths, file.path( dir., subdir, 'inst', 'libs', names( dll.paths)))
+    slibpath <- file.path( subdir, 'inst', 'libs')
+    if( getRversion() > '2.12')
+      slibpath <- file.path( slibpath, .Platform$r_arch)
+    mkdir( slibpath)
+    mvb.file.copy( dll.paths, file.path( slibpath, names( dll.paths)))
   }
 
   # Augment functions to include all that are named in each others aliasses
@@ -5893,13 +6125,13 @@ stop( "couldn't make directories")
   # mlazy objects, and code to auto-load them (involves hacking .onLoad or .First.lib
   mlazies <- mcachees( ewhere) %except% c( '.Random.seed', exclude.data)
   if( length( mlazies)) {
-    mkdir( file.path( dir., subdir, 'inst', 'mlazy'))
+    mkdir( file.path( subdir, 'inst', 'mlazy'))
     objfiles <- 'obj' %&% attr( ewhere, 'mcache')[ mlazies] %&% '.rda'
     md5new <- sapply( file.path( dir., 'mlazy', objfiles), md5sum)
     if( !is.null( mlazy.temp.dir)) { 
       md5old <- sapply( file.path( mlazy.temp.dir, objfiles), md5sum)
   #    fsnew <- file.info( file.path( dir., 'mlazy', objfiles))
-  #    fsold <- file.info( file.path( dir., subdir, 'inst', 'mlazy', objfiles)) # some may not exist
+  #    fsold <- file.info( file.path( subdir, 'inst', 'mlazy', objfiles)) # some may not exist
   #    different.file <- (fsnew$size != fsold$size) | (fsnew$mtime != fsold$mtime)
       different.file <- md5old != md5new
       different.file[ is.na( different.file)] <- TRUE
@@ -5907,9 +6139,9 @@ stop( "couldn't make directories")
       different.file <- rep( TRUE, length( objfiles))
     if( any( different.file))
       mvb.file.copy( file.path( dir., 'mlazy', objfiles[ different.file]), 
-          file.path( dir., subdir, 'inst', 'mlazy', objfiles[ different.file]))
+          file.path( subdir, 'inst', 'mlazy', objfiles[ different.file]))
     for( fi in objfiles[ !different.file])
-      file.rename( file.path( mlazy.temp.dir, fi), file.path( dir., subdir, 'inst', 'mlazy', fi))
+      file.rename( file.path( mlazy.temp.dir, fi), file.path( subdir, 'inst', 'mlazy', fi))
     mlazy.OK <- TRUE # files sorted out
     
     if( has.namespace) {
@@ -5968,9 +6200,9 @@ stop( "couldn't make directories")
   }
 
   suppressWarnings( 
-    file.path( dir., subdir, 'R',
-        dir( file.path( dir., subdir, 'R'), all.files=TRUE))) # clean out oldies
-  rfile <- file.path( dir., subdir, 'R', pkg %&% '.R')
+    file.path( subdir, 'R',
+        dir( file.path( subdir, 'R'), all.files=TRUE))) # clean out oldies
+  rfile <- file.path( subdir, 'R', pkg %&% '.R')
   # cat( '.packagename <- "', pkg, '"\n', sep='', file=rfile)
   cat( '# This is package', pkg, '\n', file=rfile)
   sapply( funs, ff)
@@ -5978,7 +6210,7 @@ stop( "couldn't make directories")
   # Non-functions:
   extra.data <- lsall( ewhere) %except% c( find.funs( ewhere), exclude.data, mlazies)
   if( length( extra.data))
-    save( list=extra.data, file=file.path( dir., subdir, 'R', 'sysdata.rda'), envir=ewhere,
+    save( list=extra.data, file=file.path( subdir, 'R', 'sysdata.rda'), envir=ewhere,
         compress=TRUE)
 
   # Save file ready for patch.installed
@@ -5987,14 +6219,14 @@ stop( "couldn't make directories")
   source.mvb( rfile, env=e)
   # e$'original!object!list' <- c( funs, extra.data, mlazies)
   e$.packageName <- pkg # ready for quick install
-  save( list=lsall( e), file=file.path( dir., subdir, 'R', 'funs.rda'), envir=e, 
+  save( list=lsall( e), file=file.path( subdir, 'R', 'funs.rda'), envir=e, 
       compress=TRUE)
   rm( e)
   
   # Try to tell RCMD not to build "funs.rda" into package... doesn't seem to work
   if( file.exists( RBI <- file.path( dir., '.Rbuildignore')))
-    mvb.file.copy( RBI, file.path( dir., subdir, '.Rbuildignore'))
-  cat( c( '[.]/R/funs[.]rda', ''), file=file.path( dir., subdir, '.Rbuildignore'), append=TRUE)
+    mvb.file.copy( RBI, file.path( subdir, '.Rbuildignore'))
+  cat( c( '[.]/R/funs[.]rda', ''), file=file.path( subdir, '.Rbuildignore'), append=TRUE, sep='\n')
 
   # Obsolete: Object list, used by maintain.packages-- funny name to avoid clashing
   # cat( '\n`original!object!list` <-', deparse( c( funs, extra.data)), '', sep='\n',
@@ -6017,7 +6249,7 @@ stop( "couldn't make directories")
     Rd.files.to.keep <- existing.Rd.files
     Rd.already <- character( 0)
     mvb.file.copy( file.path( Rd.dir, existing.Rd.files),
-        file.path( dir., subdir, 'man', existing.Rd.files), TRUE)
+        file.path( subdir, 'man', existing.Rd.files), TRUE)
     for( i in existing.Rd.files) {
       rl <- readLines( file.path( Rd.dir, i))
       docced <- rl %that.match% c( '^\\name\\{', '^\\alias\\{')
@@ -6042,7 +6274,7 @@ stop( "couldn't make directories")
 
   provisionally.add.man.file <- function( docname, text, fname) {
     new.md5 <- doc2Rd.info[[ docname]]$md5
-    already <- file.path( dir., subdir, 'man', fname)
+    already <- file.path( subdir, 'man', fname)
 
     if( !force.all.docs && !is.null( new.md5) && !is.na( new.md5) && 
         file.exists( already)) {
@@ -6068,6 +6300,7 @@ stop( "couldn't make directories")
         def.valids=alldoc)
     if( Rd %is.not.a% 'try-error') {
       fname <- sub( '\\}', '', sub( '\\\\name\\{', '', Rd[1])) %&% '.Rd'
+      fname <- legal.filename( fname)
       if( length( grep( '^\\.', fname)))
         fname <- '01' %&% fname
       provisionally.add.man.file( i, Rd, fname)
@@ -6097,23 +6330,23 @@ stop( "couldn't make directories")
       else
         sub( '\\.doc$', '', i)
     provisionally.add.man.file( i, Rd.extra, docname %&% '.Rd')        
-    # cat( file=file.path( dir., subdir, 'man', docname %&% '.Rd'), Rd.extra, sep='\n')
+    # cat( file=file.path( subdir, 'man', docname %&% '.Rd'), Rd.extra, sep='\n')
   }
-  suppressWarnings(   file.remove( file.path( dir., subdir, 'man',
-        dir( file.path( dir., subdir, 'man'), all.files=TRUE) %except% Rd.files.to.keep)))
+  suppressWarnings(   file.remove( file.path( subdir, 'man',
+        dir( file.path( subdir, 'man'), all.files=TRUE) %except% Rd.files.to.keep)))
 
   save( doc2Rd.info, file=doc2Rd.info.file)
 
   if( has.namespace) {
     if( use.existing.NAMESPACE)
-      mvb.file.copy( file.path( dir., 'NAMESPACE'), file.path( dir., subdir, 'NAMESPACE'), TRUE)
+      mvb.file.copy( file.path( dir., 'NAMESPACE'), file.path( subdir, 'NAMESPACE'), TRUE)
     else
-      write.NAMESPACE( nsinfo, file.path( dir., subdir, 'NAMESPACE'))
+      write.NAMESPACE( nsinfo, file.path( subdir, 'NAMESPACE'))
   }
 
   # Index last, so it looks up-to-date for RCMD BUILD  
-  index.file <- file.path( dir., subdir, 'INDEX')
-  Rdindex( file.path( dir., subdir, 'man'), index.file)
+  index.file <- file.path( subdir, 'INDEX')
+  Rdindex( file.path( subdir, 'man'), index.file)
   # Put the ***-package file first, if it exists
   index.stuff <- scan( index.file, what='', sep='\n', quiet=TRUE)
   if( !is.na( i <- grep( '^' %&% pkg %&% '\\-package', index.stuff)[1]))
@@ -6462,8 +6695,15 @@ function( objs, envir) {
   path <- attr( envir, 'path')
   mcache <- omcache <- attr( envir, 'mcache')
   mcache <- mcache %such.that% (names(.) %in% lsall( envir))
-
+  # Check to avoid "objNA.rda"; but this fun is called only
+  # ...by  mtidy & save.refdb, which should check anyhow
+  objs <- objs %such.that% (. %in% lsall( envir)) 
+  
   changed.objs <- objs %such.that% (mcache[.]<0)
+  if( any( is.na( mcache[ changed.objs])))
+warning( "Mcache is corrupted somehow for these objects: " %&% paste( 
+    changed.objs %such.that% is.na( mcache[ .]), collapse=', '))
+
   if( length( changed.objs) || length( mcache)<length(omcache)) {
     if( option.or.default( 'mlazy.subdir', TRUE)) {
       dir.create( file.path( path, 'mlazy'), showWarnings=FALSE)
@@ -6511,11 +6751,11 @@ return(invisible(NULL))
     # Now untrace them, and store the environment(s) containing (un)traced functions...
     # ... this may not be 'pos' if there is namespacing
     retrace.envs <- lapply( named( retracees), mtrace, fname=NULL, tracing=FALSE, 
-        return.envs=TRUE) # fname=NULL forces char.fname
+        from=pos, return.envs=TRUE) # fname=NULL forces char.fname
         
     # Now functions that are in a debugged state, but that debug has forgotten...    
     lapply( pos.tracees %except% retracees, mtrace, fname=NULL, tracing=FALSE, 
-        return.envs=FALSE) # fname=NULL forces char.fname
+        from=pos, return.envs=FALSE) # fname=NULL forces char.fname
         
   }
 
@@ -6542,6 +6782,8 @@ function( file, envir, ...) {
   mcache <- attr( envir, 'mcache')
   mcache <- mcache %such.that% (names( .) %in% lsall( envir))
   attr( envir, 'mcache') <- mcache
+  if( is.null( mcache))
+    mcache <- numeric(0)
 
   # Housekeep dead files
 
@@ -6549,17 +6791,15 @@ function( file, envir, ...) {
   if( option.or.default( 'mlazy.subdir', TRUE))
     mpath <- file.path( mpath, 'mlazy')
   if( is.dir( mpath)) {
-    objfiles <- list.files( mpath, '^obj[0-9]+\\.rda$')
-    file.remove( file.path( mpath, objfiles %except% ('obj' %&% mcache %&% '.rda')))
+    objfiles <- list.files( mpath, '^obj(NA|[0-9]+)\\.rda$')
+    file.remove( file.path( mpath, objfiles %except% ('obj' %&% abs( mcache) %&% '.rda')))
   }
 
   # Save into temporary file and keep old one, in case of stuff-up
   # Changed Sept 07 so safety-check works even without mcached objects
   new.file <- file
-  if( file.exists( file)) {
-    while( file.exists( new.file))
-      new.file <- file.path( dirname( new.file), 'n' %&% basename( new.file))
-  }
+  while( file.exists( new.file))
+    new.file <- file.path( dirname( new.file), 'n' %&% basename( new.file))
 
   # Check for ..mypackage accidentally stored here...
   badness <- lsall( envir) %that.match% '^[.][.][^.]'
@@ -6735,6 +6975,56 @@ function( pkg, hook.type, f, action=c( 'append', 'prepend', 'replace')){
 }
 
 
+"setup.dontruns" <-
+function( Rd) {
+  # Post-process to set /dontrun examples
+  if( !length( ex <- grep( '^[\\]examples[{]', Rd)))
+return( Rd)
+
+  # If example on first line, give it its own line
+  if( !grepl( '^[\\]examples[{] *$', Rd[ ex])) {
+    Rd <- multirep( Rd, ex, list( c( '\\examples{', substring( Rd[ ex], nchar( '\\examples{')+1))))
+  }
+  end.ex <- (grep( '^[}]', Rd) %such.that% (.>ex)) [1] # braces must be escaped in ex so this is fine
+
+  min <- function( ...) suppressWarnings( base::min( ...)) # annoying R "improvement"  
+  repeat{ # once unless error; twice at most
+    dontrun <- grep( "^ *## +(DON'T|NOT) +RUN *(:)? *$", Rd, ignore.case=TRUE) %such.that% 
+        (. %in.range% c( ex, end.ex))
+    
+    if( length( dontrun)) {
+      end.dontrun <- grep( "^## +END( +| *\\( *)(DON'T|NOT) +RUN\\b", Rd, ignore.case=TRUE)
+      if( (length( end.dontrun) != length( dontrun)) || !all( diff( c( t( 
+          matrix( c( dontrun, end.dontrun), ncol=2)))) > 0)) {
+        # Don't allow fatal error
+        oww <- getOption( 'warn')
+        if( oww==2)
+          options( warn=1)
+        warning( "Unmatched DON'T RUN will be made as big as possible, " %&%
+            "in doc with header:\n%s" %&% text[1] )
+        options( warn=oww)
+        # Add a dontrun immediately after unmatched ones
+        unmatched <- rep( FALSE, length( dontrun))
+        for( i in seq_along( dontrun)) {
+          mind <- min( end.dontrun %such.that% (. > dontrun[ i]))
+          unmatched[ i] <- mind >= min( dontrun[ -(1:i)]) 
+        }
+        unmatched <- index( unmatched)
+        dontrun <- c( dontrun, end.ex)
+        Rd <- multinsert( Rd, dontrun[ unmatched+1]-1, "## END DON'T RUN")
+  next
+      } else { # ie dontrun & end.dontrun are consistent
+        Rd[ dontrun] <- '\\dontrun{'
+        Rd[ end.dontrun] <- '}'
+      }
+    }
+  break
+  }
+
+return( Rd)
+}
+
+
 "setup.mcache" <-
 function( envir, fpath=attr( envir, 'path'), refs) {
   envir <- as.environment( envir)
@@ -6787,8 +7077,9 @@ return()
 
 
 "source.mvb" <-
-function( con, envir=parent.frame(), max.n.expr=Inf, echo=option.or.default( 'verbose', FALSE),
-    prompt.echo=getOption( 'prompt'), evaluate=TRUE) {
+function( con, envir=parent.frame(), max.n.expr=Inf, 
+    echo=getOption( 'verbose', FALSE), prompt.echo=getOption( 'prompt'), 
+    evaluate=TRUE, debug.script=FALSE) {
   if( !exists( 'source.list', 'mvb.session.info'))
     source.list <- list()
   else
@@ -6856,9 +7147,10 @@ stop( geterrmessage(), call.=FALSE)
 #    }
     
 #    if( do.eval)
-    if( evaluate)
-      last <- eval( tryo[[ 1]], env=envir)
-    else 
+    if( evaluate) {
+      last <- {if( identical( unname( debug.script), TRUE)) eval.scriptlet else eval}( 
+          tryo[[ 1]], env=envir) 
+    } else 
       last <- tryo[[1]][[1]] # get through the 'expression'
       
     if( echo)
@@ -7076,6 +7368,16 @@ function (x)
 }
 
 
+"unmaintain.package" <-
+function( pkg, character.only=FALSE){
+  if( !character.only) 
+    pkg <- as.character( substitute( pkg))
+
+  maintained.packages <<- maintained.packages %without.name% pkg
+  rm( list='..' %&% pkg, envir=as.environment( 'mvb.session.info'))
+}
+
+
 "unmaintain.packages" <-
 function( ..., character.only=FALSE, autosave=NA){
   if( character.only)
@@ -7111,8 +7413,9 @@ stop( "help2flatdoc only works with R 2.10 & up")
 
   oppo <- options( useFancyQuotes=FALSE, keep.source=TRUE)
   on.exit( options( oppo))
+  # DESCRIPTION.in used to be legal; not sure it is now but let's be nice
   if( !is.dir( spath) || is.na( 
-      desc <- grep( '^DESCRIPTION([.]in)$', dir( spath), perl=TRUE, value=TRUE)[1]))
+      desc <- grep( '^DESCRIPTION([.]in)?$', dir( spath), perl=TRUE, value=TRUE)[1]))
 stop( dQuote( spath) %&% " doesn't seem to be a source package")
 
   x <- tools:::.read_description( file.path( spath, desc))[ 'Package']
@@ -7143,6 +7446,7 @@ stop( "Not overwriting")
   
   # Recursive file- or directory-copy
   filecop <- function( fname, ...) {
+      # fname: either a single dir or a bunch of non-dirs
       if( !any( file.exists( file.path( spath, fname))))
     return()
     
@@ -7155,11 +7459,12 @@ stop( "Not overwriting")
         fd <- dir( file.path( spath, fname), all=TRUE) %except% c( '.', '..')
         
         # Copy all *files* at once...
-        mcf$fname <- file.path( fname, fd[ !is.dir( fd)])
+        fd.dirs <- fd[ is.dir( file.path( spath, fname, fd))]
+        mcf$fname <- file.path( fname, fd %except% fd.dirs)
         eval( as.call( mcf), sys.parent())  
         
         # ... and subdirs one at a time...
-        for( this.dir in fd[ is.dir( fd)]) {
+        for( this.dir in fd.dirs) {
           mcd$fname <- file.path( fname, this.dir)
           eval( as.call( mcd), sys.parent())
         }
@@ -7236,6 +7541,17 @@ stop( "Not overwriting")
   
   # And save...
   save( list=lsall( e), file=file.path( tpath, '.RData'), envir=e)
+  
+  # Update tasks...
+  if( is.null( tasks <- .GlobalEnv$tasks))
+    tasks <- character( 0)
+  tasks <- c( tasks, structure( './' %&% x, names=x))
+  assign( 'tasks', tasks, .GlobalEnv)
+  
+  cat( sprintf( 
+      '"tasks" vector has been augmented with "%s"-- remember to Save()...\n' %&% 
+      '...otherwise R won\'t be able to find task pkg for "%s" next time\n', x))
+return( invisible( NULL))
 }
 
 
@@ -7489,6 +7805,32 @@ function (s)
         s <- sapply(s, transfer)
     }
     do.call("structure", c(list(.Data = s), a))
+}
+
+
+"warn.and.subset" <-
+function( x, cond, 
+    mess.head=deparse( substitute( x), width.cutoff=20, control=NULL, nlines=1), 
+    mess.cond=deparse( substitute( cond), width.cutoff=40, control=NULL, nlines=1), 
+    row.info=rownames( x), sub=TRUE) {
+  
+  mum <- mvb.sys.parent()
+  mum <- if( mum==0)
+      .GlobalEnv
+    else
+      sys.frames()[[ mum]]
+
+  force( mess.cond)    
+  if( sub)
+    cond <- substitute( cond)
+  cond <- eval( cond, x, enclos=mum)
+  cond[ is.na( cond)] <- FALSE
+  if( !all( cond)) {
+    warning( mess.head %&% ': dropping cases that fail ' %&% mess.cond %&% ':', call.=FALSE) 
+    outo <- paste( row.info[ !cond], collapse='; ')
+    cat( file=stderr(), strwrap( outo, indent=2), '\n')
+  }
+  x[ cond,,drop=FALSE]
 }
 
 

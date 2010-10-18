@@ -1,12 +1,18 @@
-\name{move}
-\alias{move}
-\title{Organizing R workspaces}
-\description{\code{move} shifts one or more objects around the task hierarchy (see \code{\link{cd}}), whether or not the source and destination are currently attached on the search path.}
-\synopsis{move( x='.', from='.', to='.', what, overwrite.by.default=FALSE, copy=FALSE)}
+\name{move
+}
+\alias{move
+}
+\title{Organizing R workspaces
+}
+\description{\code{move} shifts one or more objects around the task hierarchy (see \code{\link{cd}}), whether or not the source and destination are currently attached on the search path.
+}
 \usage{
-move( x, from, to)
-move( what=, from, to)
-move( x, from, to, copy=, overwrite.by.default=)
+# Usually: unquoted object name, unquoted from and to, e.g. move( thing, ., 0/somewhere)
+# Use 'what' arg to move several objects at once, e.g. move( what=c( "thing1", "thing2"), <<etc>>)
+# move( x, from, to)
+# move( what=, from, to)
+# Next line shows the formal args, but the real usage would NEVER be like this...
+move( x='.', from='.', to='.', what, overwrite.by.default=FALSE, copy=FALSE)
 }
 \arguments{
 \item{ x}{unquoted name}
@@ -25,7 +31,7 @@ If \code{move} finds an object with the same name in the destination, you will b
 
 By default, \code{move} will delete the original object after it has safely arrived in its destination. It's normally only necessary (and more helpful) to have just one instance of an object; after all, if it needs to be accessed by several different tasks, you can just \code{move} it to an ancestral task. However, if you really do want a duplicate, you can avoid deletion of the original by setting \code{copy=TRUE}.
 
-You will be prompted for whether to \code{save} the source and destination tasks, if they are attached somewhere, but not in position 1. Normally this is a good idea, but you can always say no, and call \code{save.pos} or \code{\link{Save.pos}} later. If the source and/or destination are not attached, they will of course be \code{save}d automatically. The top workspace (i.e. current task) \code{.GlobalEnv} is never saved automatically; you have to call \code{save.image} or \code{\link{Save}} yourself.
+You will be prompted for whether to \code{save} the source and destination tasks, if they are attached somewhere, but not in position 1. Normally this is a good idea, but you can always say no, and call \code{\link{Save.pos}} later. If the source and/or destination are not attached, they will of course be saved automatically. The top workspace (i.e. current task) \code{.GlobalEnv} is never saved automatically; you have to call \code{\link{Save}} yourself.
 
 \code{move} is not meant to be called within other functions.
 }
@@ -39,6 +45,9 @@ move( what=c( "first.obj", "second.obj"), ., ../sibling.task)
 move( myobj, ..myfirstpack, ..mysecondpack) # live-edited packages
 }
 }
-\seealso{\code{\link{cd}}}
-\author{Mark Bravington}
-\keyword{utilities}
+\seealso{\code{\link{cd}}
+}
+\author{Mark Bravington
+}
+\keyword{utilities
+}

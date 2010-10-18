@@ -5,7 +5,7 @@
 \usage{
 lsize( envir=.GlobalEnv)
 }
-\arguments{\item{ envir}{where to look for the objects. Will be coerced to environment, so that e.g. \code{lsize( 2)} and \code{lsize( }package:mvbutils') work. \code{envir} can be a \code{sys.frame}-- useful during debugging.}}
+\arguments{\item{ envir}{where to look for the objects. Will be coerced to environment, so that e.g. \code{lsize( 2)} and \code{lsize( "package:mvbutils")} work. \code{envir} can be a \code{sys.frame}-- useful during debugging.}}
 \value{Named numeric vector.}
 \seealso{\code{ls}, \code{\link{mlazy}}}
 \author{Mark Bravington}

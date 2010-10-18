@@ -7,3 +7,9 @@ This file was reset in November 2009 after 4 years of neglect.
 19/11/2009: Bugfix in '%that.dont.match%'
 
 19/11/2009: Changed '%that.match%' and '%that.dont.match%' to balk if 0-length patterns are used (like 'grep')
+
+13/8/2010: Bugfix in 'move' when moving mlazies to task that doesn't yet have mlazies
+
+13/8/2010: Changed 'patch.installed' DLL treatment to only copy DLLs if *different* as well as newer
+
+25/8/2010: New subsection structuring in 'doc2Rd', and a few changes to other doco as a result. Fixed buggy doco of 'subset.with.warning'.

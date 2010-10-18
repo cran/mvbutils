@@ -1,16 +1,25 @@
-\name{maintain.packages}
-\alias{maintain.packages}
-\title{Set up task package for live editing}
-\description{Set up task package(s) for editing and/or live-editing. You need to be \code{\link{cd}}ed into the task above your source-task. \code{maintain.packages} must be called before loading the package via \code{library} or \code{require}.}
+\name{maintain.packages
+}
+\alias{maintain.packages
+}
+\alias{unmaintain.package
+}
+\title{Set up task package for live editing
+}
+\description{Set up task package(s) for editing and/or live-editing. You need to be \code{\link{cd}}ed into the task above your source-task. \code{maintain.packages} must be called before loading the package via \code{library} or \code{require}. The converse, \code{unmaintain.package}, is rarely needed; it's really only meant for when \code{\link{unpackage}} doesn't work properly, and you want a "clean slate" task package.
+}
 \usage{
 # E.g. in your .First, after library( mvbutils), or in a '.First.task' above yr source task
 maintain.packages(..., character.only = FALSE)
+unmaintain.package( pkg, character.only = FALSE)
 }
 \arguments{
-\item{ ...}{names of your packages, unquoted unless \code{character.only} is TRUE. Package names must correspond to subtasks of the current task.}
+\item{ ...}{names of packages, unquoted unless \code{character.only} is TRUE. Package names must correspond to subtasks of the current task.}
 \item{ character.only}{see above}
+\item{ pkg}{name of package, unquoted unless \code{character.only} is TRUE.}
 }
-\details{\code{maintain.packages( mypack)} loads a copy of your source-task package "mypack" (as stored in its ".RData" file) into a variable \code{..mypack} in the "mvb.session.info" environment. You don't normally need to know this, because normally you'd modify/create functions in the package via \code{\link{fixr}} or \code{fixr(..., pkg="mypack")}. However, you can directly modify the contents of \code{..mypack}. If you do, then remember to use \code{<<-}, e.g. \code{..mypack$newfun <<- function( x) whatever}, rather than \code{<-}; otherwise, a local copy of \code{..mypack} will be created in the current task. If that does happen, just \code{rm} it; the local copy and the master copy in "mvb.session.info" both point to the same thing, and modifying one implies modifying the other, so that deleting the local copy won't lose your changes.}
+\details{\code{maintain.packages( mypack)} loads a copy of your source-task package "mypack" (as stored in its ".RData" file) into a variable \code{..mypack} in the "mvb.session.info" environment. You don't normally need to know this, because normally you'd modify/create functions in the package via \code{\link{fixr}} or \code{fixr(..., pkg="mypack")}. However, you can directly modify the contents of \code{..mypack}. If you do, then remember to use \code{<<-}, e.g. \code{..mypack$newfun <<- function( x) whatever}, rather than \code{<-}; otherwise, a local copy of \code{..mypack} will be created in the current task. If that does happen, just \code{rm} it; the local copy and the master copy in "mvb.session.info" both point to the same thing, and modifying one implies modifying the other, so that deleting the local copy won't lose your changes.
+}
 \section{Maintained packages as tasks}{
 If you use \code{mvbutils} to pre-build your package, then your package must exist as a task in the \code{\link{cd}} hierarchy. This means you can in theory \code{\link{cd}} to its workspace, but I don't recommend it; and thanks to \code{maintain.packages}, there is no compelling need to have the package/task at the top of the search path.
 
@@ -25,7 +34,8 @@ rm.pkg( tasks, pkg="Splendid")
 
 If do you \code{\link{cd}} to a package/task that is already loaded under \code{maintain.packages}, then the loaded version of the package is "frozen" until you \code{\link{cd}} back up from the package/task. All \code{\link{fixr}} edit operations on objects in the package are redirected to the task version, i.e. the one highest on the search path. \code{\link{pre.install}} and then \code{\link{patch.installed}} will still work, since they operate on the disk image. When you \code{\link{cd}} back up, the task is updated on disk (as \code{\link{cd}} always does), and the maintained-package version is reloaded from disk, and all \code{\link{fixr}} edits are redirected to the maintained-package version.
 }
-\seealso{\code{\link{mvbutils.packaging.tools}}, \code{\link{fixr}}, \code{\link{pre.install}}, \code{\link{patch.installed}}}
+\seealso{\code{\link{mvbutils.packaging.tools}}, \code{\link{fixr}}, \code{\link{pre.install}}, \code{\link{patch.installed}}, \code{\link{unpackage}}
+}
 \examples{
 \dontrun{
 # In your .First:
@@ -37,4 +47,5 @@ maintain.packages( live.edit.list, character.only=TRUE)
 library( myfirstpack) # etc
 }
 }
-\keyword{internal}
+\keyword{internal
+}
