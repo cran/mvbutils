@@ -48,6 +48,10 @@ function (vector, condition)
 vector[match(vector, condition, 0) == 0]
 
 
+"%grepling%" <-
+function( x, patt) grepl( patt, x)
+
+
 "%in.range%" <-
 function (a, b) 
 (a >= min(b)) & (a <= max(b))
@@ -81,6 +85,10 @@ function( x, patt)
 "%not.in%" <-
 function (a, b) 
 !(a %in% b)
+
+
+"%perling%" <-
+function( x, patt) grepl( patt, x, perl=TRUE)
 
 
 "%such.that%" <-
@@ -254,17 +262,25 @@ return() # create only once per session
     TRUE)
 
   my.reps.opts <- named( cq( difftime, '+.POSIXt', '-.POSIXt', loadhistory, savehistory, 
-      save.image, library, help))
+      save.image, library, help, print.POSIXct, format.POSIXct, head.default, tail.default,
+      as.data.frame.POSIXct))
 
   my.reps <- my.reps.opts[ my.reps] %except% NA # storm the last bastion of user stuff-ups
 
   # Only do nominated replacements
-  assign.to.base.opt <- function( what, ...) if( what %in% my.reps) assign.to.base( what, ...)
+  # Next is mlocal so that ATB correctly picks up import env-- ATB limitation
+  assign.to.base.opt <- function( what, ..., nlocal=sys.parent()) 
+      mlocal( if( what %in% my.reps) assign.to.base( what, ...))
 
   assign.to.base.opt( 'difftime', hack( difftime, 
       units=c( 'secs', 'mins', 'hours', 'days', 'weeks', 'auto')))
   assign.to.base.opt( '+.POSIXt', mvb.plus.POSIXt)
   assign.to.base.opt( '-.POSIXt', mvb.minus.POSIXt)
+  assign.to.base.opt( 'print.POSIXct', mvb.print.POSIXt) # POSIXlt too?
+  assign.to.base.opt( 'format.POSIXct', mvb.format.POSIXct)
+  assign.to.base.opt( 'head.default', mvb.head.default)
+  assign.to.base.opt( 'tail.default', mvb.tail.default)
+  assign.to.base.opt( 'as.data.frame.POSIXct', mvb.as.data.frame.POSIXct)
 
   for( i in cq( load, save) %&% 'history')
     assign.to.base.opt( i, hack( i,
@@ -354,9 +370,11 @@ function( x) {
 
 "assign.to.base" <-
 function( x, what=lapply( named( x),
-    function( x, where) get( 'replacement.' %&% x, pos=where), where=where),
-  where=-1, in.imports=exists( '.__NAMESPACE__.', environment( sys.function( sys.parent()))),
+    function( x, where) get( 'replacement.' %&% x, pos=where), where=where), 
+  where=-1, 
+  in.imports=sys.parent() != 0 && exists( '.__NAMESPACE__.', environment( sys.function( sys.parent()))),
   override.env=TRUE) {
+############  
   if( !is.list( what))
     what <- list( what)
 
@@ -376,37 +394,63 @@ function( x, what=lapply( named( x),
         lockBinding( obj, env)
       }
     }
-
-  penv <- if( in.imports)
+  penv <- if( in.imports) # ? extra parent.env 15/11/2010 
       parent.env( environment( sys.function( sys.parent())))
     else
       NULL
+
+#  cat( 'ATB' %&% x[1], 'in.imports', in.imports, '\n')
+#  if( in.imports) {
+#    print( penv)
+#    cat( head( ls( penv), 5), '\n', sep=', ')
+#  }
 
   for( xi in x) {
     this <- what[[ xi]]
     if( !is.null( penv) && exists( xi, penv, inherits=FALSE))
       reassign( xi, this, penv)
 
-    where.xi <- find( xi, mode='function', numeric=TRUE)
-    if( length( where.xi)>1) {
+    # Hidden S3 methods will be duplicated in the package namespace
+    where.xi <- do.call( 'getAnywhere', list( xi))$where
+    pkgs <- unique( sub( 'namespace:', 'package:', 
+        sub( 'registered S3 method for .* from namespace ', 'package:', where.xi)))
+    pkgs <- sub( 'package:', '', pkgs)
+    
+    # where.xi <- find( xi, mode='function', numeric=TRUE)
+    if( length( pkgs)>1) {
       warning( xi %&% ' appears more than once in search(); overwriting top copy only')
-      where.xi <- where.xi[1] }
+      where.xi <- where.xi[1]
+    }
 
     if( !length( where.xi))
   next
 
-    system.xi <- get( xi, where.xi)
-    reassign( xi, this, pos.to.env( where.xi))
-
-    # Also assign to the hidden namespace version, if it exists
-    ns <- try( asNamespace( sub( 'package:', '', search()[ where.xi])), silent=TRUE)
-    if( ns %is.not.a% 'try.error') {
-      if( exists( xi, ns, inherits=FALSE))
-        reassign( xi, this, ns)
-      S3 <- ns$.__S3MethodsTable__.
-      if( !is.null( S3) && exists( xi, S3, inherits=FALSE))
-        reassign( xi, this, S3)
+    system.xi <- NULL
+    for( iwhere in where.xi) {
+      env <- if( grepl( '^registered S3', iwhere)) 
+          asNamespace( pkgs)$.__S3MethodsTable__.
+        else if( grepl( 'namespace:', iwhere))
+          asNamespace( pkgs)
+        else
+          as.environment( 'package:' %&% pkgs)
+      # Just 'cos 'getAnywhere' says it exists, doesn't mean it REALLY exists...
+      if( exists( xi, env, inherits=FALSE)) {
+        if( is.null( system.xi))
+          system.xi <- env[[ xi]]
+        reassign( xi, this, env)
+      }
     }
+
+    # Old code:
+    # Also assign to the hidden namespace version, if it exists
+#    ns <- try( asNamespace( sub( 'package:', '', where.xi)), silent=TRUE)
+#    if( ns %is.not.a% 'try.error') {
+#      if( exists( xi, ns, inherits=FALSE))
+#        reassign( xi, this, ns)
+#      S3 <- ns$.__S3MethodsTable__.
+#      if( !is.null( S3) && exists( xi, S3, inherits=FALSE))
+#        reassign( xi, this, S3)
+#    }
 
     # Keep original
     if( !exists( 'base.' %&% xi, where='mvb.session.info', inherits=FALSE))
@@ -565,8 +609,8 @@ stop("Can't move backwards from ROOT!")
   #save.image() # replaced by...
   Save.pos( 1) # 12/04, to work with all.rda & lazy-Load
 
-  if( !nchar( Sys.getenv( 'R_HISTFILE')))
-    Sys.putenv( R_HISTFILE=file.path( getwd(), '.Rhistory'))
+  if( !nzchar( Sys.getenv( 'R_HISTFILE')))
+    Sys.putenv( R_HISTFILE=file.path( .First.top.search, '.Rhistory'))
 
   if( option.or.default( 'mvbutils.update.history.on.cd', TRUE))
     try( savehistory())
@@ -1208,7 +1252,7 @@ function( text, file=NULL, append=formals(cat)$append, warnings.on=TRUE, Rd.vers
     forig <- NULL
 
   # Enforce PERL syntax in regexes
-  for( regexo in cq( grep, sub, gsub, regexpr, gregexpr)) {
+  for( regexo in cq( grep, grepl, sub, gsub, regexpr, gregexpr)) {
     ff <- get( regexo)
     formals( ff)$perl <- quote( !fixed)
     assign( regexo, ff, envir=sys.frame( sys.nframe()))
@@ -1602,6 +1646,16 @@ function( text, file=NULL, append=formals(cat)$append, warnings.on=TRUE, Rd.vers
     Rd <- gsub( '\017', '\\\\', Rd, fixed=TRUE) 
     Rd <- gsub( '\022', '{', Rd, fixed=TRUE)
     Rd <- gsub( '\023', '}', Rd, fixed=TRUE)
+    
+    # Fix split one-liners-- not that they need fixing-- this is "improvement" in R 2.12
+    one.liners <- cq( name, alias, docType, title, author)
+    olsplit <- grep( '^\\\\(' %&% paste( one.liners, collapse='|') %&% ') *\\{[^}]*$', Rd)
+    if( length( olsplit))
+      olsplit <- olsplit[ grepl( '^ *\\} *$', Rd[ olsplit+1])]
+    if( length( olsplit)){
+      Rd[ olsplit] <- Rd[ olsplit] %&% '}'
+      Rd <- Rd[ -(olsplit+1)]
+    }
   } else {
     # Old format Rd had problems with some weird-but-legal sequences...
     # Restore backslashes & braces in normal text -- get round buggy Rd
@@ -5050,6 +5104,41 @@ return( mcache)
 }
 
 
+"mvb.as.data.frame.POSIXct" <-
+function (x, row.names = NULL, optional = FALSE, ..., nm = paste(deparse(substitute(x), 
+    width.cutoff = 500L), collapse = " ")) {
+# MVB mod
+  if( length( dim( x))==2) {
+    orig <- attr( x, 'origin')
+    clx <- class( x)
+    x <- as.data.frame.matrix( x)
+    for( i in seq_along( x)) {
+      oldClass( x[[i]]) <- clx
+      attr( x[[i]], 'origin') <- orig
+    }
+return( x)
+  }
+    
+  force(nm)
+  nrows <- length(x)
+  if (is.null(row.names)) {
+      if (nrows == 0L) 
+          row.names <- character(0L)
+      else if (length(row.names <- names(x)) == nrows && !anyDuplicated(row.names)) {
+      }
+      else row.names <- .set_row_names(nrows)
+  }
+  if (!is.null(names(x))) 
+      names(x) <- NULL
+  value <- list(x)
+  if (!optional) 
+      names(value) <- nm
+  attr(value, "row.names") <- row.names
+  class(value) <- "data.frame"
+  value
+}
+
+
 "mvb.file.copy" <-
 function( file1, file2, overwrite=TRUE) {
   # file.copy stuffs up 'mtime' so...
@@ -5093,6 +5182,34 @@ function( default.list) {
 }
 
 
+"mvb.format.POSIXct" <-
+function (x, format = "", tz = "", usetz = FALSE, ...) {
+# MVB mod to cope with array of POSIXct
+stopifnot( x %is.a% "POSIXct") 
+  if (missing(tz) && !is.null(tzone <- attr(x, "tzone"))) 
+    tz <- tzone
+  structure(format.POSIXlt(as.POSIXlt(x, tz), format, usetz, ...), 
+      names = names(x), dim=dim( x), dimnames=dimnames( x))
+}
+
+
+"mvb.head.default" <-
+function (x, n = 6L, ...) {
+  # MVB mod to respect matrix structure of non-default S3 objects eg POSIXct
+  if( length( dim( x))==2){
+    mc <- match.call()
+    mc[[1]] <- `head.matrix`
+    return( eval( mc, parent.frame()))
+  }
+  stopifnot(length(n) == 1L)
+  n <- if (n < 0L) 
+      max(length(x) + n, 0L)
+    else 
+      min(n, length(x))
+  x[seq_len(n)]
+}
+
+
 "mvb.match.call" <-
 function (definition = sys.function( mvb.sys.parent()), 
     call = sys.call(mvb.sys.parent()), expand.dots = TRUE) {
@@ -5123,12 +5240,14 @@ stop("unary - is not defined for \"POSIXt\" objects")
     e2 <- as.POSIXct( e2) # guaranteed seconds
   
   e1 <- as.POSIXct( e1)
-  value <- c( unclass(e1) - Seconds( unclass( e2)))
-
+  # value <- c( unclass(e1) - Seconds( unclass( e2)))
+  # Removed c() Dec 2010 to allow matrices-- dunno side-effects?
+  value <- unclass(e1) - Seconds( unclass( e2))
+  
   if( pure.tdiff)
 return( value)
-  else
-return( structure( value, class = c("POSIXt", "POSIXct"), tzone=attr( e1, 'tzone')))
+  else   # Changed 12/2010 to keep class order (POSIXt or POSIXct first?) consistent with changes in R
+return( structure( value, class = class( e1), tzone=attr( e1, 'tzone')))
 }
 
 
@@ -5160,8 +5279,19 @@ stop("binary + is not defined for \"POSIXt\" objects")
   if( e1 %is.a% "POSIXlt") 
     e1 <- as.POSIXct(e1) # get tzone OK
   
-  structure( unclass( e1) + unclass( Seconds( e2)), class = c("POSIXt", 
-      "POSIXct"), tzone = attr( e1, 'tzone'))
+  # Changed 12/2010 to keep class order (POSIXt or POSIXct first?) consistent with changes in R
+  structure( unclass( e1) + unclass( Seconds( e2)), class = class( e1), tzone = attr( e1, 'tzone'))
+}
+
+
+"mvb.print.POSIXt" <-
+function( x, ...) { 
+  # Keeps matrix/ array structure without losing POSIXity
+  thrub <- format( x, usetz=TRUE, ...)
+  dim( thrub) <- dim( x)
+  dimnames( thrub) <- dimnames( x)
+  print( thrub, ...)
+return( invisible( x))
 }
 
 
@@ -5228,6 +5358,24 @@ function(n=1) {
     p <- parents[ which( sapply( frames, identical, frames[[p]]) )[ 1] ] # parent of FIRST pointer to this env in frame list
 
   p
+}
+
+
+"mvb.tail.default" <-
+function (x, n = 6L, ...) {
+  # MVB mod to respect matrix structure of non-default S3 objects eg POSIXct
+  if( length( dim( x))==2) {
+    mc <- match.call()
+    mc[[1]] <- `tail.matrix`
+return( eval( mc, parent.frame()))
+  }
+
+  stopifnot(length(n) == 1L)
+  xlen <- length(x)
+  n <- if (n < 0L) 
+      max(xlen + n, 0L)
+  else min(n, xlen)
+  x[seq.int(to = xlen, length.out = n)]
 }
 
 
@@ -5368,6 +5516,15 @@ return( FALSE)
     else
       var <- as.list( var)[[ i[ ii] ]]
 return( TRUE) }
+
+
+"my.package.path" <-
+function( func=sys.function(-1)){
+  envir <- environment( func)
+  ns <- envir$.__NAMESPACE__.
+  path <- if( ns %is.an% 'environment') ns$path else attr( ns, 'path')
+return( path)
+}
 
 
 "named" <-

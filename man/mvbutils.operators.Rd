@@ -1,39 +1,70 @@
-\name{mvbutils.operators}
-\alias{mvbutils.operators}
-\alias{\%&\%}
-\alias{\%!in\%}
-\alias{\%**\%}
-\alias{\%is.not.a\%}
-\alias{\%is.a\%}
-\alias{\%is.not.an\%}
-\alias{\%is.an\%}
-\alias{\%except\%}
-\alias{\%matching\%}
-\alias{\%not.in\%}
-\alias{\%that.match\%}
-\alias{\%that.dont.match\%}
-\alias{\%that.are.in\%}
-\alias{\%without.name\%}
-\alias{\%in.range\%}
-\alias{\%such.that\%}
-\alias{\%SUCH.THAT\%}
-\alias{\%upto\%}
-\alias{\%downto\%}
-\alias{\%where\%}
-\alias{\%where.warn\%}
-\title{Utility operators}
-\description{Succinct or convenience operators}
+\name{mvbutils.operators
+}
+\alias{mvbutils.operators
+}
+\alias{\%&\%
+}
+\alias{\%!in\%
+}
+\alias{\%**\%
+}
+\alias{\%except\%
+}
+\alias{\%grepling\%
+}
+\alias{\%is.not.a\%
+}
+\alias{\%is.a\%
+}
+\alias{\%is.not.an\%
+}
+\alias{\%is.an\%
+}
+\alias{\%matching\%
+}
+\alias{\%not.in\%
+}
+\alias{\%perling\%
+}
+\alias{\%that.match\%
+}
+\alias{\%that.dont.match\%
+}
+\alias{\%that.are.in\%
+}
+\alias{\%without.name\%
+}
+\alias{\%in.range\%
+}
+\alias{\%such.that\%
+}
+\alias{\%SUCH.THAT\%
+}
+\alias{\%upto\%
+}
+\alias{\%downto\%
+}
+\alias{\%where\%
+}
+\alias{\%where.warn\%
+}
+\title{Utility operators
+}
+\description{Succinct or convenience operators
+}
 \usage{
 a \%&\% b
 x \%**\% y
 a \%!in\% b
+vector \%except\% condition
+x \%grepling\% patt
 x \%is.not.a\% what
 x \%is.a\% what
 x \%is.not.an\% what
 x \%is.an\% what
-vector \%except\% condition
 x \%matching\% patt
 a \%not.in\% b
+x \%perling\% patt
 x \%that.match\% patt
 x \%that.dont.match\% patt
 a \%that.are.in\% b
@@ -46,7 +77,8 @@ from \%downto\% to
 x \%where\% cond
 x \%where.warn\% cond
 }
-\arguments{\item{ a, b, vector, condition, x, y, what, patt, from, to, cond}{see \bold{Arguments by function}.}}
+\arguments{\item{ a, b, vector, condition, x, y, what, patt, from, to, cond}{see \bold{Arguments by function}.}
+}
 \value{
 \item{ \%&\%}{character vector}
 \item{ \%**\%}{numeric, possibly a matrix}
@@ -69,9 +101,9 @@ x \%where.warn\% cond
 
 \code{\%is.a\%}, etc. what: class name
 
-\code{\%matching\%}, \code{\%that.match\%}, \code{\%that.dont.match\%} x: character vector
+\code{\%matching\%}, \code{\%that.match\%}, \code{\%that.dont.match\%}, \code{\%grepling\%}, \code{\%perling\%} x: character vector
 
-\code{\%matching\%}, \code{\%that.match\%}, \code{\%that.dont.match\%} patt: character vector of regexps
+\code{\%matching\%}, \code{\%that.match\%}, \code{\%that.dont.match\%}, \code{\%grepling\%}, \code{\%perling\%} patt: character vector of regexps, with perl syntax for \code{\%perling\%}
 
 \code{\%such.that\%}, \code{\%SUCH.THAT\%} a: vector
 
@@ -87,8 +119,10 @@ x \%where.warn\% cond
 
 \code{\%without.name\%} what: character vector of names to drop
 }
-\author{Mark Bravington}
-\seealso{bquote}
+\author{Mark Bravington
+}
+\seealso{bquote
+}
 \examples{
 "a" \%&\% "b" # "ab"
 matrix( 1:4, 2, 2) \%**\% matrix( 1:2, 2, 1) # c( 7, 10); '\%*\%' gives matrix result

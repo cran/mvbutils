@@ -13,3 +13,11 @@ This file was reset in November 2009 after 4 years of neglect.
 13/8/2010: Changed 'patch.installed' DLL treatment to only copy DLLs if *different* as well as newer
 
 25/8/2010: New subsection structuring in 'doc2Rd', and a few changes to other doco as a result. Fixed buggy doco of 'subset.with.warning'.
+
+15/11/2010: fixed bug with history not staying fixed under 'cd'.
+
+21/12/2010: fixed bug with class order of POSIXt/POSIXct following changes in R 2.12
+
+31/12/2010: changes to the modified POSIXt methods to support arrays of POSIXct. See package doco.
+
+5/1/2011: fixed buglets that weren't bugs until R 2.12...
