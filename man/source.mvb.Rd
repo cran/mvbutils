@@ -3,7 +3,7 @@
 \alias{current.source}
 \alias{from.here}
 \title{Read R code and data from a file or connection}
-\description{\code{source.mvb} works like \code{source(local=TRUE)}, except you can intersperse free-format data into your code. \code{current.source} returns the connection that's currently being read by \code{source.mvb}, so you can redirect input accordingly. To do this conveniently inside \code{read.table}, you can use \code{from.here} to read the next lines as data rather than R code.}
+\description{\code{source.mvb} works like \code{source(local=TRUE)}, except you can intersperse free-format data into your code. \code{current.source} returns the connection that's currently being read by \code{source.mvb}, so you can redirect input accordingly. To do this conveniently inside \code{read.table}, you can use \code{from.here} to read the next lines as data rather than R{} code.}
 \usage{
 source.mvb( con, envir=parent.frame(), max.n.expr=Inf, echo, prompt.echo, evaluate=TRUE)
 current.source()
@@ -17,7 +17,7 @@ from.here( EOF=as.character(NA)) # Don't use it like this!
 \item{ echo}{logical; defaults to \code{option.or.default( "verbose", FALSE)}}
 \item{ prompt.echo}{what to show before the first line of each echoed command.}
 \item{ evaluate}{TRUE if you want the text to be evaluated, rather than just parsed expression-by-expression (in which case, the last parsed statement is returned).}
-\item{ EOF}{line which terminates data block; lines afterwards will again be treated as R statements.}
+\item{ EOF}{line which terminates data block; lines afterwards will again be treated as R{} statements.}
 \item{ ...}{other args to \code{read.table}}
 }
 \details{
@@ -27,9 +27,9 @@ The sequence of operations differs from vanilla \code{source}, which parses the 
 
 \code{text.line <- readLines( con=current.source(), n=1)}
 
-then the next line in the file will be read in to \code{text.line}, and execution will continue at the following line. \code{\link{readLines.mvb}} can be used to read text whose length is not known in advance, until a terminating string is encountered; lines after the terminator, if any, will again be evaluated as R expressions by \code{source.mvb}.
+then the next line in the file will be read in to \code{text.line}, and execution will continue at the following line. \code{\link{readLines.mvb}} can be used to read text whose length is not known in advance, until a terminating string is encountered; lines after the terminator, if any, will again be evaluated as R{} expressions by \code{source.mvb}.
 
-After \code{max.n.expr} statements (i.e. syntactically complete R expressions) have been executed, \code{source.mvb} will return.
+After \code{max.n.expr} statements (i.e. syntactically complete R{} expressions) have been executed, \code{source.mvb} will return.
 
 If the connection was open when \code{source.mvb} is called, it is left open; otherwise, it is closed.
 
@@ -39,7 +39,7 @@ If you want to \code{read.table} to read an \emph{unknown} number of lines until
 
 \code{current.source()} can also be used inside a source file, to work out the source file's name. Of course, this will only work if the file is being handled by \code{source.mvb} rather than \code{source}.
 
-If you type \code{source.list} at the R command prompt, you should always see an empty list, because all \code{source.mvb} calls should have finished. However, the source list can occasionally become corrupt, i.e. containing invalid connections (I have only had this happen when debugging \code{source.mvb} and quitting before the exit code can clean up). If so, you'll get an error message on typing \code{source.list} (?an R bug?). Normally this won't matter at all. If it bothers you, try \code{source.list <<- list()}.
+If you type \code{source.list} at the R{} command prompt, you should always see an empty list, because all \code{source.mvb} calls should have finished. However, the source list can occasionally become corrupt, i.e. containing invalid connections (I have only had this happen when debugging \code{source.mvb} and quitting before the exit code can clean up). If so, you'll get an error message on typing \code{source.list} (?an R{} bug?). Normally this won't matter at all. If it bothers you, try \code{source.list <<- list()}.
 }
 \value{\code{source.mvb} returns the value of the last expression executed, but is mainly called for its side-effects of evaluating the code. \code{from.here} returns a connection, of class \code{c( "selfdeleting.file", "file", "connection")}; see \bold{Details}. \code{current.source} returns a connection.}
 \section{Limitations}{Because \code{source.mvb} relies on \code{pushBack}, \code{con=stdin()} won't work.}

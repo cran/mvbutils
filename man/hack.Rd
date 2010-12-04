@@ -2,7 +2,7 @@
 \alias{hack}
 \alias{assign.to.base}
 \title{Modify standard R functions, including tweaking their default arguments}
-\description{You probably shouldn't use these\dots \code{hack} lets you easily change the argument defaults of a function. \code{assign.to.base} replaces a function in \code{base} or \code{utils} (or any other package and its namespace) with a modified version, possibly produced by \code{hack}. Package \pkg{mvbutils} uses these two to change the default position for library attachment, etc; see the code of \code{.First.lib}.}
+\description{You probably shouldn't use these\dots{} \code{hack} lets you easily change the argument defaults of a function. \code{assign.to.base} replaces a function in \code{base} or \code{utils} (or any other package and its namespace) with a modified version, possibly produced by \code{hack}. Package \pkg{mvbutils} uses these two to change the default position for library attachment, etc; see the code of \code{.First.lib}.}
 \usage{
  hack( fun, ...)
  assign.to.base( x, what=,  where=-1, in.imports=, override.env = TRUE)

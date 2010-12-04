@@ -6,7 +6,7 @@
 local.return(...) # Don't use it like this!
 # Correct usage: return( local.return( ...))
 }
-\arguments{\item{ ...}{named and unnamed list, handled the same way as \code{return} before R 1.8, or as \code{\link{returnList}}}}
+\arguments{\item{ ...}{named and unnamed list, handled the same way as \code{return} before R{} 1.8, or as \code{\link{returnList}}}}
 \examples{
 ffin <- function( nlocal=sys.parent()) mlocal( return( local.return( a)))
 ffout <- function( a) ffin()

@@ -32,8 +32,7 @@ mvb.sys.parent                      Functions to Access the Function Call Stack
 mvbutils.operators                  Utility operators
 mvbutils.packaging.tools            How to create & maintain packages with mvbutils
 mvbutils.utils                      Miscellaneous utilities
-my.index                            Arbitrary-level retrieval from and modification of recursive objects;
-                                    possibly obsolete as of R 2.10
+my.index                            Arbitrary-level retrieval from and modification of recursive objects
 pre.install                         Update a source and/or installed package from a task package
 readLines.mvb                       Read text lines from a connection
 rm.pkg                              Remove object(s) from maintained package

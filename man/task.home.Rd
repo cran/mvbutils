@@ -10,7 +10,7 @@ task.home(fname)
 \details{
 Without any arguments, \code{task.home} returns the path of the current task. With a filename argument, the filename is interpreted as relative to the current task, and its full (non-relative) path is returned.
 
-\code{task.home} is almost obsolete in R, since the working directory tracks the current task. It is more important in the S+ version of \code{mvbutils}.
+\code{task.home} is almost obsolete in R{}, since the working directory tracks the current task. It is more important in the S+ version of \code{mvbutils}.
 }
 \examples{
 \dontrun{

@@ -1,57 +1,9 @@
-4/1/2004: minor changes to documentation, for 'foodweb' and 'README.mvbutils'. The latter is mostly concerned with ESS use.
+This file was reset in November 2009 after 4 years of neglect.
 
-6/1/2004: changed '.First.lib' so it no longer incorrectly complains about missing 'tasks' when 'tasks' is actually present but without an element named "mvbutils".
+17/11/2009: Release of major new version with package-building and package-maintenance tools
 
-6/1/2004: changed 'write.mvb.tasks' so that it *appends* the new tasks vector to the file "tasks.R". This makes it easier to retrieve old task lists that get accidentally screwed up.
+19/11/2009: Bugfix in 'patch.install' to prevent file removal
 
-18/2/2004: changed 'formalize.package' so that it puts README.xxx documentation into 00README.xxx.Rd files rather than duplicating it. 
+19/11/2009: Bugfix in '%that.dont.match%'
 
-  Also removed '.README.mvbutils' which is now superfluous (use README.mvbutils instead).
-
-  Also minor bug fix to .First.lib, allowing 'mvbutils' itself to be used as a task.
-
-7/3/2004: added 'mvb.parent.frame' to complement 'mvb.sys.parent' etc.
-
-7/2/2005: added support for lazy-loading of individual objects ("cacheing") in 'mlazy' etc.
-
-  Added support for image files that aren't just called ".Rdata"-- in particular, for "R/all.rda" files in packages, and lazy-loading databases in "R" subdirectories. The latter is pretty experimental though.
-
-  Fixed buggy 'on.exit' in 'mlocal' functions; use 'local.on.exit' instead
-  
-  Added 'make.internal.doc' and 'make.NAMESPACE' for formalizing packages
-  
-  Changed 'create.backups' to only create new backup files; made it automatic in 'Save.pos'
-  
-  Fixed various things broken by R2.0, including the flatdoc extensions to 'help' (which had stopped the entire help system working).
-  
-11/2/2005: NAMESPACEd it and removed a couple of superfluous functions.
-
-10/5/2005: Fixed a bug with 'Save' and changed the history file mechanisms.
-
-  Changed the default in 'option.or.default' to NULL.
-  
-  Fixed some bugs wrto operators in 'formalize.package', plus some doco infelicities.
-
-1/7/2005: Allow relative paths in task directories, of the form ./subtask
-
-  Fixed semibug where user changes task directory name outside R, then tries to 'cd' to it.
-  
-26/7/2005: 'fixr' etc now cope with text objects (stored as character vectors) as well as functions.
-
-6/8/2005: fixed bug in 'FF' whereby the end of the source code would be lost from functions whose syntax is "accidentally" complete .
-
-15/8/2005: 'cd' now does not change the old .Rdata file at all unless necessary; this reduces overhead when trying to keep multiple machines in synch. Further, objects '.Random.seed', '.Traceback', and 'last.warning' are automatically 'mlazy'ed on 'cd'. This *DOES* mean that the .Rdata file is *NO LONGER* guaranteed to contain *all* the objects in a workspace even if the user hasn't directly called 'mlazy'. To transfer all the objects, you need to copy all the "obj{n}.rda" files as well as .Rdata.
-
-9/9/2005: fixed bug in replacement 'help' that was screwing up 'help.search' on MACs with AQUA.
-
-13/9/2005: altered 'formalize.package' to handle "blah-package" documentation and "changes.txt" object or file.
-
-2/11/2005: base 'save.image' now overwritten by default, to call 'Save' instead. This ensures that quitting via 'q()' works OK. 'Save' will not be called if 'save.image' is invoked with non-standard parameters.
-
-13/12/2005: 'foodweb' now works with 'where=<<environment>>', e.g. 'where=asNamespace( "stats")' (changed 'called.by' too)
-
-14/12/2005: 'mlazy' now by default saves cached objects into a subdirectory called "mlazy". Also, you can now 'mlazy' an object called "x" or "mc"-- formerly, these two names (only) would not have worked.
-
-  Bug fix in 'formalize.package'-- no longer creates "internal" documentation for '.First.lib', '.onLoad', or '.onAttach'.
-  
-  The seemingly alarming warning "MVBUTILS-- no 'tasks' vector found in ROOT", encountered when 'mvbutils' is loaded in a context without the 'cd' system in place, has been removed.
+19/11/2009: Changed '%that.match%' and '%that.dont.match%' to balk if 0-length patterns are used (like 'grep')

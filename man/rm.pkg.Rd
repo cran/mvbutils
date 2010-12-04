@@ -11,7 +11,7 @@ remove.from.package( ...) # really has same args as 'rm.pkg'
 \arguments{
 \item{ pkg}{(string, or environment) package name or environment, e.g. \code{..mypack}}
 \item{ ...}{unquoted object names to remove}
-\item{ list}{character vector alternative to \dots, which is ignored if \code{list} is set}
+\item{ list}{character vector alternative to \dots{}, which is ignored if \code{list} is set}
 }
 \details{For now, methods are only removed from the \bold{base} S3 methods table; if new S3 generics have been defined in loaded packages, and you are trying to remove a method for such a generic, then it won't be removed. I could implement this feature if anyone really wants it.}
 \seealso{\code{\link{maintain.packages}}}

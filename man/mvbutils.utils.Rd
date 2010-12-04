@@ -8,6 +8,7 @@
 \alias{exists.mvb}
 \alias{expanded.call}
 \alias{find.funs}
+\alias{find.lurking.envs}
 \alias{index}
 \alias{is.dir}
 \alias{legal.filename}
@@ -38,6 +39,7 @@ empty.data.frame( ...)
 exists.mvb( x, pos = -1, envir = pos.to.env(pos), frame, mode = "any", inherits = FALSE)
 expanded.call( nlocal=sys.parent())
 find.funs(pos=1, ..., exclude.mcache = TRUE, mode="function")
+find.lurking.envs(obj, trace = FALSE)
 index( lvector)
 is.dir( dir)
 legal.filename( name)
@@ -58,7 +60,7 @@ safe.rbind( df1, df2)
 to.regexpr( x)
 yes.no( prompt, default)
 }
-\arguments{\item{ x, y, n, ..., exclude.mcache, nlocal, lvector, dir, name, pos, envir, frame, mode, inherits, dirlist, opt.name, default, substrs, mainstrs, any.case, names.for.output, df1, df2, prompt}{see "Arguments by function"}}
+\arguments{\item{ x, y, n, ..., exclude.mcache, nlocal, lvector, dir, name, pos, envir, frame, mode, inherits, dirlist, opt.name, default, substrs, mainstrs, any.case, names.for.output, df1, df2, prompt,  obj, trace}{see "Arguments by function"}}
 \details{
 \code{as.cat} makes a character vector print as if it was \code{cat}ted rather than \code{print}ed.
 
@@ -72,9 +74,13 @@ yes.no( prompt, default)
 
 \code{exists.mvb} is pretty much like \code{exists} but has a \code{pos} rather than a \code{where} argument.
 
+\code{expanded.call} returns the full argument list available to its caller, including defaults where arguments were not set explicitly. The arguments may not be those originally passed, if they were modified before the invocation of \code{expanded.call}. Default arguments which depend on calculations after the invocation of \code{expanded.call} will lead to an error.
+
 \code{find.funs} finds "function" objects (or objects of other modes, via the "mode" arg) in one or more environments, optionally matching a pattern.
 
-\code{expanded.call} returns the full argument list available to its caller, including defaults where arguments were not set explicitly. The arguments may not be those originally passed, if they were modified before the invocation of \code{expanded.call}. Default arguments which depend on calculations after the invocation of \code{expanded.call} will lead to an error.
+\code{find.lurking.envs( myobj)} will search through \code{myobj} and all its attributes, returning the size of each sub-object. The search is completely recursive, except for environments. The size of environments is returned as Inf. Multiple references to the same environment are shown as just one environment.
+
+\code{find.lurking.envs} can be very useful for working out e.g. why the result of a model-fitting function is taking up 1000000MB of disk space; sometimes this is due to unnecessary environments in well-concealed places.
 
 \code{index} returns the position(s) of TRUE elements. Unlike \code{which}: attributes are lost; NA elements map to NAs; \code{index(<<length 0 object>>)} is \code{numeric(0)}; \code{index( <<non-logical>>)} is NA.
 
@@ -96,13 +102,13 @@ yes.no( prompt, default)
 
 \code{option.or.default} returns the named option value if it exists, otherwise the supplied default. Obsolete in R2.10; use \code{getOption( ..., default=...)} instead.
 
-\code{pos} is probably to be eschewed in new code, in favour of \code{gregexpr} with \code{fixed=TRUE}, which is likely faster. (And I should rewrite it to use \code{gregexpr}.) It's one of a few legacy functions in \code{mvbutils} that pre-date improvements in base R. \code{pos} will either search for several literal patterns in a single target, or vice versa- not both. It returns a matrix showing the positions of the matching substrings, with as many columns as the maximum number of matches. 0 signifies "no match"; there is always at least one column even if there are no matches at all.
+\code{pos} is probably to be eschewed in new code, in favour of \code{gregexpr} with \code{fixed=TRUE}, which is likely faster. (And I should rewrite it to use \code{gregexpr}.) It's one of a few legacy functions in \code{mvbutils} that pre-date improvements in base R{}. \code{pos} will either search for several literal patterns in a single target, or vice versa- not both. It returns a matrix showing the positions of the matching substrings, with as many columns as the maximum number of matches. 0 signifies "no match"; there is always at least one column even if there are no matches at all.
 
 \code{print}: if \code{class(x)=="cat"}, the character vector \code{x} will be \code{print}ed by \code{cat(x,sep="\\n")}. If \code{class(x)=="nullprint"}, then \code{print(x)} will not print anything.
 
 \code{returnList} returns a list corresponding to old-style (pre-R 1.8) \code{return} syntax. Briefly: a single argument is returned as itself. Multiple arguments are returned in a list. The names of that list are the argument names if provided; or, for any unnamed argument that is just a symbolic name, that symbolic name; or no name at all, for other unnamed arguments. You can duplicate pre-1.8 behaviour of \code{return(...)} via \code{return(returnList(...))}.
 
-\code{safe.rbind} mimics \code{rbind}, but works round an R bug (I reckon) where a column appears to be a numeric in one \code{data.frame} but a factor in the other.
+\code{safe.rbind} mimics \code{rbind}, but works round an R{} bug (I reckon) where a column appears to be a numeric in one \code{data.frame} but a factor in the other.
 
 \code{to.regexpr} converts literal strings to their equivalent regexps, e.g. by doubling backslashes. Useful if you want "fixed=TRUE" to apply only to a portion of your regexp.
 
@@ -115,6 +121,7 @@ yes.no( prompt, default)
 \item{  empty.data.frame}{\code{data.frame}}
 \item{  expanded.call}{a \code{call} object}
 \item{  find.funs}{a character vector of function names}
+\item{  find.lurking.envs}{a \code{data.frame} with columns "what" and "size"}
 \item{  is.dir}{logical vector}
 \item{  is.nonzero}{TRUE or FALSE}
 \item{  legal.filename}{character( 1)}
@@ -134,19 +141,21 @@ yes.no( prompt, default)
 \item{as.cat}{x: character vector that you want to be displayed via \code{cat( x, sep="\\n")}}
 \item{clip}{x: a vector or list}
 \item{clip n}{integer saying how many elements to clip from the end of \code{x}}
-\item{cq \dots}{quoted or unquoted character strings, to be \code{substitute}d and then concatenated}
+\item{cq \dots{}}{quoted or unquoted character strings, to be \code{substitute}d and then concatenated}
 \item{deparse.names.parsably x}{any object for \code{deparse}- \code{name} objects treated specially}
-\item{empty.data.frame \dots}{named length-1 vectors of appropriate mode, e.g. "first.col=''"}
+\item{empty.data.frame \dots{}}{named length-1 vectors of appropriate mode, e.g. "first.col=''"}
 \item{exists.mvb x}{string, pos = integer, envir = environment, frame = frame number, mode & inherits as for \code{exists}}
 \item{expanded.call nlocal}{frame to retrieve arguments from. Normally, use the default; see \code{\link{mlocal}}.}
-\item{find.funs \dots}{extra arguments for \code{objects}. Usually just "pattern" for regexp searches.}
+\item{find.funs \dots{}}{extra arguments for \code{objects}. Usually just "pattern" for regexp searches.}
 \item{find.funs exclude.mcache}{if TRUE (default), don't look at \code{\link{mlazy}} objects}
 \item{find.funs mode}{"function" to look for functions, "environment" to look for environments, etc}
 \item{index lvector}{vector of TRUE/FALSE/NA}
 \item{is.dir dir}{character vector of files to check existence and directoriness of.}
 \item{legal.filename name}{character string to be modified}
 \item{find.funs pos}{list of environments, or vector of char or numeric positions in search path.}
-\item{lsall \dots}{as for \code{ls}, except that \code{all.names} will be coerced to TRUE}
+\item{find.lurking envs obj}{what to look in}
+\item{find.lurking envs trace}{leave as FALSE unless debugging}
+\item{lsall \dots{}}{as for \code{ls}, except that \code{all.names} will be coerced to TRUE}
 \item{masking, masked pos}{position in search path}
 \item{mkdir dirlist}{character vector of directories to create}
 \item{my.all.equal x, y}{anything}
@@ -158,9 +167,9 @@ yes.no( prompt, default)
 \item{pos any.case}{logical- ignore case?}
 \item{pos names.for.output}{character vector to label rows of output matrix; optional}
 \item{print.cat, print.nullprint x}{thing to print}
-\item{print.cat, print.nullprint \dots}{args for \code{print} (ignored)}
-\item{put.in.session \dots}{a named set of objects, to be \code{assign}ed into the \code{mvb.session.info} search environment}
-\item{returnList \dots}{named or un-named arguments, just as for \code{return} before R 1.8.}
+\item{print.cat, print.nullprint \dots{}}{args for \code{print} (ignored)}
+\item{put.in.session \dots{}}{a named set of objects, to be \code{assign}ed into the \code{mvb.session.info} search environment}
+\item{returnList \dots{}}{named or un-named arguments, just as for \code{return} before R{} 1.8.}
 \item{safe.rbind df1, df2}{\code{data.frame} or \code{list}}
 \item{to.regexpr x}{character vector}
 \item{yes.no prompt}{string to put before asking for input}
@@ -176,6 +185,12 @@ empty.data.frame( a=1, b="yes")
 # "b" (a factor with levels ""yes"")
 f <- function( a=9, b) expanded.call(); f( 3, 4) # list( a=3, b=4)
 find.funs( "package:base", patt="an") # "transform" etc.
+find.lurking.envs( cd)
+#                                     what  size
+#1                     attr(obj, "source")  5368
+#2                                     obj 49556
+#3 environment(obj) <: namespace:mvbutils>   Inf
+eapply( .GlobalEnv, find.lurking.envs)
 is.dir( getwd()) # TRUE
 legal.filename( "a:b\\\\c/d&f") # "a.b.c.d&f"
 sapply( named( cq( alpha, beta)), nchar)  # c( alpha=5, beta=4)

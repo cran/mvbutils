@@ -13,7 +13,7 @@ extract.named( l, to=parent.frame())
 \examples{
 ff <- function(...) \{ extract.named( list(...)); print( ls()); bbb \}
 # note bbb is not "declared"
-ff( bbb=6, ccc=9) # prints [1] "..." "bbb" "ccc", returns 6
+ff( bbb=6, ccc=9) # prints [1] "bbb" "ccc", returns 6
 }
 \author{Mark Bravington}
 \keyword{programming}

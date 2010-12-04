@@ -5,7 +5,7 @@
 \alias{FF}
 \alias{autoedit}
 \title{Editing functions}
-\description{\code{fixr} opens a function, (or text object, or general object) in your preferred text editor. Control returns immediately to the R command line, so you can keep working in R and can be editing several functions/objects simultaneously (cf \code{edit}). A session-duration list of objects being edited is maintained, so that each object can be easily sourced back into its rightful workspace. These objects will be updated automatically on file-change if you've run \code{autoedit( TRUE)}, or manually by calling \code{FF()}. There is an optional automatic text backup facility. \code{readr} also opens a file in your text editor, but in read-only mode, and doesn't update the backups or the list of objects being edited. \code{fixtext} is a shorthand form for forcing creation of a text object rather than the default of a function. For non-function and non-text objects, see separate section below.}
+\description{\code{fixr} opens a function, (or text object, or general object) in your preferred text editor. Control returns immediately to the R{} command line, so you can keep working in R{} and can be editing several functions/objects simultaneously (cf \code{edit}). A session-duration list of objects being edited is maintained, so that each object can be easily sourced back into its rightful workspace. These objects will be updated automatically on file-change if you've run \code{autoedit( TRUE)}, or manually by calling \code{FF()}. There is an optional automatic text backup facility. \code{readr} also opens a file in your text editor, but in read-only mode, and doesn't update the backups or the list of objects being edited. \code{fixtext} is a shorthand form for forcing creation of a text object rather than the default of a function. For non-function and non-text objects, see separate section below.}
 \usage{
   # Usually: fixr( x) or fixr( x, new.doc=T)
   fixr( x, new=FALSE, install=FALSE, what, fixing, pkg=NULL, character.only=FALSE, new.doc=FALSE)
@@ -36,7 +36,7 @@ Originally, \code{fixr} was only for functions, and not even for functions in pa
 \details{
 When \code{fixr} is run for the first time (or if you set \code{install=TRUE}), it will ask you for some basic information about your text editor. In particular, you'll need to know what to type at a command prompt to invoke your text editor on a specific file; in Windows, you can usually find this by copying the Properties/Shortcut/Target field of a shortcut, followed by a space and the filename. After supplying these details, \code{fixr} will launch the editor and print a message showing some \code{options} (\code{"backup.fix"}, \code{"edit.scratchdir"} and \code{"program.editor"}), that will need to be set in your \code{.First}. function. You should now be able to do that via \code{fixr(.First)}.
 
-Changes to the temporary files used for editing can be checked for automatically whenever a valid R command is typed (e.g. by typing 0<ENTER>; <ENTER> alone doesn't work). To set this up, call \code{autoedit()} once per session, e.g. in your \code{.First}. The manual version of this is \code{FF()}. If any file changes are detected, the code is sourced back in and the appropriate function(s) are modified. \code{FF} tries to write functions back into the workspace they came from, which might not be \code{.GlobalEnv}. If not, you'll be asked whether you want to \code{save.image} that workspace (provided it's a task-- see \code{\link{cd}}). \code{FF} should still put the function in the right place, even if you've called \code{\link{cd}} after calling \code{fixr} (unless you've detached the original task) or if you \code{\link{move}}d it.
+Changes to the temporary files used for editing can be checked for automatically whenever a valid R{} command is typed (e.g. by typing 0<ENTER>; <ENTER> alone doesn't work). To set this up, call \code{autoedit()} once per session, e.g. in your \code{.First}. The manual version of this is \code{FF()}. If any file changes are detected, the code is sourced back in and the appropriate function(s) are modified. \code{FF} tries to write functions back into the workspace they came from, which might not be \code{.GlobalEnv}. If not, you'll be asked whether you want to \code{save.image} that workspace (provided it's a task-- see \code{\link{cd}}). \code{FF} should still put the function in the right place, even if you've called \code{\link{cd}} after calling \code{fixr} (unless you've detached the original task) or if you \code{\link{move}}d it.
 
 \code{readr} requires a similar installation process. To get the read-only feature, you'll need to add some kind of option/switch on the command line that invokes your text editor; not all text editors support this feature. Similarly to \code{fixr}, you'll need to set \code{options( program.reader=<<something>>)} in your \code{.First}; the installation process will tell you what to use.
 
@@ -56,12 +56,12 @@ If the function was being \code{mtrace}d (see \code{help(package=debug)}), \code
 
 If there is a problem with parsing, the \code{source} attribute of the function is updated to the new code, but the function body is invisibly replaced with a \code{stop} call, stating that parsing failed.
 
-The list of functions being edited by \code{fixr} is stored in the variable \code{fix.list} in the \code{mvb.session.info} environment. When you quit and restart R, the function files you have been using will stay open in the editor, but \code{fix.list} will be empty; hence, updating the file "myfun.r" will not update the corresponding R function. If this happens, just type \code{fixr(myfun)} in R and when your editor asks you if you want to replace the on-screen version, say no. Save the file again (some editors require a token modification, such as space-then-delete, first) and R will notice the update.
+The list of functions being edited by \code{fixr} is stored in the variable \code{fix.list} in the \code{mvb.session.info} environment. When you quit and restart R{}, the function files you have been using will stay open in the editor, but \code{fix.list} will be empty; hence, updating the file "myfun.r" will not update the corresponding R{} function. If this happens, just type \code{fixr(myfun)} in R{} and when your editor asks you if you want to replace the on-screen version, say no. Save the file again (some editors require a token modification, such as space-then-delete, first) and R{} will notice the update.
 
 An automatic text backup facility is available from \code{fixr}: see \code{?get.backup}. The backup system also allows you to sort functions by edit date; see \code{?fix.order}. Backup currently only works for functions and character objects.
 }
 \section{Things that are not functions and not character vectors}{
-\code{fixr} can edit general objects, within reason; more precisely, it can edit the R code that generates them. Some useful examples are:
+\code{fixr} can edit general objects, within reason; more precisely, it can edit the R{} code that generates them. Some useful examples are:
 
 \itemize{
 \item expressions for complicated calls with particular datasets to model-fitting functions such as \code{glm};
@@ -77,7 +77,7 @@ fixr( myobj)
 %#
 }
 
-Note that you are writing R code in the text editor, and it will be executed immediately when it is sourced back in (by \code{\link{source.mvb}}). If you just want to set up a delayed function call, for example, be sure to wrap it in \code{expression()} or \code{quote()} to avoid immediate evaluation.
+Note that you are writing R{} code in the text editor, and it will be executed immediately when it is sourced back in (by \code{\link{source.mvb}}). If you just want to set up a delayed function call, for example, be sure to wrap it in \code{expression()} or \code{quote()} to avoid immediate evaluation.
 }
 \seealso{\code{.First}, \code{edit}, \code{\link{cd}}, \code{\link{get.backup}}, \code{\link{fix.order}}, \code{\link{move}}}
 \keyword{utilities}

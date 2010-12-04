@@ -1,7 +1,7 @@
 \name{doc2Rd}
 \alias{doc2Rd}
 \title{Converts plain-text documentation to Rd format}
-\description{Converts plain-text documentation into an Rd-format character vector, optionally writing it to a file. You probably won't need to call \code{doc2Rd} yourself, because \code{\link{pre.install}} and \code{\link{patch.install}} do it for you when you are building a package; the entire documentation of package \pkg{mvbutils} was produced this way. The main point of this helpfile is to describe plain-text documentation details. However, rather than wading through all the material below, just have a look at a couple of R's help screens in the pager (i.e. text-style help, not HTML help) and try making one yourself. See \code{\link{fixr}} for how to set up an empty template.}
+\description{Converts plain-text documentation into an Rd-format character vector, optionally writing it to a file. You probably won't need to call \code{doc2Rd} yourself, because \code{\link{pre.install}} and \code{\link{patch.install}} do it for you when you are building a package; the entire documentation of package \pkg{mvbutils} was produced this way. The main point of this helpfile is to describe plain-text documentation details. However, rather than wading through all the material below, just have a look at a couple of R{}'s help screens in the pager (i.e. text-style help, not HTML help) and try making one yourself. See \code{\link{fixr}} for how to set up an empty template.}
 \usage{
 doc2Rd( text, file=NULL, append=, warnings.on=TRUE, Rd.version=, def.valids=NULL, check.legality=TRUE)
 }
@@ -10,15 +10,15 @@ doc2Rd( text, file=NULL, append=, warnings.on=TRUE, Rd.version=, def.valids=NULL
 \item{ file}{(string or connection) if non-NULL, write the output to this file}
 \item{ append}{(logical) only applies if \code{!is.null(file)}; should output be appended rather than overwriting?}
 \item{ warnings.on}{(logical) ?display warnings about apparently informal documentation?}
-\item{ Rd.version}{(character) what Rdoc version to create "man" files in? Currently "1" means pre-R2.10, "2" means R2.10 and up. Default is set according to what version of R is running.}
+\item{ Rd.version}{(character) what Rdoc version to create "man" files in? Currently "1" means pre-R2.10, "2" means R2.10 and up. Default is set according to what version of R{} is running.}
 \item{ def.valids}{(character) objects or helpfiles for which links should be generated automatically. When \code{doc2Rd} is being called from \code{pre.install}, this will be set to all documented objects in your package. Cross-links to functions in other packages are not currently generated automatically (in fact not at all, yet).}
 \item{ check.legality}{if TRUE and \code{Rd.version} is 2 or more, then the output Rd will be run thru \code{parse_Rd} and a \code{try-error} will be returned if that fails; normal return otherwise. Not applicable if \code{Rd.version} is 1.}
 }
 \value{Character vector containing the text as it would appear in an Rd file, with \code{class} of "cat" so it prints nicely on the screen.}
 \details{
-Flat-format (plain-text) documentation in \code{doc} attributes can be displayed by the replacement \code{help} in \code{mvbutils} (see \code{\link{dochelp}}) without any further ado. This is very useful while developing code before the package-creation stage, and you can write such documentation any way you want. When you want to generate a package, \code{doc2Rd} will convert pretty much anything into a legal Rd file. However, if you can follow a very few rules, using \code{doc2Rd} will actually give nice-looking authentic R help. For this to work, your documentation basically needs to look like a plain-text help file, as displayed by \code{help( ..., pager=T)} (pre-2.10) or \code{help(..., help_type="text")} (post-2.10).
+Flat-format (plain-text) documentation in \code{doc} attributes can be displayed by the replacement \code{help} in \code{mvbutils} (see \code{\link{dochelp}}) without any further ado. This is very useful while developing code before the package-creation stage, and you can write such documentation any way you want. When you want to generate a package, \code{doc2Rd} will convert pretty much anything into a legal Rd file. However, if you can follow a very few rules, using \code{doc2Rd} will actually give nice-looking authentic R{} help. For this to work, your documentation basically needs to look like a plain-text help file, as displayed by \code{help( ..., pager=T)} (pre-2.10) or \code{help(..., help_type="text")} (post-2.10).
 
-Rather than wading through this help file to work out how to write plain-text help, just have a look at a couple of R's help screens in the pager (i.e. not HTML help) and try making one yourself. You can also use \code{\link{help2flatdoc}} to convert an existing plain-text help file. Also check the file "sample.fun.rrr" in the "demostuff" subdirectory of this package (see \bold{Examples}). If something doesn't work, delve more deeply\dots
+Rather than wading through this help file to work out how to write plain-text help, just have a look at a couple of R{}'s help screens in the pager (i.e. not HTML help) and try making one yourself. You can also use \code{\link{help2flatdoc}} to convert an existing plain-text help file. Also check the file "sample.fun.rrr" in the "demostuff" subdirectory of this package (see \bold{Examples}). If something doesn't work, delve more deeply\dots{}
 
 \itemize{
 \item There are no "escape characters"-- the system is "text WYSIWYG". For example, if you type a \\ character in your doc, \code{help} will display a \\ in that spot. Single quotes and percent signs can have special implications, though-- see below.
@@ -26,7 +26,7 @@ Rather than wading through this help file to work out how to write plain-text he
 \item "Item lists", such as in the ARGUMENTS section and sometimes the VALUE section (and sometimes other sections), should be indented. and have a colon to separate the item name from the item body.
 \item General lists of items, like this bullet-point list, should be indented and should start with a "-" character, followed by a space.
 \item Your spacing is generally ignored (exceptions: USAGE, EXAMPLES, multi-line code blocks; see previous point). Text is wrapped, so you should write paragraphs as single lines without hard line breaks. Use blank lines generously, to make your life easier; also, they will help readability of informal helpfiles.
-\item To mark \emph{in-line} code fragments (including variable names, package names, etc-- basically things that R could parse), put them in single quotes. Hence you \bold{can't} use single quotes \bold{within} in-line code fragments.
+\item To mark \emph{in-line} code fragments (including variable names, package names, etc-- basically things that R{} could parse), put them in single quotes. Hence you \bold{can't} use single quotes \bold{within} in-line code fragments.
 }
 
 #ifdef flub 
@@ -49,7 +49,7 @@ An example of what you couldn't include:
 \section{Special fields}{
 Almost anything between a pair of single quotes will be put into a \\code\{\} or \\code\{\\link\{\}\} or \\pkg\{\} or \\env\{\} construct, and the quotes will be removed. A link will be used if the thing between the quotes is a one-word name of something documented in your package (assuming \code{doc2Rd} is being called from \code{\link{pre.install}}). A link will also be used in all cases of the form "See XXX" or "see XXX" or "XXX (qv)", where XXX is in single quotes, and any " (qv)" will be removed. With "[pP]ackage XXX" and "XXX package", a \\pkg\{\} construct will be used. References to \code{.GlobalEnv} and \code{.BaseNamespaceEnv} go into \\env\{\} constructs. Otherwise, a \\code\{\} construct will be used, unless the following exceptions apply. The first exception is if the quotes are inside USAGE, EXAMPLES, or a multi-line code block. The second is if the first quote is preceded by anything other than " ", "(" or "-". The final semi-exception is that a few special cases are put into other constructs, as next.
 
-URLs and email addresses should be enclosed in <\dots>; they are auto-detected and put into \\url\{\} and \\email\{\} constructs respectively.
+URLs and email addresses should be enclosed in <\dots{}>; they are auto-detected and put into \\url\{\} and \\email\{\} constructs respectively.
 
 Lines that start with a \% will have the \% removed before conversion, so their contents will be passed to RCMD Rdconv later (unless you start the line with \%\%). They aren't displayed by \code{\link{dochelp}}, though, so can be used to hide an unhelpful USAGE, say, or to hide an "#ifdef windows".
 
@@ -93,7 +93,7 @@ In KEYWORDS, separate the keywords with commas, semicolons, or line breaks; don'
 
  \bold{Q:} For some reason I want to see one thing in informal help (i.e. when the package isn't actually loaded but just sitting in a task on the search path), but a different thing in formal help. Can I do that?
 
- \bold{A:} If you must. Use the \%-line mechanism for the formal help version, and then insert a line "\%#ifdef flub" before the informal version, and a line "\%#endif" after it. Your text version will show up in informal help, and your fancy version will show up in all help produced via Rd. (Anyone using the "flub" operating system will see both versions\dots)
+ \bold{A:} If you must. Use the \%-line mechanism for the formal help version, and then insert a line "\%#ifdef flub" before the informal version, and a line "\%#endif" after it. Your text version will show up in informal help, and your fancy version will show up in all help produced via Rd. (Anyone using the "flub" operating system will see both versions\dots{})
 
  \bold{Q:} How can I insert a file/kbd/samp/option/acronym etc tag?
 
@@ -109,7 +109,7 @@ In KEYWORDS, separate the keywords with commas, semicolons, or line breaks; don'
 
  \bold{Q:} What about S4?
 
- \bold{A:} I am not a fan of S4 and have found no need for it in many 1000s of lines of R code\dots hence I haven't included any explicit support for it so far. Nevertheless, things might well work anyway, unless special Rd constructs are needed. If \code{doc2Rd} \emph{doesn't} work for your S4 stuff (bear in mind that the \%-line mechanism may help), then for now you'll still have to write S4 Rd files yourself; see \code{\link{pre.install}} for where to put them. However, if anyone would like the flatdoc facility for S4 and is willing to help out, I'm happy to try to add support.
+ \bold{A:} I am not a fan of S4 and have found no need for it in many 1000s of lines of R{} code\dots{} hence I haven't included any explicit support for it so far. Nevertheless, things might well work anyway, unless special Rd constructs are needed. If \code{doc2Rd} \emph{doesn't} work for your S4 stuff (bear in mind that the \%-line mechanism may help), then for now you'll still have to write S4 Rd files yourself; see \code{\link{pre.install}} for where to put them. However, if anyone would like the flatdoc facility for S4 and is willing to help out, I'm happy to try to add support.
 }
 \author{Mark Bravington}
 \seealso{

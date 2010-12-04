@@ -1,7 +1,7 @@
 \name{help2flatdoc}
 \alias{help2flatdoc}
 \title{Convert help files to flatdoc format.}
-\description{Converts a vanilla R help file (as shown in the internal pager) to plain-text format. The output conventions are those in \code{\link{doc2Rd}}, so the output can be turned into Rd-format by running it through \code{\link{doc2Rd}}. This function is useful if you have existing Rd-format documentation and want to try out the \code{\link{flatdoc}} system of integrated code and documentation.}
+\description{Converts a vanilla R{} help file (as shown in the internal pager) to plain-text format. The output conventions are those in \code{\link{doc2Rd}}, so the output can be turned into Rd-format by running it through \code{\link{doc2Rd}}. This function is useful if you have existing Rd-format documentation and want to try out the \code{\link{flatdoc}} system of integrated code and documentation.}
 \usage{
 help2flatdoc( fun.name, pkg=NULL, text=NULL)
 }

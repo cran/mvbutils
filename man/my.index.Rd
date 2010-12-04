@@ -2,8 +2,8 @@
 \alias{my.index}
 \alias{my.index.assign}
 \alias{my.index.exists}
-\title{Arbitrary-level retrieval from and modification of recursive objects; possibly obsolete as of R 2.10}
-\description{\code{my.index} and \code{my.index.assign} are designed to replace \code{[[} and \code{[[<-} \bold{within} a function, to allow arbitrary-depth access into any recursive object. In order to avoid conflicts with system usage and/or slowdowns, it may be wise to do this only inside a function definition where they are needed. \code{my.index.exists} tests whether the indexed element actually exists.}
+\title{Arbitrary-level retrieval from and modification of recursive objects}
+\description{\code{my.index} and \code{my.index.assign} are designed to replace \code{[[} and \code{[[<-} \bold{within} a function, to allow arbitrary-depth access into any recursive object. In order to avoid conflicts with system usage and/or slowdowns, it may be wise to do this only inside a function definition where they are needed. \code{my.index.exists} tests whether the indexed element actually exists. Note that these functions were written in 2001; since then, base-R has extended the default behaviour of \code{[[} etc for recursive objects, so that \code{my.index( thing, 1, 3, 5)} can sometimes be achieved just by to \code{thing[[c(1,3,5)]]} with the system version of \code{[[}. However, at least as of R{} 2.10.1, the system versions still have limited "recursability".}
 \usage{
 # Use them like this, inside a function definition:
 # assign( "[[", my.index); var[[i]]
@@ -19,9 +19,9 @@ my.index.exists( i, var)
 \item{ i}{numeric index vector}
 }
 \details{
-Although R allows arbitrary-level access to lists, this does not (yet) extend to \code{call} objects or certain other language objects-- hence these functions. They are written entirely in R, and are probably very slow as a result. It is probably \bold{unwise} to replace system \code{[[} and \code{[[<-} with these replacements at a global level, i.e. outside the body of a function-- these replacements do not dispatch based on object class, for example.
+Although R{} allows arbitrary-level access to lists, this does not (yet) extend to \code{call} objects or certain other language objects-- hence these functions. They are written entirely in R{}, and are probably very slow as a result. It is \bold{unwise} to replace system \code{[[} and \code{[[<-} with these replacements at a global level, i.e. outside the body of a function-- these replacements do not dispatch based on object class, for example.
 
-Note that \code{my.index} and \code{my.index.assign} distort strict R syntax, by concatenating their \code{...} arguments before lookup. Strictly speaking, R says that \code{x[[2,1]]} should extract one element from a matrix list; however, this doesn't really seem useful because the same result can always be achieved by \code{x[2,1][[1]]}. With \code{my.index}, \code{x[[2,1]]} is the same as \code{x[[c(2,1)]]}. The convenience of automatic concatentation seems slightly preferable.
+Note that \code{my.index} and \code{my.index.assign} distort strict R{} syntax, by concatenating their \code{...} arguments before lookup. Strictly speaking, R{} says that \code{x[[2,1]]} should extract one element from a matrix list; however, this doesn't really seem useful because the same result can always be achieved by \code{x[2,1][[1]]}. With \code{my.index}, \code{x[[2,1]]} is the same as \code{x[[c(2,1)]]}. The convenience of automatic concatentation seemed slightly preferable (at least when I wrote these, in 2001).
 
 \code{my.index.exists} checks whether \code{var} is "deep enough" for \code{var[[i]]} to work. Unlike the others, it does not automatically concatenate indices.
 
