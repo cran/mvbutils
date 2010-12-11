@@ -25,7 +25,7 @@ If \code{move} finds an object with the same name in the destination, you will b
 
 By default, \code{move} will delete the original object after it has safely arrived in its destination. It's normally only necessary (and more helpful) to have just one instance of an object; after all, if it needs to be accessed by several different tasks, you can just \code{move} it to an ancestral task. However, if you really do want a duplicate, you can avoid deletion of the original by setting \code{copy=TRUE}.
 
-You will be prompted for whether to \code{save} the source and destination tasks, if they are attached somewhere, but not in position 1. Normally this is a good idea, but you can always say no, and call \code{save.pos} or \code{Save.pos} later. If the source and/or destination are not attached, they will of course be \code{save}d automatically. The top workspace (i.e. current task) \code{.GlobalEnv} is never saved automatically; you have to call \code{save.image} or \code{Save} yourself.
+You will be prompted for whether to \code{save} the source and destination tasks, if they are attached somewhere, but not in position 1. Normally this is a good idea, but you can always say no, and call \code{save.pos} or \code{\link{Save.pos}} later. If the source and/or destination are not attached, they will of course be \code{save}d automatically. The top workspace (i.e. current task) \code{.GlobalEnv} is never saved automatically; you have to call \code{save.image} or \code{\link{Save}} yourself.
 
 \code{move} is not meant to be called within other functions.
 }

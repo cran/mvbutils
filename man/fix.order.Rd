@@ -1,7 +1,7 @@
 \name{fix.order}
 \alias{fix.order}
 \title{Shows functions sorted by date of edit}
-\description{\code{fix.order} sorts the functions according to the filedates of their backups (in the .Backup.mvb directory). This is very useful for reminding yourself what you were working on recently. It only works if functions have been edited using the \code{fixr} system.}
+\description{\code{fix.order} sorts the functions according to the filedates of their backups (in the .Backup.mvb directory). This is very useful for reminding yourself what you were working on recently. It only works if functions have been edited using the \code{\link{fixr}} system.}
 \usage{
 fix.order( env=1)
 }

@@ -13,9 +13,11 @@ export( "%!in%",
 "%such.that%",
 "%SUCH.THAT%",
 "%that.are.in%",
+"%that.dont.match%",
 "%that.match%",
 "%upto%",
 "%where%",
+"%where.warn%",
 "%without.name%",
 "add.flatdoc.to",
 "as.cat",
@@ -23,7 +25,6 @@ export( "%!in%",
 "assign.to.base",
 "attach.mlazy",
 "autoedit",
-"autoFF",
 "callees.of",
 "callers.of",
 "cd",
@@ -43,7 +44,6 @@ export( "%!in%",
 "do.in.envir",
 "doc2Rd",
 "dochelp",
-"docskel",
 "dont.lock.me",
 "dont.lockBindings",
 "empty.data.frame",
@@ -83,6 +83,8 @@ export( "%!in%",
 "masking",
 "massrep",
 "mcachees",
+"mcut",
+"mintcut",
 "Minutes",
 "mkdir",
 "mlazy",
@@ -105,6 +107,7 @@ export( "%!in%",
 "my.index.exists",
 "named",
 "option.or.default",
+"patch.install",
 "patch.installed",
 "pos",
 "pre.install",
@@ -127,12 +130,13 @@ export( "%!in%",
 "strip.missing",
 "task.home",
 "to.regexpr",
-"unmaintain.packages",
+"unpackage",
 "write.NAMESPACE",
 "write.sourceable.function",
-"yes.no",
-".Last.lib"
+"yes.no"
 )
+import( utils)
+import( tools)
 S3method( print, cat)
 S3method( print, cdtree)
 S3method( print, docattr)
@@ -140,6 +144,4 @@ S3method( print, nullprint)
 S3method( print, pagertemp)
 S3method( plot, cdtree)
 S3method( plot, foodweb)
-import( utils)
-import( tools)
 

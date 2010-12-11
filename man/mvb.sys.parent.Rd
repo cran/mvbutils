@@ -44,6 +44,6 @@ ff.system( 27, b=4) # eval( expr, envir, enclos) !!!
 ff.mvb <- function(...) eval( quote( mvb.sys.call()), envir=sys.frame( sys.nframe()))
 ff.mvb( 27, b=4) # ff.mvb( 27, b=4)
 }
-\seealso{\code{\link{sys.parent}}, \code{\link{sys.nframe}}, \code{\link{parent.frame}}, \code{\link{match.call}}, \code{\link{nargs}}, \code{\link{sys.call}}, \code{\link{sys.function}}, \code{\link{sys.on.exit}}}
+\seealso{\code{sys.parent}, \code{sys.nframe}, \code{parent.frame}, \code{match.call}, \code{nargs}, \code{sys.call}, \code{sys.function}, \code{sys.on.exit}}
 \author{Mark Bravington}
 \keyword{programming}

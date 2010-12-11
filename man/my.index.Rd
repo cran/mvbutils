@@ -2,7 +2,7 @@
 \alias{my.index}
 \alias{my.index.assign}
 \alias{my.index.exists}
-\title{Arbitrary-level retrieval from and modification of recursive objects}
+\title{Arbitrary-level retrieval from and modification of recursive objects; possibly obsolete as of R 2.10}
 \description{\code{my.index} and \code{my.index.assign} are designed to replace \code{[[} and \code{[[<-} \bold{within} a function, to allow arbitrary-depth access into any recursive object. In order to avoid conflicts with system usage and/or slowdowns, it may be wise to do this only inside a function definition where they are needed. \code{my.index.exists} tests whether the indexed element actually exists.}
 \usage{
 # Use them like this, inside a function definition:

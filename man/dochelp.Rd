@@ -25,11 +25,11 @@ To work with \code{dochelp}, a \code{doc} attribute should be either:
 
 If the documentation is very informal, start it with a blank line to prevent \code{find.documented( ..., doctype="Rd")} from finding it.
 
-The file will be re-formatted to fit the pager; each paragraph should be a single element in the character vector. Elements starting with a \% will be dropped (but may still be useful for \code{doc2Rd}).
+The file will be re-formatted to fit the pager; each paragraph should be a single element in the character vector. Elements starting with a \% will be dropped (but may still be useful for \code{\link{doc2Rd}}).
 
 \code{\link{flatdoc}} offers an easy way to incorporate plain-text (flat-format) documentation-- formal or informal-- in the same text file as a function definition, allowing easy maintenance.
 }
-\seealso{\code{\link{flatdoc}}, \code{\link{doc2Rd}}, \code{\link{find.documented}}, \code{\link{strwrap}}}
+\seealso{\code{\link{flatdoc}}, \code{\link{doc2Rd}}, \code{\link{find.documented}}, \code{strwrap}}
 \examples{
 myfun <- structure( function() 1,
   doc="Here is some informal documentation for myfun\\n")

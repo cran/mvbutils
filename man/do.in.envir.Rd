@@ -16,7 +16,7 @@ do.in.envir( fbody, envir=parent.frame(2)) # Don't use it like this!
 \details{
 By default, a \code{do.in.envir} function will have, as its enclosing environment, the environment in which it was \bold{called}, rather than \bold{defined}. It can therefore read variables in its caller's frame directly (i.e. without using \code{get}), and can assign to them via \code{<<-}. It's also possible to use \code{do.in.envir} to set a completely different enclosing environment; this is exemplified by some of the functions in \code{debug}, such as \code{go}.
 
-Note the difference between \code{do.in.envir} and \code{mlocal}; \code{mlocal} functions evaluate in the frame of their caller (by default), whereas \code{do.in.envir} functions evaluate in their own frame, but have a non-standard enclosing environment defined by the \code{envir} argument.
+Note the difference between \code{do.in.envir} and \code{\link{mlocal}}; \code{\link{mlocal}} functions evaluate in the frame of their caller (by default), whereas \code{do.in.envir} functions evaluate in their own frame, but have a non-standard enclosing environment defined by the \code{envir} argument.
 
 Calls to e.g. \code{sys.nframe} won't work as expected inside \code{do.in.envir} functions. You need to offset the frame argument by 5, so that \code{sys.parent()} should be replaced by \code{sys.parent( 5)} and \code{sys.call} by \code{sys.call(-5)}.
 

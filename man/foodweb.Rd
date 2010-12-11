@@ -6,14 +6,8 @@
 \title{Shows which functions call what}
 \description{\code{foodweb} is applied to a group of functions (e.g. all those in a workspace); it produces a graphical display showing the hierarchy of which functions call which other ones. This is handy, for instance, when you have a great morass of functions in a workspace, and want to figure out which ones are meant to be called directly. \code{callers.of(funs)} and \code{callees.of(funs)} show which functions directly call, or are called directly by, \code{funs}.}
 \usage{
-foodweb( funs, where=1, charlim=80, prune=character(0), rprune, ancestors=TRUE,
-descendents=TRUE, plotting =TRUE, plotmath=FALSE,
-generics=c( "c","print","plot", "["), lwd=0.5, xblank=0.18,
-border="transparent", boxcolor="white", textcolor="black",
-color.lines=TRUE, highlight="red", ...)
-\method{plot}{foodweb}(x, textcolor, boxcolor, xblank, border, textargs = list(),
-use.centres = TRUE, color.lines = TRUE, poly.args = list(),
-expand.xbox = 1.05, expand.ybox = expand.xbox * 1.2, plotmath = FALSE, ...) # plot.foodweb
+foodweb( funs, where=1, charlim=80, prune=character(0), rprune, ancestors=TRUE, descendents=TRUE, plotting =TRUE, plotmath=FALSE, generics=c( "c","print","plot", "["), lwd=0.5, xblank=0.18, border="transparent", boxcolor="white", textcolor="black", color.lines=TRUE, highlight="red", ...)
+\method{plot}{foodweb}(x, textcolor, boxcolor, xblank, border, textargs = list(), use.centres = TRUE, color.lines = TRUE, poly.args = list(), expand.xbox = 1.05, expand.ybox = expand.xbox * 1.2, plotmath = FALSE, cex=par( "cex"), ...) # plot.foodweb
 callers.of( funs, fw=foodweb( plotting=FALSE))
 callees.of( funs, fw=foodweb( plotting=FALSE))
 }
@@ -35,6 +29,7 @@ callees.of( funs, fw=foodweb( plotting=FALSE))
 \item{ textcolor}{of each object}
 \item{ color.lines}{will linking lines be coloured according to the level they originate at?}
 \item{ highlight}{seemingly not used}
+\item{ cex}{text size (see "cex" in \code{?par})}
 \item{ ...}{passed to \code{plot.foodweb} and thence to \code{par}}
 \item{ textargs}{not currently used}
 \item{ use.centres}{where to start/end linking lines. \code{TRUE} is more accurate but less tidy with big webs.}
@@ -49,7 +44,7 @@ The main value is in the graphical display. At the top ("level 0"), functions wh
 
 \code{foodweb} makes some effort to arrange the functions on the display to keep the number of crossing lines low, but this is a hard problem! Judicious use of \code{prune} will help keep the display manageable. Perhaps counterintuitively, any functions NOT linked to those in \code{prune} (which all will be, by default) will be pruned from the display.
 
-\code{foodweb} tries to catch names of functions that are stored as text, and it will pick up e.g. \code{glm} in "do.call( \code{glm}, glm.args)". There are limits to this, of course (?methods?).
+\code{foodweb} tries to catch names of functions that are stored as text, and it will pick up e.g. \code{glm} in \code{do.call( "glm", glm.args)}. There are limits to this, of course (?methods?).
 
 The argument list may be somewhat daunting, but the only ones normally used are \code{funs}, \code{where}, and \code{prune}. Also, to get a readable display, you may need to reduce \code{cex} and/or \code{charlim}. A number of the less-obvious arguments are set by other functions which rely on \code{plot.foodweb} to do their display work. Several may disappear in future versions.
 

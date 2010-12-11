@@ -7,7 +7,7 @@
 \alias{cditerate}
 \alias{plot.cdtree}
 \title{Hierarchy-crawling functions for cd-organized workspaces}
-\description{These functions work through part or all of a workspace (task) hierarchy set up via \code{cd}. \code{cdfind} searches for objects through the (attached and unattached) task hierarchy. \code{cdtree} displays the hierarchy structure. \code{cd.change.all.paths} is useful for moving or migrating all or part of the hierarchy to new disk directories. \code{cd.write.mvb.tasks} sets up sourceable text representations of the hierarchy, as a safeguard. \code{cditerate} is the engine that crawls through the hierarchy, underpinning the others; you can write your own functions to be called by \code{cditerate}.}
+\description{These functions work through part or all of a workspace (task) hierarchy set up via \code{\link{cd}}. \code{cdfind} searches for objects through the (attached and unattached) task hierarchy. \code{cdtree} displays the hierarchy structure. \code{cd.change.all.paths} is useful for moving or migrating all or part of the hierarchy to new disk directories. \code{cd.write.mvb.tasks} sets up sourceable text representations of the hierarchy, as a safeguard. \code{cditerate} is the engine that crawls through the hierarchy, underpinning the others; you can write your own functions to be called by \code{cditerate}.}
 \usage{
 cdfind( pattern, from = ., from.text, show.task.name=FALSE)
 cdregexpr( regexp, from = ., from.text, show.task.name=FALSE)

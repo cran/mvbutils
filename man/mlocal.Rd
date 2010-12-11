@@ -15,10 +15,10 @@ mlocal( expr) # Don't use it like this!
 Sometimes it's useful to write a "child" function that can create and modify variables in its parent directly, without using \code{assign} or \code{<<-} (note that \code{<<-} will only work on variables that exist already). This can make for clearer, more modular programming; for example, tedious initializations of many variables can be hidden inside an \code{initialize()} statement. The definition of an \code{mlocal} function does not have to occur within its caller; the \code{mlocal} function can exist as a completely separate R object.
 
 \preformatted{
-function( i) \{
+function( i) {
   mlocal( i)
   # how good is that?
-\}
+}
 }
 
 \code{mlocal} functions can have arguments just like normal functions. These arguments will temporarily hide any objects of the same name in the \code{nlocal} frame (i.e. the calling frame). When the \code{mlocal} function exits, its arguments will be deleted from the calling frame and the hidden objects (if any) will be restored. Sometimes it's desirable to avoid cluttering the calling frame with variables that only matter to the \code{mlocal} function. A useful convention is to "declare" such temporary variables in your function definition, as defaultless arguments after the \code{nlocal} argument.
@@ -31,11 +31,11 @@ Note that (at least at present) all arguments are evaluated as soon as your \cod
 
 If you call \code{return} in an \code{mlocal} function, you must call \code{\link{local.return}} too.
 
-Frame-dependent functions (sys.parent()) etc. will not do what you expect inside an \code{mlocal} function. In R 1.8 at least, you need to shift the normal index by 3 to get what you'd expect, so that \code{sys.call(-3)} inside an \code{mlocal} function will return the call to the \code{mlocal} function, and \code{sys.function( sys.parent(3))} will return the \code{mlocal} function definition. You can get the expected results for the \bold{caller} via \code{mvb.sys.parent} with no shift, etc.-- unless the caller is itself an \code{mlocal} function.
+Frame-dependent functions (sys.parent()) etc. will not do what you expect inside an \code{mlocal} function. In R 1.8 at least, you need to shift the normal index by 3 to get what you'd expect, so that \code{sys.call(-3)} inside an \code{mlocal} function will return the call to the \code{mlocal} function, and \code{sys.function( sys.parent(3))} will return the \code{mlocal} function definition. You can get the expected results for the \bold{caller} via \code{\link{mvb.sys.parent}} with no shift, etc.-- unless the caller is itself an \code{mlocal} function.
 
 \code{on.exit} \bold{doesn't} work properly, \bold{contrary} to what previous \code{mlocal} documentation said (the scoping is wrong, though often this doesn't matter). If you want to have exit code in the \code{mlocal} function itself, use \code{\link{local.on.exit}}. I can't find any way to set the exit code in the calling function from within an \code{mlocal} function.
 
-See R-news 2001 \#3 (1/3) for another closely related approach to "macros".
+See R-news 2001 #3 (1/3) for another closely related approach to "macros".
 }
 \value{As per your function; also see \code{\link{local.return}}.}
 \examples{

@@ -18,6 +18,6 @@ task.home( "myfile.c") # probably the same as file.path( getwd(), "myfile.c")
 task.home() # probably the same as getwd()
 }
 }
-\seealso{\code{\link{cd}}, \code{\link{getwd}}, \code{\link{file.path}}}
+\seealso{\code{\link{cd}}, \code{getwd}, \code{file.path}}
 \author{Mark Bravington}
 \keyword{utilities}

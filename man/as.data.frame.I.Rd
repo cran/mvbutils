@@ -19,6 +19,6 @@ mode( as.data.frame( list( x=letters[1:3]))$x) # numeric
 class( as.data.frame.I( list( x=letters[1:3]))$x) # AsIs
 mode( as.data.frame.I( list( x=letters[1:3]))$x) # character
 }
-\seealso{\code{\link{data.frame}}, \code{\link{I}}}
+\seealso{\code{data.frame}, \code{I}}
 \keyword{classes}
 \keyword{methods}

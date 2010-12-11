@@ -22,4 +22,4 @@ rm.pkg( "mypackage", list=cq( foo, bar))
 rm.pkg( ..mypackage, list=cq( foo, bar))
 }
 }
-\keyword{internal}
+\keyword{misc}

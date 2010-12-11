@@ -11,7 +11,7 @@ local.on.exit( expr, add=FALSE)
 \item{ add}{if TRUE, the expression will be appended to the existing \code{local.on.exit} expression. If FALSE, the latter is overwritten.}
 }
 \details{
-\code{on.exit} doesn't work properly inside an \code{mlocal} function, because the scoping is wrong (though sometimes you get away with it). Use \code{local.on.exit} instead, in exactly the same way. I can't find any way to set the exit code in the \bold{calling} function from within an \code{mlocal} function.
+\code{on.exit} doesn't work properly inside an \code{\link{mlocal}} function, because the scoping is wrong (though sometimes you get away with it). Use \code{local.on.exit} instead, in exactly the same way. I can't find any way to set the exit code in the \bold{calling} function from within an \code{\link{mlocal}} function.
 
 Exit code will be executed before any temporary variables are removed (see \code{\link{mlocal}}).
 }
@@ -28,6 +28,6 @@ ffout <- function() \{
 \}
 ffout()
 }
-\seealso{\code{\link{mlocal}}, \code{\link{local.return}}, \code{\link{local.on.exit}}, \code{\link{do.in.envir}}, and R-news 1/3}
+\seealso{\code{\link{mlocal}}, \code{\link{local.return}}, \code{local.on.exit}, \code{\link{do.in.envir}}, and R-news 1/3}
 \author{Mark Bravington}
 \keyword{programming}

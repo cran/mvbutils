@@ -21,8 +21,8 @@ The default \code{funs} argument will find all functions not mentioned in flat-f
 \code{make.arguments.section} puts one argument per line, then a colon, then the name of the function in parentheses. The idea is that something about the argument should be added manually in a text editor.
 }
 \examples{
-make.usage.section( c( "make.usage.section", "find.funs")) # charvec returned invisibly
-make.arguments.section( c( "make.usage.section", "find.funs")) # ditto
+make.usage.section( c( "make.usage.section", "find.funs"), env=asNamespace( 'mvbutils'))
+make.arguments.section( c( "make.usage.section", "find.funs"), env=asNamespace( 'mvbutils'))
 }
 \seealso{\code{\link{flatdoc}}, \code{\link{pre.install}}}
 \author{Mark Bravington}
