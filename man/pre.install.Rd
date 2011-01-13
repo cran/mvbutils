@@ -1,92 +1,87 @@
-\name{pre.install
-}
-\alias{pre.install
-}
-\alias{patch.installed
-}
-\alias{patch.install
-}
-\alias{pre.install.hook...
-}
-\title{Update a source and/or installed package from a task package
-}
-\description{\code{pre.install} creates a "source package" from a "task package", ready for installation using R{} CMD INSTALL/BUILD/CHECK. \code{patch.install} can be called after a \code{pre.install}; it makes a quick modification to your already-installed version of a package, and there is then no subsequent need to re-build and re-install via RCMD. It also updates the help system with immediate effect, i.e. during the current R{} session. \code{patch.installed} is a synonym for \code{patch.install}. Consult \code{?"mvbutils.packaging.tools"} before reading further.
+\name{pre.install}
+\alias{pre.install}
+\alias{patch.installed}
+\alias{patch.install}
+\alias{pre.install.hook...}
+\title{Update a source and/or installed package from a task package}
+\description{\code{pre.install} creates a "source package" from a "task package", ready for first-time installation using \code{fresh.install} (or R{} CMD INSTALL/BUILD/CHECK). For subsequent maintenance of an already-installed package, \code{patch.install} is normally sufficient ; it modifies the installed package (and the source package) on-the-fly, and there is no need to re-build or re-install. \code{patch.install} also updates the help system with immediate effect, i.e. during the current R{} session. \code{patch.installed} is a synonym for \code{patch.install}. Consult \code{?mvbutils.packaging.tools} before reading further.
 }
 \usage{
- # 95\% of the time you just need
+ # 95\% of the time you just need:
  # pre.install( pkg)
  # patch.install( pkg)
  # Your own hook: pre.install.hook.<<mypack>>( default.list, <<myspecialargs>>, ...)
- pre.install( pkg, character.only=FALSE, force.all.docs=FALSE, Rd.version, dir.above.source=NULL, ...)
+ pre.install( pkg, character.only=FALSE, force.all.docs=FALSE,
+     dir.above.source="+", ood.version=NA, R.target.version=getRversion(), ...)
  patch.installed( pkg, character.only=FALSE, force.all.docs=FALSE, help.patch=TRUE, DLLs.only=FALSE,
      update.installed.cache=option.or.default("mvb.update.installed.cache", TRUE), pre.inst=TRUE,
-     Rd.version=NULL, dir.above.source=NULL)
+     dir.above.source="+", R.target.version=getRversion(),
+     autoversion=getOption("mvb.autoversion", TRUE))
  patch.install(...) # actually the args are exactly the same as for 'patch.installed'
 }
 \arguments{
 \item{ pkg}{package name. Either quoted or unquoted is OK; unquoted will be treated as quoted unless\dots{}}
-\item{ character.only}{\dots{} is TRUE}
+\item{ character.only}{\dots{} is TRUE. Or just set e.g. \code{char="my@funny@name"}, which will trump any use of \code{pkg}.}
 \item{ force.all.docs}{normally just create help files for objects whose documentation has changed; if TRUE, then recreate help for all documented objects.}
 \item{ help.patch}{if TRUE, patch the help of the installed package}
 \item{ DLLs.only}{just synchronize the DLLs and don't bother with other steps (see \bold{Compiled code})}
 \item{ default.list}{list of various things-- see under "Overriding\dots{}" below}
-\item{ ...}{arguments to pass to your \code{pre.install.hook.XXX} function, usually if you want to be able to build different versions of a package. In \code{pre.install}, \code{...} is just shorthand for the arg list of \code{patch.installed}.}
+\item{ ...}{arguments to pass to your \code{pre.install.hook.XXX} function, usually if you want to be able to build different "flavours" of a package (e.g. a trial version vs. a production version, or versions with and without enormous datasets included). In \code{patch.install}, \code{...} is just shorthand for the arg list of \code{patch.installed}.}
 \item{ update.installed.cache}{defaults to TRUE unless you have set \code{options( "mvb.update.installed.cache")}. If TRUE, then clear the installed-package cache, so that things like \code{installed.packages} work OK. The only reason to set to FALSE could be speed, if you have lots of packages; feedback on this would be appreciated.}
-\item{ pre.inst}{?run \code{pre.install} first?}
-\item{ Rd.version}{(character) what Rdoc version to create "man" files in? Currently can be "1" (pre-R2.10) or "2" (R2.10 and up). Default is set according to what version of R{} is running.}
-\item{ dir.above.source}{directory within which the source package directory will go, so that \code{pre.install( pkg=mypack, dir="holder")} will lead to creation of "holder/mypack". Default is the task package. Useful to set manually if you are forced to maintain different versions of the package, e.g. for different R{} versions, or if your source package must live in a "subversion tree" (whatever that is).}
+\item{ pre.inst}{?run \code{pre.install} first? Leave as TRUE unless you know better.}
+\item{ autoversion}{(patch.installed) if TRUE, try to automatically update the version number; this means you will update source & installed version numbers without having to change the DESCRIPTION file. Default is \code{getOption( "mvb.autoversion", TRUE)}.}
+\item{ dir.above.source}{folder within which the source package directory will go, with a \code{+} at the start being shorthand for the task package folder (the default). Hence \code{pre.install( pkg=mypack, dir="+/holder")} will lead to creation of "holder/mypack" below the task folder of \code{mypack}. Set this manually if you have to maintain different versions of the package for different R{} versions, or different flavours of the package for other reasons, or if your source package must live in a "subversion tree" (whatever that is).}
+\item{ R.target.version}{Not needed 99\% of the time; use only if you want to create source package for a different version of R{}. Supercedes the \code{Rd.version} argument of \code{pre.install} pre-'mvbutils' 2.5.57, used to control the documentation format. Set \code{R.target.version} to something less than "2.10" for ye olde "Rd version 1" format.}
+\item{ ood.version}{I can't remember why this argument exists, so you probably shouldn't use it! It's connected somehow with \code{autoversion}, and the old documentation said this:used only by \code{patch.installed}, and only if "autoversion" is TRUE. If \code{ood.version} is non-NA, then it is checked against the version number in the \emph{source package} DESCRIPTION file, and if they are equal, then the last part of the version number in the \emph{task package} DESCRIPTION file is incremented. Normally this would only be set by \code{patch.install}, which will do so as part of an auto-update strategy iff your version number has more than two parts.}
 }
-\details{
-The minimal ingredient for \code{pre.install} is a "task package"-- a directory with a ".RData" file in it, and possibly other files. [The term "task" is used because there is an expectation that this directory will be linked into the task hierarchy maintained by \code{\link{cd}}; this might not be essential, but I haven't tested it any other way.] \code{pre.install} creates a source package in a subdirectory of task package, for first-time building via RCMD BUILD. For subsequent maintenance, you would normally just call \code{patch.install}, which calls \code{pre.install} and then updates the installed package. You can override most of the default behaviour of \code{pre.install} by providing your own hook function \code{pre.install.hook.<<mypack>>} in the task-- see .OVERRIDING.DEFAULTS.
-
-[_R pre-2.10 only:_ For help conversion to work, the various R{} build tools must be in the search path, just as when you're actually building the package. Also, certain environment variables may need to be set, such as "R_LIBS". All this may not automatically be the case. If not, you should set \code{options( rcmd.shell.setup)} to a character vector of commands that will set up the path & environment variables properly, when called as part of a batch file (Windows) or shell script (Linux etc). On my (Windows) system, this is \code{CALL SET-R-BUILD-PATH-GUTS.BAT}. The changes are temporary, just while the conversion is taking place.]
+\details{The minimal ingredient for \code{pre.install} is a "task package"-- a directory with a ".RData" file in it, and possibly other files. [The term "task" is used because there is an expectation that this directory will be linked into the task hierarchy maintained by \code{\link{cd}}; this might not be essential, but I haven't tested it any other way.] \code{pre.install} creates a source package in a subdirectory of task package, for first-time building via RCMD BUILD. For subsequent maintenance, you would normally just call \code{patch.install}, which calls \code{pre.install} and then updates the installed package; it's not usually necessary to call RCMD BUILD. You can override most of the default behaviour of \code{pre.install} by providing your own hook function \code{pre.install.hook.<<mypack>>} in the task-- see \bold{Overriding defaults}.
 \subsection{Compiled code}{
-\bold{Note:} see end of this subsection for changes in R{} >= 2.12
-
 \code{pre/patch.install} do not compile source code; you need to do that yourself. If you use RCMD to do your compilation, then you can use RCMD INSTALL; this will overwrite your installed package, and probably can't be done during an R{} session. Alternatively, you may be able to use RCMD SHLIB to create the DLL directly, which you can then copy into the "libs" subdirectory of the installed package, without needing to re-install. I haven't tried this, but colleagues have.
 
-If, like me, you pre-compile your own DLLs directly (not allowed for CRAN, but fine for distribution to other users on the same OS), then you can put the DLL into a subdirectory "inst/libs" of the task, or indeed directly into the task folder; it will still end up in the "libs" subdirectory of the installed package, even though R{} doesn't compile it.
+If, like me, you pre-compile your own DLLs directly (not allowed for CRAN, but fine for distribution to other users on the same OS), then you can put the DLLs into a folder "inst/libs" of the task (see next for Windows); they will end up as usual in the "libs" folder of the installed package, even though R{} doesn't compile it. On Windows, put the DLLs one level deeper in "inst/libs/<<arch>>" instead, where "<<arch>>" is found from \code{.Platform$r_arch}; for 32-bit Windows, it's currently "i386". All references in this section to "libs", whether in the task or source or installed package, should be taken as meaning "libs/<<arch>>".
 
-To load compiled code in your package, use \code{library.dynam} in the \code{.onLoad} function (or in the \code{.First.lib} if you really aren't going to use a namespace). The alternative \code{dyn.load} is apparently frowned on these days.
+To load compiled code in your package, use \code{library.dynam} in the \code{.onLoad} function, for example like this:
 
-After the package is built, I change my compiler settings so that the DLL is created directly in the installed package's "libs" subdirectory; this means I can use the compiler's debugger while R{} is running. To accommodate this, \code{patch.install} behaves as follows:
+\preformatted{
+.onLoad <- function( libname, pkgname){
+  library.dynam( 'my_first_dll', package=pkgname)
+  library.dynam( 'my_other_dll', package=pkgname)  # fine to have several DLLs
+}
+}
+
+After the package has been installed for the first time, I change my compiler settings so that the DLL is created directly in the installed package's "libs" folder; this means I can use the compiler's debugger while R{} is running. To accommodate this, \code{patch.install} behaves as follows:
 
 \itemize{
 \item any new DLLs in the task package are copied to the installed package;
 \item any DLLs in the installed package but not in the task package are deleted;
 \item for any DLLs in both task & installed, both copies are synchronized to the \emph{newer} version;
-\item the source package always matches the task package (?is that correct?)
+\item the source package always matches the task package
 }
 
 You can call \code{patch.install( mypack, DLLs.only=TRUE)} if you only want the DLL-synching step.
-\subsection{R 2 12 changes to compiled code folders}{
-In R{} >= 2.12, all references above to "libs" folders in the \emph{installed} package should be to "libs/<<arch>>", where "arch" is your sub-architecture. You can find that from \code{.Platform$r_arch}; for 32-bit Windows, it's "i386", etc. In the \emph{task} package, compiled DLLs can be placed in (i) the task folder, (ii) an "inst/libs" folder, (iii) an "inst/libs/<<arch>>" folder; it's assumed that any DLLs not in an explicit "<<arch>>" folder are for the current architecture. All task DLLs will be synchronized as appropriate with the installed package's DLLs, which as above live in the "libs/<<arch>>" folder of the installed package; and they should all end up in an "inst/libs/<<arch>>" folder in the source package.
 
-If you are using both R{} < 2.12 and R{} >= 2.12, then bear in mind the \code{subdir} argument of \code{pre.install}, which lets you create different source packages; this is useful with precompiled DLLs, since the source package structure needs to be different.
-}
+(Before version 2.5.57, \code{mvbutils} allowed more latitude in where you could put your home-brewed DLLs, but it just made life more confusing. The only place that now works is as above.)
 }
 \subsection{Package structure}{
-The "task directory" means the working directory when you call \code{pre.install}; \code{\link{cd}} will look after this for you. The "package directory" is the subdirectory "<<pkg>>" below that, which will be created if needs be.
+The "task directory" means the working directory when you call \code{pre.install}; \code{\link{cd}} will look after this for you. The "source package directory" is usually the subdirectory "<<pkg>>" below that, which will be created if needs be. See the Glossary section in \code{?mvbutils.packaging.tools}.
 
-The default behaviour of \code{pre.install} is as follows-- to change it, see \bold{Overriding defaults}. A basic source package is created (no C code etc.) in a subdirectory "<<pkg>>" of the current task. The package will have a DESCRIPTION file, a single R{} source file with name "<<pkg>>.R" in the "R" subdirectory, possibly a "sysdata.rda" file in the same place to contain non-functions, possibly a NAMESPACE file, and a set of Rd files in the "man" subdirectory. Rd files will be auto-created from \code{\link{flatdoc}} style documentation, although precedence will be given to any pre-existing Rd files found in an "Rd" subdirectory of your task, which get copied directly into the package. Any "demo", "src", and "data" subdirectories will be copied straight to the package. An "inst" subdirectory will also be copied, but recursively (i.e. including any of \emph{its} subdirectories). There is no recompilation of source code. For handling of DLLs, see below.
+The default behaviour of \code{pre.install} is as follows-- to change it, see \bold{Overriding defaults}. A basic source package is created (no C code etc.) in a subdirectory "<<pkg>>" of the current task. The package will have a DESCRIPTION file, a NAMESPACE file, a single R{} source file with name "<<pkg>>.R" in the "R" subdirectory, possibly a "sysdata.rda" file in the same place to contain non-functions, and a set of Rd files in the "man" subdirectory. Rd files will be auto-created from \code{\link{flatdoc}} style documentation, although precedence will be given to any pre-existing Rd files found in an "Rd" subdirectory of your task, which get copied directly into the package. Any "inst", "demo", "src", and "data" subdirectories will be copied to the source package, recursively (i.e. including any of \emph{their} subdirectories). There is no recompilation of source code. For handling of DLLs, see below.
 
-Most objects in the task will go into the package, but there are usually a few you wouldn't want there: objects that are concerned only with how to create the package in the first place, and ephemeral system clutter such as \code{.Random.seed}. The default exceptions are: functions \code{pre.install.hook.<<pkg>>}, \code{.First.task}, and \code{.Last.task}; data \code{forced!exports}, \code{.required}, \code{.Depends}, \code{tasks}, \code{.Traceback}, \code{.packageName}, \code{last.warning}, \code{.Last.value}, \code{.Random.seed}, \code{.SavedPlots}; and any character vector whose name ends with ".doc".
+Most objects in the task package will go into the source package, but there are usually a few you wouldn't want there: objects that are concerned only with how to create the package in the first place, and ephemeral system clutter such as \code{.Random.seed}. The default exceptions are: functions \code{pre.install.hook.<<pkg>>}, \code{.First.task}, and \code{.Last.task}; data \code{<<pkg>>.file.exclude.regexes}, \code{forced!exports}, \code{.required}, \code{.Depends}, \code{tasks}, \code{.Traceback}, \code{.packageName}, \code{last.warning}, \code{.Last.value}, \code{.Random.seed}, \code{.SavedPlots}; and any character vector whose name ends with ".doc".
 
-All pre-existing files in the "man", "src", "tests", "exec", "demo", "inst", and "R" subdirectories of the source-package directory will be removed (unless you have some \code{\link{mlazy}} objects; see below). Rd files in the task's "man" directory take precedence over Rd files that are created automatically by \code{pre.install} from \code{\link{flatdoc}}-style documentation. If an \code{.Rbuildignore} file is present in the task directory, it's copied to the package directory (NB I should include a facility in the pre-install hook for this). If there is a "changes.txt" file in the task directory, it will be copied to the "inst" subdirectory of the package, as will any files in the task's own "inst" subdirectory. Similarly, any DESCRIPTION file in the task directory will be copied to the package directory, after removing any "Built:" line. If there is no DESCRIPTION file in the task directory, a default DESCRIPTION file will be created in the package directory, but you'll certainly want to edit it before CRAN release; you can also generate the DESCRIPTION file yourself via the \code{pre.install.hook} override. Any "Makefile.*" in the task directory will be copied, as will any in the "src" subdirectory (not sure why both places are allowed). No other files or subdirectories in the package directory will be created or removed, but some essential files will be modified.
+All pre-existing files in the "man", "src", "tests", "exec", "demo", "inst", and "R" subdirectories of the source-package directory will be removed (unless you have some \code{\link{mlazy}} objects; see below). Rd files in the task's "man" directory take precedence over Rd files that are created automatically by \code{pre.install} from \code{\link{flatdoc}}-style documentation. If an \code{.Rbuildignore} file is present in the task directory, it's copied to the package directory, but I've never gotten this feature to work (NB I should include a facility in the pre-install hook for this). To exclude files that would otherwise be copied, i.e. those in "inst/demo/src/data" folders, create a character vector of regexes called \code{<<pkg>>.file.exclude.regexes}; any file matching any of these won't be copied. If there is a "changes.txt" file in the task directory, it will be copied to the "inst" subdirectory of the package, as will any files in the task's own "inst" subdirectory. Similarly, any DESCRIPTION file in the task directory will be copied to the package directory, after removing any "Built:" line. If there is no DESCRIPTION file in the task directory, a default DESCRIPTION file will be created in the package directory, but you'll certainly want to edit it before CRAN release; you can also generate the DESCRIPTION file yourself via the \code{pre.install.hook} override. Any "Makefile.*" in the task directory will be copied, as will any in the "src" subdirectory (not sure why both places are allowed). No other files or subdirectories in the package directory will be created or removed, but some essential files will be modified.
 
-The package is assumed to be namespaced if any of the following apply: there is a NAMESPACE file in the task directory; there is a \code{.onLoad} function in the task; there is an "Imports" directive in the DESCRIPTION file. If a NAMESPACE file is present in the task, then it is copied directly to the package. If not but the package still looks like a namespace candidate, then \code{pre.install} will generate a NAMESPACE file by calling \code{\link{make.NAMESPACE}}, which makes reasonable guesses about what to import, export, and S3methodize. What is & isn't an S3 method is generally deduced OK (see \code{\link{make.NAMESPACE}} for gruesome details), but you can override the defaults via the pre-install hook.
+If a NAMESPACE file is present in the task (usually no need), then it is copied directly to the package. If not, then \code{pre.install} will generate a NAMESPACE file by calling \code{\link{make.NAMESPACE}}, which makes reasonable guesses about what to import, export, and S3methodize. What is & isn't an S3 method is generally deduced OK (see \code{\link{make.NAMESPACE}} for gruesome details), but you can override the defaults via the pre-install hook. FWIW, since adding the package-creation features to \code{mvbutils}, I have never bothered explicitly writing a NAMESPACE file for any of my packages. By default, only \emph{documented} functions are exported (i.e. visible to the user or other packages); the rest are only available to other functions in your package.
 
-By default, the R{} source file will only contain functions, but you can include other objects too by naming them in the \code{funs} argument. For functions, any \code{doc} and \code{export.me} attributes are dropped, but source code is kept in the \code{source} attribute.
+The R{} source file will contain functions only. Any \code{doc} and \code{export.me} attributes are dropped, but other attributes are kept; in particular, source code is kept in the \code{source} attribute.
 
-If any of the Rd files starts with a period, e.g. ".dotty.name", it will be renamed to e.g. "01.dotty.name.Rd" to avoid some problems with RCMD.
-
-If the package is not namespaced (why not?), then any undocumented functions will receive skeletal documentation in a \code{my.proto.package-internals.Rd} file. The doco is OK for RCMD CHECK, but says little more than "don't use these functions yourself". Undocumented functions are those not found by \code{find.documented( doctype="any")}).
+If any of the Rd files starts with a period, e.g. ".dotty.name", it will be renamed to e.g. "01.dotty.name.Rd" to avoid some problems with RCMD. This should never matter, but just so you know\dots{}
 
 To speed up conversion of documentation, a list of raw & converted documentation is stored in the file "doc2Rd.info.rda" in the task directory, and conversion is only done for objects whose raw documentation has changed, unless \code{force.all.docs} is TRUE.
 
 \code{pre.install} creates a file "funs.rda" in the package's "R" subdirectory, which is subsequently used by \code{patch.installed}. RCMD BUILD will omit this file (currently with a complaint, though I'm trying to fix this) but it does not cause trouble.
 }
-\subsection{Package documentation}{If there is a text object called "<<packagename>>.package.doc", then it will be passed through \code{\link{doc2Rd}} with an extra "docType\{package\}" field. The first line should start "<<packagename>>-package" and the corresponding ".Rd" file will be put first into the index. This is the recommended way of providing package overviews-- and, speaking as a frequently bewildered would-be user of others' packages, I urge you to make use of it!
+\subsection{Package version numbers}{If the currently-installed version number has 3 or more parts, and the new version number does not exceed it, then \code{patch.install} will set the new version number to the last-place-incremented currently-installed one, so that e.g. 2.1.3 will become 2.1.4 and 2.1.3.9 will become 2.1.3.10. You can prevent this by setting \code{options( mvb.autoversion=FALSE)}.
 }
 \subsection{Data objects}{
 Data objects are handled a bit differently to the recommendations in "R extensions" and elsewhere-- but the end result for the package user is the same, or better. The changes have been made to speed up package maintenance, and to improve useability. Specifically:
@@ -94,19 +89,49 @@ Data objects are handled a bit differently to the recommendations in "R extensio
 \itemize{
 \item Undocumented data objects live only in the package's namespace, i.e. visible only to your functions.
 \item Documented data objects appear both in the visible part of the package (i.e. in the search path), and in the namespace. [The R{} standard is that these should not be visible in the namespace, but this doesn't seem sensible to me.]
-\item To document a data object \code{xxx}, include a flat-format text object \code{xxx.doc} in your task. \code{xxx.doc} itself won't appear in the packaged object, but will result in documentation for \code{xxx}.
-\item There is no need for the user ever to call \code{\link{data}} to access a dataset in the package, and in fact it won't work;
-\item Big data objects can be individually lazy-loaded (see below) to save time & memory, but lazy-loading is otherwise off by default for individual data objects.
+\item The easiest way to export a data object, is to "document" it by putting its name into an alias line of the doc attribute of an existing function. (Alias lines are single-word lines directly after the first line of the doc attr.)
+\item To document a data object \code{xxx} in its own right, include a flat-format text object \code{xxx.doc} in your task package; see \code{\link{doc2Rd}}. \code{xxx.doc} itself won't appear in the packaged object, but will result in documentation for \code{xxx} \emph{and} any other data objects that are given as alias lines.
+\item Big data objects can be set up for transparent individual lazy-loading (see below) to save time & memory, but lazy-loading is otherwise off by default for individual data objects.
+\item There is no need for the user ever to call \code{\link{data}} to access a dataset in the package, and in fact it won't work.
 }
 
 Note that the \code{data(...)} function has been pretty much obsolete since the advent of lazy-loading in R{} 2.0; see R-news #4/2.
 
 In terms of package structure, as opposed to operation, there is no "data" subdirectory. Data lives either in the "sysdata.rdb/rdx" files in the "R" subdirectory (but can still be user-visible, which is not normally the case for objects in those files), or in the "mlazy" subdirectory for those objects with individual lazy-loading.
-}
 \subsection{Big data objects}{Lazy-loading objects cached with \code{\link{mlazy}} are handled specially, to speed up \code{pre.install}. Such objects get their cache-files copied to "inst/mlazy", and the \code{.onLoad} is prepended with code that will load them on demand. By default, they are exported if and only if documented, and are not locked. The following objects are not packaged by default, even if \code{\link{mlazy}}ed: \code{.Random.seed}, \code{.Traceback}, \code{last.warning}, and \code{.Saved.plots}. These are \code{\link{mlazy}}ed automatically if \code{options( mvb.quick.cd)} is \code{TRUE}-- see \code{\link{cd}}.
 }
+}
+\subsection{Documentation and exporting}{
+\subsection{Package documentation}{Just because you have a package \pkg{Splendid}, it doesn't follow that a user will be able to figure out how to use it from the alphabetical list of functions in \code{library( help=Splendid)}. The recommended way to provide a package overview is via package documentation", which the user accesses via \code{package?Splendid}. You can write this in a text object called e.g. "Splendid.package.doc", which will be passed through \code{\link{doc2Rd}} with an extra "docType\{package\}" field added. The first line should start e.g. "Splendid-package" and the corresponding ".Rd" file will be put first into the index. Speaking as a frequently bewildered would-be user of others' packages-- and one who readily gives up if the "help" is impenetrable-- I urge you to make use of this feature!
+}
+\subsection{Bare minimum for export}{
+Only documented functions and data are exported from your package (unless you resort to the subterfuge described in the subsection after this). Documented things are those found by \code{find.documented( doc="any")}. The simplest way to document something is just to add its name as an "alias line" to the existing documentation of another function, before the first empty line. For example, if you're already using \code{\link{flatdoc}} to document \code{my.beautiful.function}, you can technically "document" and thus export other functions like so:
+
+\preformatted{
+structure( function( blahblahblah)...
+,doc=flatdoc())
+my.beautiful.function    package:splendid
+other.exported.function.1
+other.exported.function.2
+}
+
+The package will build & install OK even if you don't provide USAGE and ARGUMENTS sections for the other functions. Of course, R{} CMD CHECK wouldn't like it (and may have a point on this occasion). If you just are after "legal" (for R{} CMD CHECK) albeit unhelpful documentation for some of your functions that you can't face writing proper doco for yet, see \code{\link{make.usage.section}} and \code{make.argument.section}.
+}
+\subsection{Exporting undocumented things and vice versa}{
+A bit naughty (RCMD CHECK complains), but quite doable. Note that "things" can be data objects, not just functions. Simply write a pre-install hook (see \bold{Overriding defaults}) that includes something like this:
+
+\preformatted{
+pre.install.hook.mypack <- function( hooklist) {
+  hooklist$nsinfo$exports <- c( hooklist$nsinfo$exports, "my.undocumented.thing")
+return( hooklist)
+}
+}
+
+You can follow a similar approach if you want to document something but \emph{not} to export it (so that it can only be accessed by \code{Splendid:::unexported.thing}. This probably isn't naughty.
+}
+}
 \subsection{Overriding defaults}{
-If a function \code{pre.install.hook.<<pkgname>>} exists in the task "<<pkgname>>", it will be called during \code{pre.install}. It will be passed one list-mode argument, containing default values for various installation things that can be adjusted; it should return a list with the same names. It will also be passed any \code{...} arguments to \code{pre.install}, which can be used e.g. to set "production mode" vs "informal mode" of the end product. The hook can do two things: sort out any file issues not adequately handled by \code{pre.install}, and/or change the following elements in the list that is passed in:
+If a function \code{pre.install.hook.<<pkgname>>} exists in the task "<<pkgname>>", it will be called during \code{pre.install}. It will be passed one list-mode argument, containing default values for various installation things that can be adjusted; and it should return a list with the same names. It will also be passed any \code{...} arguments to \code{pre.install}, which can be used e.g. to set "production mode" vs "informal mode" of the end product. For example, you might call \code{preinstall(mypack,modo="production")} and then write a function \code{pre.install.hook.mypack( hooklist, modo)} that includes or excludes certain files depending on the value of \code{modo}. The hook can do two things: sort out any file issues not adequately handled by \code{pre.install}, and/or change the following elements in the list that is passed in. The return value should be the possibly-modified list. Hook list elements are:
 
 \describe{
 \item{copies}{files to copy directly}
@@ -122,12 +147,28 @@ If a function \code{pre.install.hook.<<pkgname>>} exists in the task "<<pkgname>
 }
 
 There are two reasons for using a hook rather than directly setting parameters in \code{pre.install}. The first is that \code{pre.install} will calculate sensible but non-obvious default values for most things, and it is easier to change the defaults than to set them up from scratch in the call. The second is that once you have written a hook, you can forget about it-- you don't have to remember special argument values each time you call \code{pre.install} for that task.
+\subsection{Debugging a pre install hook}{To understand what's in the list and how to write a pre-install hook, the easiest way is probably to write a dummy one and then \code{mtrace} it before calling \code{pre.install(mypack)}. However, it's all a bit clunky at present (July 2011). Because the hook only exists in the "..mypack" shadow environment, \code{mtrace} won't find it automatically, so you'll need \code{mtrace( pre.install.hook.mypack, from=..mypack)}. That's fine, but if you then modify the source of your hook function, you'll get an error following the "Reapplying trace\dots{}" message. So you need to do \code{mtrace.off} \emph{before} saving your edited hook-function source, and then \code{mtrace} the hook again before calling \code{pre.install(mypack)}. To be fixed, if I can work out how\dots{}
+}
+}
+\subsection{Different versions of r}{
+R{} seems to be rather fond of changing the structural requirements of source & installed packages. \code{mvbutils} tries to shield you from those arcane and ephemeral details-- usually, your task package will not need changing, and \code{pre.install} will automatically generate source & installed packages in whatever format R{} currently requires. However, sometimes you do at least need to be able to build different "instances" of your package for different versions of R{}. The \code{subdir} and maybe the \code{R.target.version} arguments of \code{pre.install} may help with this.
+
+But if you need to build instances of your package for a different version of R{}, then you may need this argument (and \code{dir.above.source}). I try to keep \code{mvbutils} up-to-date with R{}'s fairly frequent revisions to package structure rules, with the aim that you (or I) can easily produce a source/binary-source package for a version of R{} later than the one you're using right now, merely by setting \code{R.target.version}. However, be warned that this may not always be enough; there might at some point be changes in R{} that will require you to be running the appropriate R{} version (and an appropriate version of \code{mvbutils}) just to recreate/rebuild your package in an appropriate form.
+
+The nuances of \code{R.target.version} change with the changing tides of R{} versions, but the whole point of \code{pre.install} etc is that you shouldn't really need to know about those details; \code{mvbutils} tries to look after them for you. For example, though: as of 10/2011, the "detailed behaviour" is to enforce namespaces if \code{R.target.version} >= 2.14, regardless of whether your package has a \code{.onLoad} or not.
+
+If you are using both R{} < 2.12 and R{} >= 2.12, then bear in mind the \code{subdir} argument of \code{pre.install}, which lets you create different source packages; this is useful with precompiled DLLs, since the source package structure needs to be different.
+\subsection{Help pre r2 10}{For help conversion to work, the various R{} build tools must be in the search path, just as when you're actually building the package. Also, certain environment variables may need to be set, such as "R_LIBS". All this may not automatically be the case. If not, you should set \code{options( rcmd.shell.setup)} to a character vector of commands that will set up the path & environment variables properly, when called as part of a batch file (Windows) or shell script (Linux etc). On my (Windows) system, I wrote a batch file which I invoke via \code{CALL SET-R-BUILD-PATH-GUTS.BAT}. The changes are temporary, just while the conversion is taking place.
+}
+\subsection{Compiled code on windows pre r2 12}{There didn't use to be an "<<arch>>" level, so that DLLs went directly into "inst/libs" (task and source package) and "libs" (installed package).
+}
+\subsection{Packages without namespaces pre r2 14}{You used to be allowed to build packages without namespaces-- not to be encouraged for general distribution IMO, but occasionally a useful shortcut for your own stuff nevertheless (mainly because everything is "exported", documented or not). For R{} <= 2.14, \code{mvbutils} will decide for itself whether your package is meant to be namespaced, based on whether any of the following apply: there is a NAMESPACE file in the task directory; there is a \code{.onLoad} function in the task; there is an "Imports" directive in the DESCRIPTION file.
+}
 }
 }
 \seealso{\code{\link{mvbutils.packaging.tools}}, \code{\link{cd}}, \code{\link{doc2Rd}}, \code{\link{maintain.packages}}
 }
-\author{Mark Bravington
-}
+\author{Mark Bravington}
 \keyword{programming}
 \keyword{utilities
 }

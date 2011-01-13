@@ -1,55 +1,29 @@
-\name{mvbutils.operators
-}
-\alias{mvbutils.operators
-}
-\alias{\%&\%
-}
-\alias{\%!in\%
-}
-\alias{\%**\%
-}
-\alias{\%except\%
-}
-\alias{\%grepling\%
-}
-\alias{\%is.not.a\%
-}
-\alias{\%is.a\%
-}
-\alias{\%is.not.an\%
-}
-\alias{\%is.an\%
-}
-\alias{\%matching\%
-}
-\alias{\%not.in\%
-}
-\alias{\%perling\%
-}
-\alias{\%that.match\%
-}
-\alias{\%that.dont.match\%
-}
-\alias{\%that.are.in\%
-}
-\alias{\%without.name\%
-}
-\alias{\%in.range\%
-}
-\alias{\%such.that\%
-}
-\alias{\%SUCH.THAT\%
-}
-\alias{\%upto\%
-}
-\alias{\%downto\%
-}
-\alias{\%where\%
-}
-\alias{\%where.warn\%
-}
-\title{Utility operators
-}
+\name{mvbutils.operators}
+\alias{mvbutils.operators}
+\alias{\%&\%}
+\alias{\%!in\%}
+\alias{\%**\%}
+\alias{\%except\%}
+\alias{\%grepling\%}
+\alias{\%is.not.a\%}
+\alias{\%is.a\%}
+\alias{\%is.not.an\%}
+\alias{\%is.an\%}
+\alias{\%matching\%}
+\alias{\%not.in\%}
+\alias{\%perling\%}
+\alias{\%that.match\%}
+\alias{\%that.dont.match\%}
+\alias{\%that.are.in\%}
+\alias{\%without.name\%}
+\alias{\%in.range\%}
+\alias{\%such.that\%}
+\alias{\%SUCH.THAT\%}
+\alias{\%upto\%}
+\alias{\%downto\%}
+\alias{\%where\%}
+\alias{\%where.warn\%}
+\title{Utility operators}
 \description{Succinct or convenience operators
 }
 \usage{
@@ -80,14 +54,14 @@ x \%where.warn\% cond
 \arguments{\item{ a, b, vector, condition, x, y, what, patt, from, to, cond}{see \bold{Arguments by function}.}
 }
 \value{
-\item{ \%&\%}{character vector}
+\item{ \%&\%}{character vector. If either is zero-length, so is the result (unlike \code{paste}).}
 \item{ \%**\%}{numeric, possibly a matrix}
 \item{ \%upto\%, \%downto\%}{numeric}
 \item{ \%is.a\% etc}{logical}
 \item{ All others}{same type as first argument.}
 }
 \section{Arguments by function}{
-\code{\%&\%} a, b: character vectors to be \code{paste}d with no separator
+\code{\%&\%} a, b: character vectors to be \code{paste}d with no separator. If either is zero-length, so is the result (unlike \code{paste}).
 
 \code{\%**\%} x, y: matrices or vectors to be multiplied using \code{\%*\%} but with less fuss about dimensions
 
@@ -119,8 +93,7 @@ x \%where.warn\% cond
 
 \code{\%without.name\%} what: character vector of names to drop
 }
-\author{Mark Bravington
-}
+\author{Mark Bravington}
 \seealso{bquote
 }
 \examples{

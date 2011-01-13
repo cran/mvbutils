@@ -1,10 +1,7 @@
-\name{doc2Rd
-}
-\alias{doc2Rd
-}
-\title{Converts plain-text documentation to Rd format
-}
-\description{Converts plain-text documentation into an Rd-format character vector, optionally writing it to a file. You probably won't need to call \code{doc2Rd} yourself, because \code{\link{pre.install}} and \code{\link{patch.install}} do it for you when you are building a package; the entire documentation of package \pkg{mvbutils} was produced this way. The main point of this helpfile is to describe plain-text documentation details. However, rather than wading through all the material below, just have a look at a couple of R{}'s help screens in the pager (i.e. text-style help, not HTML help) and try making one yourself. See \code{\link{fixr}} for how to set up an empty template.
+\name{doc2Rd}
+\alias{doc2Rd}
+\title{Converts plain-text documentation to Rd format}
+\description{Converts plain-text documentation into an Rd-format character vector, optionally writing it to a file. You probably won't need to call \code{doc2Rd} yourself, because \code{\link{pre.install}} and \code{\link{patch.install}} do it for you when you are building a package; the entire documentation of package \pkg{mvbutils} was produced this way. The main point of this helpfile is to describe plain-text documentation details. However, rather than wading through all the material below, just have a look at a couple of R{}'s help screens in the pager, e.g. \code{help( glm, help_type="text")} and try making one yourself. Don't bother with indentation, except in item lists as per MORE.DETAILS below. See \code{\link{fixr}} and its \code{new.doc} argument for how to set up an empty template.
 }
 \usage{doc2Rd( text, file=NULL, append=, warnings.on=TRUE, Rd.version=, def.valids=NULL, check.legality=TRUE)
 }
@@ -28,7 +25,7 @@ Rather than wading through this help file to work out how to write plain-text he
 \item There are no "escape characters"-- the system is "text WYSIWYG". For example, if you type a \\ character in your doc, \code{help} will display a \\ in that spot. Single quotes and percent signs can have special implications, though-- see below.
 \item Section titles should either be fully capitalized, or end with a : character. The capitalized version shows up more clearly in informal help. Replace any spaces with periods, e.g. SEE.ALSO not SEE ALSO. The only non-alpha characters allowed are hyphens.
 \item Subsections are like sections, except they start with a sequence of full stops, one per nesting level. See also \bold{Subsections} below.
-\item "Item lists", such as in the ARGUMENTS section and sometimes the VALUE section (and sometimes other sections), should be indented. and have a colon to separate the item name from the item body.
+\item "Item lists", such as in the ARGUMENTS section and sometimes the VALUE section (and sometimes other sections), should be indented and should have a colon to separate the item name from the item body.
 \item General lists of items, like this bullet-point list, should be indented and should start with a "-" character, followed by a space.
 \item Your spacing is generally ignored (exceptions: USAGE, EXAMPLES, multi-line code blocks; see previous point). Text is wrapped, so you should write paragraphs as single lines without hard line breaks. Use blank lines generously, to make your life easier; also, they will help readability of informal helpfiles.
 \item To mark \emph{in-line} code fragments (including variable names, package names, etc-- basically things that R{} could parse), put them in single quotes. Hence you can't use single quotes within in-line code fragments.
@@ -50,7 +47,7 @@ An example of what you couldn't include:
 \item Some other special constructs, such as links, can be obtained by using particular phrases in your documentation; see \bold{Special fields} below.
 }
 \subsection{Subsections}{
-Subsections are a nice new feature in R{} 2.11. You can use them to get better control over the order in which parts of documentation appear. R{} will order sections thus: USAGE, ARGUMENTS, DETAILS, VALUE, other sections you write in alphabetical section order, NOTES, SEE ALSO etc. That order is not always useful. You can add subsections to DETAILS so that people will see them in the order you want. If you want VALUE to appear before DETAILS, then just rename DETAILS to MORE.DETAILS, and put subsections inside that.
+Subsections are a nice new feature in R{} 2.11. You can use them to get better control over the order in which parts of documentation appear. R{} will order sections thus: USAGE, ARGUMENTS, DETAILS, VALUE, other sections you write in alphabetical section order, NOTES, SEE ALSO. That order is not always useful. You can add subsections to DETAILS so that people will see them in the order you want. If you want VALUE to appear before DETAILS, then just rename DETAILS to MORE.DETAILS, and put subsections inside that.
 
 In plain-text, subsection headings are just like section headings, except they start with a period (don't use the initial periods when cross-referencing to it elsewhere in the doco). You can have nested subsections by adding extra periods at the start, like this:
 \subsection{Another depth of nesting}{In the plain text version of this doco, the SUBSECTIONS line starts with one period, and the ANOTHER.DEPTH.OF.NESTING line starts with two. If you try to increase subsection depth by more than one level, i.e. with 2+ full stops more than the previous (sub)section, then \code{doc2Rd} will correct your "mistake".
@@ -67,7 +64,7 @@ Triple dots are converted to \\dots, regardless of whether they're in code or no
 
 Any reasonable "*b*old" or "_emphatic stuff_" constructions (no quotes, just the asterisks) will go into \\bold\{\} and \\emph\{\} constructs respectively, to give \bold{b}old or \emph{emphatic stuff}. (Those first two didn't, because they are "unreasonable"-- in particular, they're quoted.) No other fancy constructs are supported (yet).
 }
-\subsection{Format for non-function help}{For documenting datasets, the mandatory sections are DESCRIPTION, USAGE, and FORMAT; the latter works just like ARGUMENTS, in that you specify field names in a list. Other common sections include EXAMPLES, SOURCE, REFERENCES, and DETAILS.
+\subsection{Format for non-function help}{For documenting datasets, the mandatory sections seem to be DESCRIPTION, USAGE, and FORMAT; the latter works just like ARGUMENTS, in that you specify field names in a list. Other common sections include EXAMPLES, SOURCE, REFERENCES, and DETAILS.
 }
 \subsection{Extreme details}{
 The first line should be the docfile name (without the Rd) followed by a few spaces and the package descriptor, like so:
@@ -111,19 +108,16 @@ In KEYWORDS, separate the keywords with commas, semicolons, or line breaks; don'
 
  \bold{A:} S3 methods can be documented just like any other function, except for one small detail: in the USAGE section, the generic name instead of your method name should be used. IE if you are documenting a method \code{\link{print.cat}}, the USAGE section should contain a call to \code{print(x,...)} rather than \code{print.cat(x,...)}. \code{doc2Rd} will then detect your intent and produce correct Rd format. If you describe several different S3 methods for the same generic in the same piece of documentation (and even if you don't), then it may help the user if you put a comment with the method name after each reference in USAGE, e.g. \code{print(x,...) # print.cat}, especially if the optional arguments are different. Doing that also gives \code{\link{pre.install}} a better chance of correctly sorting out the documentation.
 
- Sometimes you have a function which looks like it might be an S3 method, but isn't (e.g. \code{\link{as.data.frame.I}} in package \pkg{mvbutils}). This will be not be labelled as S3 by \code{\link{pre.install}} because you will of course have used the full name in the USAGE section, because it isn't a method. However, it can still be found by \code{NextMethod} etc., so you probably shouldn't do this.
+ Confusion will arise with a function that looks like an S3 method, but aren't. It will be not be labelled as S3 by \code{\link{pre.install}} because you will of course have used the full name in the USAGE section, because it isn't a method. However, it can still be found by \code{NextMethod} etc., so you shouldn't do this.
 
- S3 classes themselves need to be documented via a relevant function, using aliasses.
+ S3 classes themselves need to be documented either via a relevant method using an alias line, or via a separate \code{myclass.doc} text object.
 
  \bold{Q:} What about S4?
 
  \bold{A:} I am not a fan of S4 and have found no need for it in many 1000s of lines of R{} code\dots{} hence I haven't included any explicit support for it so far. Nevertheless, things might well work anyway, unless special Rd constructs are needed. If \code{doc2Rd} \emph{doesn't} work for your S4 stuff (bear in mind that the \%-line mechanism may help), then for now you'll still have to write S4 Rd files yourself; see \code{\link{pre.install}} for where to put them. However, if anyone would like the flatdoc facility for S4 and is willing to help out, I'm happy to try to add support.
 }
 }
-\note{(Pre-R 2.10 only.) In rare cases, backslashes and braces inside marked code (fragments, multi-line blocks, and the USAGE and EXAMPLES sections) will cause harmless but annoying warnings about missing links during RCMD CHECK. This is a consequence of buggy behaviour in the Rd conversion routines; the only way I could get these characters to display completely reliably, was by introducing empty links.
-}
-\author{Mark Bravington
-}
+\author{Mark Bravington}
 \seealso{
 The file "sample.fun.rrr" in subdirectory "demostuff", and the demo "flatdoc.demo.r".
 
@@ -138,9 +132,7 @@ If you want to tinker with the underlying mechanisms: \code{\link{flatdoc}}, \co
 \examples{
 ## Needs a function with the right kind of "doc" attr
 ## Look at file "demostuff/sample.fun.rrr"
-lodlibs <- library()[[2]]
-mvb.lib.loc <- lodlibs[ lodlibs[,1]=='mvbutils', 2][1]
-sample.fun <- source.mvb( file.path( mvb.lib.loc, 'mvbutils', 'demostuff', 'sample.fun.rrr'))
+sample.fun <- source.mvb( system.file( file.path( 'demostuff', 'sample.fun.rrr'), package='mvbutils'))
 cat( '***Original plain-text doco:***\\n')
 print( as.cat( attr( sample.fun, 'doc'))) # unescaped, ie what you'd actually edit
 cat( '\\n***Rd output:***\\n')

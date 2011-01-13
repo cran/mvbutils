@@ -21,3 +21,5 @@ This file was reset in November 2009 after 4 years of neglect.
 31/12/2010: changes to the modified POSIXt methods to support arrays of POSIXct. See package doco.
 
 5/1/2011: fixed buglets that weren't bugs until R 2.12...
+
+19/10/2012: ditto for R 2.14. Added 'install.pkg' etc, removed 'as.data.frame.I', tweaked documentation.

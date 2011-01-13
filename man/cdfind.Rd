@@ -7,7 +7,11 @@
 \alias{cditerate}
 \alias{plot.cdtree}
 \title{Hierarchy-crawling functions for cd-organized workspaces}
-\description{These functions work through part or all of a workspace (task) hierarchy set up via \code{\link{cd}}. \code{cdfind} searches for objects through the (attached and unattached) task hierarchy. \code{cdtree} displays the hierarchy structure. \code{cd.change.all.paths} is useful for moving or migrating all or part of the hierarchy to new disk directories. \code{cd.write.mvb.tasks} sets up sourceable text representations of the hierarchy, as a safeguard. \code{cditerate} is the engine that crawls through the hierarchy, underpinning the others; you can write your own functions to be called by \code{cditerate}.}
+\description{
+These functions work through part or all of a workspace (task) hierarchy set up via \code{\link{cd}}. \code{cdfind} searches for objects through the (attached and unattached) task hierarchy. \code{cdtree} displays the hierarchy structure. \code{cd.change.all.paths} is useful for moving or migrating all or part of the hierarchy to new disk directories. \code{cd.write.mvb.tasks} sets up sourceable text representations of the hierarchy, as a safeguard. \code{cditerate} is the engine that crawls through the hierarchy, underpinning the others; you can write your own functions to be called by \code{cditerate}.
+
+If a task folder or its ".RData" file doesn't exist, a warning is given and (obviously) it's not iterated over. If that file does exist but there's a problem while loading it (e.g. a reference to the namespace of a package that can't be loaded-- search for \code{partial.namespaces} in \code{\link{mvbutils.packaging.tools}}) then the iteration is still attempted, because something might be loaded. Neither case should cause an error.
+}
 \usage{
 cdfind( pattern, from = ., from.text, show.task.name=FALSE)
 cdregexpr( regexp, from = ., from.text, show.task.name=FALSE)
@@ -45,6 +49,10 @@ If you want to automatically crawl through the task hierarchy to do something el
 The inner function (typically called \code{cdsomething.guts}) must have arguments \code{found}, \code{task.dir}, \code{task.name}, and \code{env}, and may have any other arguments, which will be set according as the \code{...} argument of \code{cditerate}. \code{found} accumulates the results of previous calls to \code{what.to.do}. Your inner function can augment \code{found}, and should return the (possibly augmented) \code{found}. As for the other parameters: \code{task.dir} is obvious; \code{task.name} is a character(1) giving the full path specifier, e.g. \code{"ROOT/mytask"}; and \code{env} holds the environment into which the task has been (temporarily) loaded. \code{env} allows you to examine the task; for instance, you can check objects in the task by calling \code{ls(env=env)} inside your \code{what.to.do} function. See the code of \code{cdfind.guts} for an example.
 }
 \author{Mark Bravington}
-\examples{cdfind( ".First", 0) # probably returns list( .First="ROOT")}
-\seealso{\code{\link{cd}}}
-\keyword{utilities}
+\examples{
+cdfind( ".First", 0) # probably returns list( .First="ROOT")
+}
+\seealso{\code{\link{cd}}
+}
+\keyword{utilities
+}

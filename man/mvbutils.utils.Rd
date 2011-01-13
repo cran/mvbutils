@@ -1,75 +1,48 @@
-\name{mvbutils.utils
-}
-\alias{mvbutils.utils
-}
-\alias{as.cat
-}
-\alias{clip
-}
-\alias{cq
-}
-\alias{deparse.names.parsably
-}
-\alias{empty.data.frame
-}
-\alias{env.name.string
-}
-\alias{exists.mvb
-}
-\alias{expanded.call
-}
-\alias{everyth
-}
-\alias{find.funs
-}
-\alias{find.lurking.envs
-}
-\alias{index
-}
-\alias{is.dir
-}
-\alias{legal.filename
-}
-\alias{lsall
-}
-\alias{lib.pos
-}
-\alias{masked
-}
-\alias{masking
-}
-\alias{mkdir
-}
-\alias{most.recent
-}
-\alias{my.all.equal
-}
-\alias{named
-}
-\alias{option.or.default
-}
-\alias{pos
-}
-\alias{print.cat
-}
-\alias{print.nullprint
-}
-\alias{put.in.session
-}
-\alias{returnList
-}
-\alias{safe.rbind
-}
-\alias{to.regexpr
-}
-\alias{yes.no
-}
-\title{Miscellaneous utilities
-}
+\name{mvbutils.utils}
+\alias{mvbutils.utils}
+\alias{as.cat}
+\alias{cbind.POSIXct}
+\alias{clip}
+\alias{cq}
+\alias{deparse.names.parsably}
+\alias{empty.data.frame}
+\alias{env.name.string}
+\alias{exists.mvb}
+\alias{expanded.call}
+\alias{everyth}
+\alias{find.funs}
+\alias{find.lurking.envs}
+\alias{generic.dll.loader}
+\alias{index}
+\alias{is.dir}
+\alias{legal.filename}
+\alias{length<-.POSIXct}
+\alias{lsall}
+\alias{lib.pos}
+\alias{masked}
+\alias{masking}
+\alias{mkdir}
+\alias{most.recent}
+\alias{my.all.equal}
+\alias{named}
+\alias{nscat}
+\alias{option.or.default}
+\alias{pos}
+\alias{print.cat}
+\alias{print.nullprint}
+\alias{put.in.session}
+\alias{rbind.POSIXct}
+\alias{returnList}
+\alias{safe.rbind}
+\alias{scatn}
+\alias{to.regexpr}
+\alias{yes.no}
+\title{Miscellaneous utilities}
 \description{Miscellaneous utilities.
 }
 \usage{
 as.cat( x)
+\method{cbind}{POSIXct}( ...)  # cbind.POSIXct
 clip( x, n=1)
 cq( ...)
 deparse.names.parsably( x)
@@ -80,9 +53,11 @@ expanded.call( nlocal=sys.parent())
 everyth( x, by=1, from=1)
 find.funs(pos=1, ..., exclude.mcache = TRUE, mode="function")
 find.lurking.envs(obj, delve=FALSE, trace=FALSE)
+generic.dll.loader( libname, pkgname)
 index( lvector)
 is.dir( dir)
 legal.filename( name)
+\method{length}{POSIXct}(x) <- value # length<-.POSIXct
 lsall( ...)
 lib.pos() # used only to hack 'library'
 masked( pos)
@@ -91,20 +66,25 @@ mkdir( dirlist)
 most.recent( lvec)
 my.all.equal( x, y)
 named( x)
+nscat( fmt, ..., sep='\\n', file='')
 option.or.default( opt.name, default=NULL)
 pos( substrs, mainstrs, any.case = FALSE, names.for.output)
 \method{print}{cat}( x, ...) # print.cat
 \method{print}{nullprint}( x, ...) # print.nullprint
 put.in.session( ...)
+\method{rbind}{POSIXct}( ...) # rbind.POSIXct
 returnList( ...)
 safe.rbind( df1, df2)
+scatn( fmt, ..., sep='\\n', file='')
 to.regexpr( x)
 yes.no( prompt, default)
 }
-\arguments{\item{ x, y, n, ..., by, env, from, exclude.mcache, nlocal, lvector, dir, name, pos, envir, frame, mode, inherits, dirlist, lvec, opt.name, default, substrs, mainstrs, any.case, names.for.output, df1, df2, prompt,  obj, delve, trace}{see "Arguments by function"}
+\arguments{\item{ x, y, n, ..., value, by, env, from, exclude.mcache, nlocal, lvector, dir, name, pos, envir, frame, mode, inherits, dirlist, lvec, opt.name, default, substrs, mainstrs, any.case, names.for.output, df1, df2, prompt,  obj, delve, trace, fmt, sep, file, libname, pkgname}{see "Arguments by function"}
 }
 \details{
 \code{as.cat} makes a character vector print as if it was \code{cat}ted rather than \code{print}ed.
+
+\code{cbind.POSIXct} and \code{rbind.POSIXct} cope nicely with POSIXct matrices and arrays; default R{} behaviour is to strip the attributes and turn everything back into raw seconds\dots{}
 
 \code{clip} removes the last \code{n} elements of \code{x}.
 
@@ -126,11 +106,15 @@ yes.no( prompt, default)
 
 \code{find.lurking.envs( myobj)} will search through \code{myobj} and all its attributes, returning the size of each sub-object. The size of environments is returned as Inf. The search is completely recursive, except for environments and by default the inner workings of functions; attributes of the entire function are always recursed. Changing the \code{delve} parameter to TRUE ensures full recursion of function arguments and function bodies, which will show e.g. the \code{srcref} structure; try it to see why the default is FALSE. \code{find.lurking.envs} can be very useful for working out e.g. why the result of a model-fitting function is taking up 1000000MB of disk space; sometimes this is due to unnecessary environments in well-concealed places.
 
+\code{generic.dll.loader} is to be called from the \code{.onLoad} or \code{.First.lib} of a package. It looks for its DLLs either directly in the "libs" directory, or in the appropriate sub-architecture directory below "libs".
+
 \code{index} returns the position(s) of TRUE elements. Unlike \code{which}: attributes are lost; NA elements map to NAs; \code{index(<<length 0 object>>)} is \code{numeric(0)}; \code{index( <<non-logical>>)} is NA.
 
 \code{is.dir} tests for directoriness.
 
 \code{legal.filename} coerces its character argument into a similar-looking string that is a legal filename on any (?) system.
+
+\code{length<-.POSIXct} resets the length of POSIXct objects without losing their POSIXity.
 
 \code{lib.pos} is used by \code{mvbutils} in hacking \code{library}, to make sure packages get attached \bold{below} ROOT task. You'll probably never need to call this directly.
 
@@ -146,15 +130,21 @@ yes.no( prompt, default)
 
 \code{named(x)} is just \code{names(x) <- as.character( x); x}; useful for \code{lapply} etc.
 
+\code{nscat}: see \code{\link{scatn}}
+
 \code{option.or.default} returns the named option value if it exists, otherwise the supplied default. Obsolete in R2.10; use \code{getOption( ..., default=...)} instead.
 
 \code{pos} is probably to be eschewed in new code, in favour of \code{gregexpr} with \code{fixed=TRUE}, which is likely faster. (And I should rewrite it to use \code{gregexpr}.) It's one of a few legacy functions in \code{mvbutils} that pre-date improvements in base R{}. \code{pos} will either search for several literal patterns in a single target, or vice versa-- but not both. It returns a matrix showing the positions of the matching substrings, with as many columns as the maximum number of matches. 0 signifies "no match"; there is always at least one column even if there are no matches at all.
 
 \code{print}: if \code{class(x)=="cat"}, the character vector \code{x} will be \code{print}ed by \code{cat(x,sep="\\n")}. If \code{class(x)=="nullprint"}, then \code{print(x)} will not print anything.
 
+\code{rbind.POSIXct}: see \code{\link{cbind.POSIXct}}.
+
 \code{returnList} returns a list corresponding to old-style (pre-R 1.8) \code{return} syntax. Briefly: a single argument is returned as itself. Multiple arguments are returned in a list. The names of that list are the argument names if provided; or, for any unnamed argument that is just a symbolic name, that symbolic name; or no name at all, for other unnamed arguments. You can duplicate pre-1.8 behaviour of \code{return(...)} via \code{return(returnList(...))}.
 
 \code{safe.rbind} mimics \code{rbind}, but works round an R{} bug (I reckon) where a column appears to be a numeric in one \code{data.frame} but a factor in the other.
+
+\code{scatn} is just \code{cat( sprintf( fmt, ...), "", file=file, sep=sep)}. \code{scatn} prints a newline afterwards, but not before; \code{nscat} does the opposite. If you're just displaying a "title" before calling \code{print}, use \code{nscat}.
 
 \code{to.regexpr} converts literal strings to their equivalent regexps, e.g. by doubling backslashes. Useful if you want "fixed=TRUE" to apply only to a portion of your regexp.
 
@@ -162,6 +152,7 @@ yes.no( prompt, default)
 }
 \value{
 \item{  as.cat}{character vector of class \code{cat}}
+\item{  cbind.POSIXct}{matrix of class \code{POSIXct}, with same \code{tzone} as first element of \code{...}}
 \item{  clip}{vector of the same mode as \code{x}}
 \item{  cq}{character vector}
 \item{  empty.data.frame}{\code{data.frame}}
@@ -170,24 +161,30 @@ yes.no( prompt, default)
 \item{  everyth}{same type as \code{x}}
 \item{  find.funs}{a character vector of function names}
 \item{  find.lurking.envs}{a \code{data.frame} with columns "what" and "size"}
+\item{  generic.dll.loader}{a useless list}
 \item{  is.dir}{logical vector}
 \item{  is.nonzero}{TRUE or FALSE}
 \item{  legal.filename}{character( 1)}
+\item{  length<-.POSIXct}{vector of class \code{POSIXct}}
 \item{  masked}{character vector}
 \item{  masking}{character vector}
 \item{  mkdir}{logical vector of success/failure}
+\item{  nscat}{NULL}
 \item{  most.recent}{integer vector the same length as \code{lvec}, with values in the range (0,length(lvec)).}
 \item{  named}{vector of the same mode as \code{x}}
 \item{  option.or.default}{option's value}
 \item{  pos}{numeric matrix, one column per match found plus one; at least one column guaranteed}
+\item{  rbind.POSIXct}{matrix of class \code{POSIXct}, with same \code{tzone} as first element of \code{...}}
 \item{  returnList}{list or single object}
 \item{  safe.rbind}{\code{data.frame}}
+\item{  scatn}{NULL}
 \item{  to.regexpr}{character}
 \item{  yes.no}{TRUE or FALSE}
 }
 \section{Arguments by function}{
 \describe{
 \item{as.cat}{x: character vector that you want to be displayed via \code{cat( x, sep="\\n")}}
+\item{cbind.POSIXct}{\dots{}: each element is a matrix/array/vector of class \code{POSIXct}.}
 \item{clip}{x: a vector or list}
 \item{clip}{n: integer saying how many elements to clip from the end of \code{x}}
 \item{cq}{\dots{}: quoted or unquoted character strings, to be \code{substitute}d and then concatenated}
@@ -200,69 +197,52 @@ yes.no( prompt, default)
 \item{find.funs}{\dots{}: extra arguments for \code{objects}. Usually just "pattern" for regexp searches.}
 \item{find.funs}{exclude.mcache: if TRUE (default), don't look at \code{\link{mlazy}} objects}
 \item{find.funs}{mode: "function" to look for functions, "environment" to look for environments, etc}
-}
-
- :
-
-\describe{
 \item{find.lurking.envs}{delve: whether to recurse into function arguments and function bodies}
-}
-
- :
-
-\describe{
 \item{find.lurking.envs}{trace: just a debugging aid-- leave as FALSE}
+\item{generic.dll.loader}{libname, pkgname: as per \code{.onLoad}}
 \item{index}{lvector: vector of TRUE/FALSE/NA}
 \item{is.dir}{dir: character vector of files to check existence and directoriness of.}
 \item{legal.filename}{name: character string to be modified}
 \item{find.funs}{pos: list of environments, or vector of char or numeric positions in search path.}
-}
-
- :
-
-\describe{
-\item{find.lurking}{envs obj: what to look in}
-}
-
- :
-
-\describe{
-\item{find.lurking}{envs trace: leave as FALSE unless debugging}
+\item{length<-.POSIXct}{x: POSIXct object}
+\item{length<-.POSIXct}{value: integer}
 \item{lsall}{\dots{}: as for \code{ls}, except that \code{all.names} will be coerced to TRUE}
-\item{}{masking, masked pos: position in search path}
+\item{masking, masked}{pos: position in search path}
 \item{mkdir}{dirlist: character vector of directories to create}
 \item{most.recent}{logical vector}
 \item{my.all.equal}{x, y: anything}
 \item{named}{x: character vector which will become its own \code{names} attribute}
-}
-
- :
-
-\describe{
+\item{nscat}{see \code{\link{scatn}}}
 \item{option.or.default}{opt.name: character(1)}
 \item{option.or.default}{default: value to be returned if there is no \code{option} called \code{"opt.name"}}
 \item{pos}{substrs: character vector of patterns (literal not regexpr)}
 \item{pos}{mainstrs: character vector to search for \code{substrs} in.}
 \item{pos}{any.case: logical- ignore case?}
 \item{pos}{names.for.output: character vector to label rows of output matrix; optional}
-\item{}{print.cat, print.nullprint x: thing to print}
-\item{}{print.cat, print.nullprint \dots{}: args for \code{print} (ignored)}
+\item{print.cat, print.nullprint x}{thing to print}
+\item{print.cat, print.nullprint \dots{}}{args for \code{print} (ignored)}
 \item{put.in.session}{\dots{}: a named set of objects, to be \code{assign}ed into the \code{mvb.session.info} search environment}
+\item{rbind.POSIXct}{\dots{}: each element is a matrix/array/vector of class \code{POSIXct}.}
 \item{returnList}{\dots{}: named or un-named arguments, just as for \code{return} before R{} 1.8.}
 \item{safe.rbind}{df1, df2: \code{data.frame} or \code{list}}
+\item{scatn, nscat}{fmt, \dots{}: as per \code{sprintf}; file, sep: as per \code{cat}}
 \item{to.regexpr}{x: character vector}
 \item{yes.no}{prompt: string to put before asking for input}
 \item{yes.no}{default: value to return if user just presses <ENTER>}
 }
 }
-\author{Mark Bravington
-}
+\author{Mark Bravington}
 \examples{
+x <- matrix( Sys.time()+Seconds( 1:6), 2, 3)
+rbind( x, x)
+cbind( x, x)
+length( x) <- 5
 clip( 1:5, 2) # 1:3
 cq( alpha, beta) # c( "alpha", "beta")
 empty.data.frame( a=1, b="yes")
-# data.frame with 0 rows of columns "a" (numeric) and
-# "b" (a factor with levels ""yes"")
+# data.frame with 0 rows of columns "a" (numeric) and "b" (character)
+empty.data.frame( a=1, b=factor( c( "yes", "no")))$b
+# factor with levels c( "no", "yes")
 everyth( 1:10, 3, 5) # c( 5, 8)
 f <- function( a=9, b) expanded.call(); f( 3, 4) # list( a=3, b=4)
 find.funs( "package:base", patt="an") # "transform" etc.
@@ -272,6 +252,10 @@ find.lurking.envs( cd)
 #2                                     obj 49556
 #3 environment(obj) <: namespace:mvbutils>   Inf
 eapply( .GlobalEnv, find.lurking.envs)
+\dontrun{
+mypack:::.onLoad <- function( libname, pkgname) generic.dll.loader( libname, pkgname)
+#... or just copy the code into your .onLoad
+}
 is.dir( getwd()) # TRUE
 legal.filename( "a:b\\\\c/d&f") # "a.b.c.d&f"
 most.recent( c( FALSE,TRUE,FALSE,TRUE)) # c( 0, 2, 2, 4)
@@ -288,6 +272,7 @@ levels( rbind( data.frame( x=1), data.frame( x="cat"))$x)
 # NULL, because "x" acquires mode "character"; a bug, I think
 levels( safe.rbind( data.frame( x=1), data.frame( x="cat"))$x)
 # c( "1", "cat")
+scatn( 'Things \%i', 1:3)
 to.regexpr( "a{{") # "a\\\\\{\\\\\{"
 \dontrun{
 mkdir( "subdirectory.of.getwd")

@@ -2,7 +2,8 @@
 \alias{make.usage.section}
 \alias{make.arguments.section}
 \title{Construct sections of documentation}
-\description{These are really intended for expediting documentation of large numbers of "internal" functions in a proto-package, and are called by \code{make.internal.doc}. \code{make.usage.section} and \code{make.arguments.section} form prototype USAGE and ARGUMENTS section for the specified functions. These are ready for pasting into flat-format documentation (and subsequent editing).}
+\description{Don't bother reading about these unless you are sure you need to! These are really intended for expediting documentation of large numbers of "internal" functions in a proto-package, and are called by \code{make.internal.doc}. \code{make.usage.section} and \code{make.arguments.section} form prototype USAGE and ARGUMENTS section for the specified functions. These are ready for pasting into flat-format documentation (and subsequent editing).
+}
 \usage{
 make.usage.section( funs=, file=stdout(), env=.GlobalEnv)
 make.arguments.section( funs=, file=stdout(), env=.GlobalEnv)
@@ -12,7 +13,8 @@ make.arguments.section( funs=, file=stdout(), env=.GlobalEnv)
 \item{ file}{where to put the output (\code{"clipboard"} is useful). NULL means don't print.}
 \item{ env}{where to look for the functions}
 }
-\value{Character vector containing the doc section (in plain text, not Rd format).}
+\value{Character vector containing the doc section (in plain text, not Rd format).
+}
 \details{
 The default \code{funs} argument will find all functions not mentioned in flat-format ready-for-doc2Rd documentation. This is useful for documenting a group of "internal" functions.
 
@@ -24,6 +26,8 @@ The default \code{funs} argument will find all functions not mentioned in flat-f
 make.usage.section( c( "make.usage.section", "find.funs"), env=asNamespace( 'mvbutils'))
 make.arguments.section( c( "make.usage.section", "find.funs"), env=asNamespace( 'mvbutils'))
 }
-\seealso{\code{\link{flatdoc}}, \code{\link{pre.install}}}
+\seealso{\code{\link{flatdoc}}, \code{\link{pre.install}}
+}
 \author{Mark Bravington}
-\keyword{internal}
+\keyword{internal
+}

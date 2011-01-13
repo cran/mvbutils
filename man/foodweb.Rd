@@ -4,7 +4,8 @@
 \alias{callees.of}
 \alias{plot.foodweb}
 \title{Shows which functions call what}
-\description{\code{foodweb} is applied to a group of functions (e.g. all those in a workspace); it produces a graphical display showing the hierarchy of which functions call which other ones. This is handy, for instance, when you have a great morass of functions in a workspace, and want to figure out which ones are meant to be called directly. \code{callers.of(funs)} and \code{callees.of(funs)} show which functions directly call, or are called directly by, \code{funs}.}
+\description{\code{foodweb} is applied to a group of functions (e.g. all those in a workspace); it produces a graphical display showing the hierarchy of which functions call which other ones. This is handy, for instance, when you have a great morass of functions in a workspace, and want to figure out which ones are meant to be called directly. \code{callers.of(funs)} and \code{callees.of(funs)} show which functions directly call, or are called directly by, \code{funs}.
+}
 \usage{
 foodweb( funs, where=1, charlim=80, prune=character(0), rprune, ancestors=TRUE, descendents=TRUE, plotting =TRUE, plotmath=FALSE, generics=c( "c","print","plot", "["), lwd=0.5, xblank=0.18, border="transparent", boxcolor="white", textcolor="black", color.lines=TRUE, highlight="red", ...)
 \method{plot}{foodweb}(x, textcolor, boxcolor, xblank, border, textargs = list(), use.centres = TRUE, color.lines = TRUE, poly.args = list(), expand.xbox = 1.05, expand.ybox = expand.xbox * 1.2, plotmath = FALSE, cex=par( "cex"), ...) # plot.foodweb
@@ -54,9 +55,9 @@ If the display from \code{foodweb} is unclear, try \code{foodweb( .Last.value, c
 }
 \value{
 \code{foodweb} returns an object of (S3) class \code{foodweb}. This has three components:
-funmat: a matrix of 0's and 1's showing what (row) calls what (column). The \code{dimnames} are the function names.
-x: shows the x-axis location of the centre of each function's name in the display, in \code{par("usr")} units
-level: shows the y-axis location of the centre of each function's name in the display, in \code{par("usr")} units. For small numbers of functions, this will be an integer; for larger numbers, there will some adjustment around the nearest integer
+\item{ funmat}{a matrix of 0s and 1s showing what (row) calls what (column). The \code{dimnames} are the function names.}
+\item{ x}{shows the x-axis location of the centre of each function's name in the display, in \code{par("usr")} units}
+\item{ level}{shows the y-axis location of the centre of each function's name in the display, in \code{par("usr")} units. For small numbers of functions, this will be an integer; for larger numbers, there will some adjustment around the nearest integer}
 Apart from graphical annotation, the main useful thing is \code{funmat}, which can be used to work out the "pecking order" and e.g. which functions directly call a given function. \code{callers.of} and \code{callees.of} return a character vector of function names.
 }
 \examples{

@@ -1,17 +1,10 @@
-\name{mlazy
-}
-\alias{mlazy
-}
-\alias{mtidy
-}
-\alias{demlazy
-}
-\alias{mcachees
-}
-\alias{attach.mlazy
-}
-\title{Cacheing objects for lazy-load access
-}
+\name{mlazy}
+\alias{mlazy}
+\alias{mtidy}
+\alias{demlazy}
+\alias{mcachees}
+\alias{attach.mlazy}
+\title{Cacheing objects for lazy-load access}
 \description{
 \code{mlazy} and friends are designed for handling collections of biggish objects, where only a few of the objects are accessed during any period, and especially where the individual objects might change and the collection might grow or shrink. As with "lazy loading" of packages, and the \code{gdata/ASOR} packages, the idea is to avoid the time & memory overhead associated with loading in numerous huge R{} binary objects when not all will be needed. Unlike lazy loading and \code{gdata}, \code{mlazy} caches each mlazyed object in a separate file, so it also avoids the overhead that would be associated with changing/adding/deleting objects if all objects lived in the same big file. When a workspace is \code{\link{Save}}d, the code updates only those individual object files that need updating.
 
@@ -73,7 +66,9 @@ You will probably also want to modify or create the \code{.First.task} (see \cod
 \subsection{Options}{
 By default, \code{mlazy} now saves & loads into a auto-created subdirectory called "mlazy". In the earliest releases, though, it saved "obj*.rda" files into the same directory as ".RData". It will now \bold{move} any "obj*.rda" files that it finds alongside ".RData" into the "mlazy" subdirectory. You can (possibly) override this by setting \code{options( mlazy.subdir=FALSE)}, but the default is likely more reliable.
 
-By default, there is no way to figure out what object is contained in a "obj*.rda" without forcibly loading that file or inspecting the \code{.mcache00} object in the "parent" \code{.RData} file-- not that you should ever need to know. However, if you set \code{options( mlazy.index=TRUE)}, then a file "obj.ind" will be maintained in the "mlazy" directory, showing (object name - value) pairs in plain text. For directories with very large numbers of objects, there may be some speed penalty.
+By default, there is no way to figure out what object is contained in a "obj*.rda" without forcibly loading that file or inspecting the \code{.mcache00} object in the "parent" \code{.RData} file-- not that you should ever need to know. However, if you set \code{options( mlazy.index=TRUE)} (\bold{recommended}), then a file "obj.ind" will be maintained in the "mlazy" directory, showing (object name - value) pairs in plain text (tab-separated). For directories with very large numbers of objects, there may be some speed penalty. If you want to create an index file for an existing "mlazy" directory that lacks one, \code{\link{cd}} to the task and call \code{mvbutils:::mupdate.mcache.index.if.opt(mlazy.index=TRUE)}.
+
+See \code{\link{Save}} for how to set compression options, and \code{save} for what you can set them to; \code{options(mvbutils.compression_level=1)} may save some time, at the expense of disk space.
 }
 \subsection{Troubleshooting}{
 In the unlikely event of needing to manually load a cached image file, use \code{\link{load.refdb}}-- \code{\link{cd}} and \code{attach.mlazy} do this automatically.
@@ -84,7 +79,7 @@ See \bold{Options} for the easy way to check what object is stored in a particul
 
 To see how memory changes when you call \code{mlazy} and \code{mtidy}, call \code{gc()}.
 
-To check object sizes \bold{without} actually loading the cached objects, use \code{\link{lsize}}. Many functions that iterate over all objects in the environment, such as \code{eapply}, will cause \code{mlazy} objects to be loaded.
+To check object sizes \emph{without} actually loading the cached objects, use \code{\link{lsize}}. Many functions that iterate over all objects in the environment, such as \code{eapply}, will cause \code{mlazy} objects to be loaded.
 
 Housekeeping of "obj**.rda" files happens during \code{\link{Save}}; any obsolete files (i.e. corresponding to objects that have been \code{remove}d) are deleted.
 }
@@ -98,8 +93,7 @@ There is presumably some speed penalty from using a cache, but experience to dat
 }
 \seealso{\code{\link{lsize}}, \code{gc}, package \pkg{gdata}, package \pkg{ASOR}
 }
-\author{Mark Bravington
-}
+\author{Mark Bravington}
 \examples{
 \dontrun{
 biggo <- matrix( runif( 1e6), 1000, 1000)
