@@ -1,7 +1,7 @@
-e8c3641842f9fd051957444dcb01551d *DESCRIPTION
-043f9287cc127183c9fae2e835204870 *INDEX
+a3cef1671d64ab239afe9736d8f8b95a *DESCRIPTION
+dea5634d26b2591d02d1fac05733dc50 *INDEX
 0265c910927ce91ed58fb575590e901b *NAMESPACE
-69fccbd694ba8100c3460ee90ca5d5ee *R/mvbutils.R
+c56cdc80bbeedce36b63cd68c5048f1e *R/mvbutils.R
 3ed876863227be85ab92c5608e324388 *R/sysdata.rda
 76961d9885b33351e6a2a038f07b37f2 *demo/00Index
 1340da5bcb0a3ad8b8beb81d0dda32e6 *demo/doc2Rd.demo.r
@@ -11,7 +11,7 @@ e0ae6dd654960000e37d82124b3d1326 *demo/source.mvb.demo.r
 74a09cddfb0609f69af0f1eb50bc0178 *inst/demostuff/original.dochelp.rrr
 d134082a060dd356235e8f93f58fbfbd *inst/demostuff/sample.fun.rrr
 3a40c1b402ae1130f1618debd1e8b395 *inst/demostuff/source.mvb.demo.rrr
-a30f76cc8013dc6368f182cade390d49 *man/00mvbutils-package.Rd
+f9cd712c86df4308f585e88f47fec58c *man/00mvbutils-package.Rd
 72665c99b0e9bce1a3c966c7f5f558ab *man/Hours.Rd
 2899603c8bd23526de15942042053cfc *man/Save.Rd
 38054b6251da4f80ce7e8cf3d887e05f *man/add.flatdoc.to.Rd
@@ -35,7 +35,7 @@ a87d6c50d78181a41f542d25f2d39af3 *man/foodweb.Rd
 d6ccb949100115f03c8e7f1e7a9f49fc *man/get.backup.Rd
 ab972bcc8dda944a7d7b3c2eeb699d35 *man/hack.Rd
 45c6543b299a451fd2e3ffff76a71ba7 *man/help2flatdoc.Rd
-4944da96c044d3d4869159c29aee2dcd *man/install.pkg.Rd
+fd818e1c1438ce120666be8fa26bcdbb *man/install.pkg.Rd
 d1a5650c5c80e12e07a9738d1325d76b *man/load.refdb.Rd
 adf38c24582659dc5c457a862b785a9c *man/local.on.exit.Rd
 5ea945c7f2c75d9a4c3932fc4308687a *man/local.return.Rd
@@ -51,11 +51,11 @@ dcdd44a63d01164d1c513894c4811bf3 *man/mcut.Rd
 12e099799b62fe8f2a1e1b31cf0333db *man/multirep.Rd
 876f825c86e86aada1a6b6a6b2bb5d3e *man/mvb.sys.parent.Rd
 809b3214256698269606feb02546b570 *man/mvbutils.operators.Rd
-bf95d8b57d4559a4085af3926c86f5bb *man/mvbutils.packaging.tools.Rd
+255b12188a29d01b59be8e5516a3d61d *man/mvbutils.packaging.tools.Rd
 c86682ed384190f34fba66b197b1f881 *man/mvbutils.utils.Rd
 726eed2fdfededb017b996a34a415118 *man/my.index.Rd
 56bbcbed9601dea4eec40decf53cffff *man/my.package.path.Rd
-9c45df2e410905bec2f37539e35dad40 *man/pre.install.Rd
+9600f884e30d0dcf577b498740f5a785 *man/pre.install.Rd
 a066e66b3896b184a2259524c3df2680 *man/readLines.mvb.Rd
 7727fe7716737adef2a788dc4e107272 *man/rm.pkg.Rd
 d62ec3cb4eb11bd7a30a8ba73a46320e *man/search.for.regexpr.Rd

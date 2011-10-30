@@ -2763,7 +2763,7 @@ stop("Couldn't launch editor")
     fix.list <<- fix.list[ fix.list$name != name | fix.list$where != name.load.from,]
     fix.list <<- rbind(fix.list,
         list( name = name, file = filename, where = name.load.from, where.type= type.load.from,
-        has.source=has.source( x),
+        has.source=!is.character( x),
         dataclass = paste( unique( c( class( x), 
             if( is.character( x)) 'character')), collapse=','),
         file.time=unclass( file.info( filename)[1,'mtime'])))
@@ -5951,14 +5951,11 @@ stop( "Can't find path of installed package '" %&% pkg %&% "'")
   ipath <- ipath[1] # if multiple installations, then fix only topmost
   dynamic.help <- is.Rd2 && file.exists( file.path( ipath, 'help', 'paths.rds'))
 
-  if( pre.inst) {
-    oodv <- tools:::.read_description( file.path( ipath, 'DESCRIPTION'))[ 'Version']
-    if( length( strsplit( oodv, '[.-]')[[1]]) < 3) # don't auto-update version
-      oodv <- NA
+  if( pre.inst)
     pre.install( pkg, character.only=TRUE, force.all.docs=force.all.docs,
-        R.target.version=R.target.version, dir.above.source=dir.above.source, ood.version=oodv)
-  }
-
+        R.target.version=R.target.version, dir.above.source=dir.above.source, 
+        autoversion=autoversion)
+  
   # DLLs
   fixup.DLLs( TRUE, ipath, rpath, spath, pkg, use.newest=TRUE)
   
@@ -6298,7 +6295,8 @@ function(substrs, mainstrs, any.case = FALSE, names.for.output) {
 
 "pre.install" <-
 function( pkg, character.only=FALSE, force.all.docs=FALSE, 
-    dir.above.source='+', ood.version=NA, R.target.version=getRversion(), ...) {
+    dir.above.source='+', autoversion=getOption( 'mvb.autoversion', TRUE),
+    R.target.version=getRversion(), ...) {
 #########
   set.pkg.and.dir() # set 'dir.', 'subdir', and 'ewhere', and ensure 'pkg' is character
   
@@ -6338,22 +6336,25 @@ stop( "couldn't make essential directories")
     description[] <- gsub( '\n', ' ', description) 
   } else {
     description <- c( Package=pkg, Title='What the package does',
-        Version='1.0', Author='R.A. Fisher', Description='More about what it does',
+        Version='1.0.0', Author='R.A. Fisher', Description='More about what it does',
         Maintainer='Who to complain to <yourfault@somewhere.net>',
         License='???') # adapted from 'package.skeleton'
-    cat( description, file=file.path( dir., 'DESCRIPTION'), sep='\n')
+    cat( sprintf( '%s: %s', names( description), description), 
+        file=file.path( dir., 'DESCRIPTION'), sep='\n')
   }
 
-  ood.version <- numeric_version( ood.version, strict=FALSE)
-  nominal.new.version <- numeric_version( description[ 'Version'], strict=TRUE)
-  if( !is.na( ood.version) && nominal.new.version <= ood.version) {
-    # Update the description
-    ok.bit <- sub( '([.-])[0-9]+$', '\\1', ood.version)
-    last.bit <- as.numeric( substring( ood.version, nchar( ok.bit)+1))
-    if( !is.na( last.bit))
-      description[ 'Version'] <- ok.bit %&% (last.bit+1)
+  # Autoversion: package must already be installed, and have at least 3 parts to version number
+  if( autoversion) {
+    ood.version <- try( installed.packages()[ pkg, 'Version'], silent=TRUE)
+    if( ood.version %is.not.a% 'try-error') {
+      # Update the description
+      ok.bit <- sub( '([.-])[0-9]+$', '\\1', ood.version)
+      last.bit <- as.numeric( substring( ood.version, nchar( ok.bit)+1))
+      if( !is.na( last.bit))
+        description[ 'Version'] <- ok.bit %&% (last.bit+1)
+    }
   }
-  description <- description %without.name% 'Built'
+  description <- description %without.name% c( 'Built', 'LazyLoad', 'SaveImage')
 #  description[ 'SaveImage'] <- 'yes'
 #  description[ cq( LazyLoad, LazyData)] <- 'no'
 
@@ -6854,25 +6855,18 @@ function( pkg, character.only=FALSE, dir.above.source='+', cmd='ECHO', postfix='
   #file.path.as.absolute <- mvbutils:::file.path.as.absolute
   set.pkg.and.dir()
   cd <- getwd()
-  
-  orig.env.vars <- list()
-  on.exit( {
-    setwd( cd)
-    do.call( 'Sys.setenv', orig.env.vars)
-  })
-  
-  set.rcmd.vars <- function() {
-      opath <- c( PATH=Sys.getenv( 'PATH'))
-      Sys.setenv( PATH=gsub( '/', '\\\\', 
-          paste( c( "C:/Rtools/bin", "c:/perl/bin", "c:/rtools/mingw/bin", R.home() %&% '/bin',
-          "D:/UTILS", "C:/R/Tcl/bin", opath), collapse=';')))
-      opath <- c( opath, R_LIBS=Sys.getenv( 'R_LIBS'))
-      Sys.setenv( R_LIBS=paste( .libPaths(), collapse=';'))
-    return( as.list( opath))
-    }
+  on.exit( setwd( cd))
 
-  
-  orig.env.vars <- set.rcmd.vars() # based on whatever preset.rcmd.vars() got ready
+  if( FALSE) {  
+    # Env var replacement NYI
+    orig.env.vars <- list()
+    on.exit( {
+      setwd( cd)
+      do.call( 'Sys.setenv', orig.env.vars)
+    })
+
+    orig.env.vars <- set.rcmd.vars() # based on whatever preset.rcmd.vars() got ready...
+  }
   
   setwd( dir.)
   # scatn( Sys.getenv( 'PATH'))
@@ -7404,7 +7398,12 @@ NULL
 
 "set.rcmd.vars" <-
 function( ...) {
-####
+######## NYI NYI NYI #########
+# Supposed to let users set env vars specifically for R-related system calls, so that
+# eg system( 'R CMD whatever') will just work.
+# NYI!
+return()
+
   ?sep
   vars <- unlist( list( ...))
   sysvars <- Sys.getenv()
@@ -7490,7 +7489,7 @@ return( Rd)
         if( oww==2)
           options( warn=1)
         warning( "Unmatched DON'T RUN will be made as big as possible, " %&%
-            "in doc with header:\n%s" %&% text[1] )
+            "in doc with header:\n%s" %&% Rd[1] )
         options( warn=oww)
         # Add a dontrun immediately after unmatched ones
         unmatched <- rep( FALSE, length( dontrun))
