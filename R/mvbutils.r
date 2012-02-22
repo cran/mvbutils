@@ -4085,7 +4085,7 @@ function (topic, package = NULL, lib.loc = NULL, verbose = getOption("verbose"),
 "help2flatdoc" <-
 function( fun.name, pkg=NULL, text=NULL){
   if( is.null( text)) {
-    libpath <- dirname( .find.package( pkg))
+    libpath <- dirname( find.package( pkg))
     
     if( getRversion() >= "2.10") {
       al <- readRDS( file.path( libpath, pkg, 'help', 'aliases.rds'))
