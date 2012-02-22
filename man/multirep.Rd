@@ -3,7 +3,8 @@
 \alias{multinsert}
 \alias{massrep}
 \title{Replacement and insertion functions with more/less than 1 replacement per spot}
-\description{\code{multirep} is like \code{replace}, but the replacements are a list of the same length as the number of elements to replace. Each element of the list can have 0, 1, or more elements-- the original vector will be expanded/contracted accordingly. (If all elements of the list have length 1, the result will be the same length as the original.) \code{multinsert} is similar, but doesn't overwrite the elements in \code{orig} (so the result of \code{multinsert} is longer). \code{massrep} is like \code{multirep}, but takes lists as arguments so that a group-of-line-numbers in the first list is replaced by a group-of-lines in the second list.}
+\description{\code{multirep} is like \code{replace}, but the replacements are a list of the same length as the number of elements to replace. Each element of the list can have 0, 1, or more elements-- the original vector will be expanded/contracted accordingly. (If all elements of the list have length 1, the result will be the same length as the original.) \code{multinsert} is similar, but doesn't overwrite the elements in \code{orig} (so the result of \code{multinsert} is longer). \code{massrep} is like \code{multirep}, but takes lists as arguments so that a group-of-line-numbers in the first list is replaced by a group-of-lines in the second list.
+}
 \usage{
 multirep( orig, at, repl, sorted.at=TRUE)
 multinsert( orig, at, ins, sorted.at=TRUE)
@@ -25,4 +26,5 @@ multirep( cq( the, cat, sat, on, the, mat), c( 2, 6), list( cq( big, bug), chara
 multinsert( cq( cat, sat, on, mat), c( 0, 4), list( cq( fat), cq( cleaning, equipment)))
 # [1] "fat" "cat" "sat" "on" "mat" "cleaning" "equipment"
 }
-\keyword{misc}
+\keyword{misc
+}

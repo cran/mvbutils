@@ -3,7 +3,8 @@
 \alias{create.backups}
 \alias{read.bkind}
 \title{Text backups of function source code}
-\description{\code{get.backup} retrieves backups of a function or character object. \code{create.backups} creates backup files for all hitherto-unbacked-up functions in a search environment. For \code{get.backup} to work, all backups must have been created using the \code{\link{fixr}} system (or \code{create.backups}). \code{read.bkind} shows the names of objects with backups, and gives their associated filenames.}
+\description{\code{get.backup} retrieves backups of a function or character object. \code{create.backups} creates backup files for all hitherto-unbacked-up functions in a search environment. For \code{get.backup} to work, all backups must have been created using the \code{\link{fixr}} system (or \code{create.backups}). \code{read.bkind} shows the names of objects with backups, and gives their associated filenames.
+}
 \usage{
 get.backup( name, where=1, rev=TRUE, zap.name=TRUE, unlength=TRUE)
 create.backups( pos=1)
@@ -28,7 +29,7 @@ The number of backups kept is controlled by \code{options(backup.fix)}, a numeri
 
 \code{get.backup} returns all available backup versions as \bold{character vectors}, by default with the most recent first. To turn one of these character vectors into a function, a \code{source} step is needed; see \bold{Examples}.
 
-\code{read.bkind} shows which file to look for particular backups in. These files are text-format, so you can look at one in a text editor and manually extract the parts you want. You can also use \code{read.bkind} to set up a restoration-of-everything, as shown in EXAMPLES. I deliberately haven't included a function for mass restoration in \code{mvbutils}, because it's too dangerous and individual needs vary.
+\code{read.bkind} shows which file to look for particular backups in. These files are text-format, so you can look at one in a text editor and manually extract the parts you want. You can also use \code{read.bkind} to set up a restoration-of-everything, as shown in \bold{Examples}. I deliberately haven't included a function for mass restoration in \code{mvbutils}, because it's too dangerous and individual needs vary.
 
 Currently there is no automatic way to determine the type of a backed-up object. All backups are stored as text, so text objects look very similar to functions. However, the first line of a text object is just a number equal to the length of the text object; the first line of a function object starts with "function(" or "structure( function(". The examples show one way to distinguish automatically.
 
@@ -73,8 +74,10 @@ for( i in bks$object.names) \{
 \}
 }
 }
-\seealso{\code{\link{fixr}}, \code{\link{cd}}, \code{\link{move}}}
+\seealso{\code{\link{fixr}}, \code{\link{cd}}, \code{\link{move}}
+}
 \author{Mark Bravington}
 \keyword{programming}
 \keyword{utilities}
-\keyword{documentation}
+\keyword{documentation
+}

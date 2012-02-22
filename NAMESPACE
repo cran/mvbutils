@@ -21,6 +21,7 @@ export( "%!in%",
 "%where%",
 "%where.warn%",
 "%without.name%",
+"?",
 "add.flatdoc.to",
 "as.cat",
 "assign.to.base",
@@ -43,18 +44,20 @@ export( "%!in%",
 "clip",
 "cq",
 "create.backups",
+"cull.old.builds",
 "current.source",
 "demlazy",
 "deparse.names.parsably",
+"ditto.list",
 "do.in.envir",
 "doc2Rd",
 "dochelp",
+"docotest",
 "dont.lock.me",
 "dont.lockBindings",
 "empty.data.frame",
 "env.name.string",
 "everyth",
-"exists.mvb",
 "expanded.call",
 "extract.named",
 "fast.read.fwf",
@@ -73,14 +76,14 @@ export( "%!in%",
 "generic.dll.loader",
 "get.backup",
 "hack",
+"help",
 "help2flatdoc",
-"Hours",
 "index",
 "install.pkg",
 "is.dir",
+"isF",
+"isT",
 "legal.filename",
-"length<-.POSIXct",
-"lib.pos",
 "load.refdb",
 "local.on.exit",
 "local.return",
@@ -97,7 +100,6 @@ export( "%!in%",
 "mcachees",
 "mcut",
 "mintcut",
-"Minutes",
 "mkdir",
 "mlazy",
 "mlocal",
@@ -106,27 +108,38 @@ export( "%!in%",
 "mtidy",
 "multinsert",
 "multirep",
+"mvb.eval.parent",
 "mvb.match.call",
 "mvb.nargs",
 "mvb.parent.frame",
 "mvb.sys.call",
 "mvb.sys.function",
 "mvb.sys.nframe",
-"mvb.sys.on.exit",
 "mvb.sys.parent",
 "my.all.equal",
 "my.index",
 "my.index.assign",
 "my.index.exists",
-"my.package.path",
 "named",
 "nscat",
+"nscatn",
 "option.or.default",
 "patch.install",
 "patch.installed",
+"plot.cdtree",
+"plot.foodweb",
 "pos",
 "pre.install",
+"print",
+"print.call",
+"print.cat",
+"print.default",
+"print.function",
+"print.specialprint",
 "put.in.session",
+"rbdf",
+"rbind",
+"rbind.data.frame",
 "read.bkind",
 "readLines.mvb",
 "readr",
@@ -139,11 +152,11 @@ export( "%!in%",
 "scatn",
 "search.for.regexpr",
 "search.task.trees",
-"Seconds",
 "set.presave.hook.mvb",
 "set.rcmd.vars",
 "setup.mcache",
 "source.mvb",
+"spkg",
 "strip.missing",
 "task.home",
 "to.regexpr",
@@ -152,18 +165,21 @@ export( "%!in%",
 "warn.and.subset",
 "write.NAMESPACE",
 "write.sourceable.function",
-"yes.no"
-)
+"yes.no")
 import( utils)
 import( tools)
 import( stats)
-S3method( cbind, POSIXct)
-S3method( print, cat)
-S3method( print, cdtree)
-S3method( print, docattr)
-S3method( print, nullprint)
-S3method( print, pagertemp)
-S3method( rbind, POSIXct)
-S3method( plot, cdtree)
-S3method( plot, foodweb)
+S3method( "rbind", "data.frame")
+S3method( "close", "selfdeleting.file")
+S3method( "print", "browsertemp")
+S3method( "print", "call")
+S3method( "print", "cat")
+S3method( "print", "cdtree")
+S3method( "print", "default")
+S3method( "print", "docattr")
+S3method( "print", "function")
+S3method( "print", "nullprint")
+S3method( "print", "pagertemp")
+S3method( "print", "specialprint")
+S3method( "print", "thing.with.source")
 

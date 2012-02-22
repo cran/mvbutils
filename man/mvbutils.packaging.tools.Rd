@@ -28,17 +28,16 @@ First, the simplest case: suppose you have some pure R{} code and maybe data tha
 \item \code{library(Splendid)}; your package will be loaded for use, and is also ready for live-editing.
 }
 
-Your package will probably just about work now, but the result won't yet be perfect. The first thing is that you will need to edit the DESCRIPTION file. \code{mvbutils} creates a default text file "DESCRIPTION" in the task folder even if you haven't, but it won't be what you really want, as you'll realize if you type \code{library( help=Splendid)}. Apart from the obvious changes, the most important fields to add are "Imports:" (or "Depends:" for packages that are pre-R2.14 and that also don't have a namespace), to say what other packages are needed by Splendid. The DESCRIPTION file should rarely need to be updated, since the \code{autoversion} feature can be used to take care of version numbering.
-
-The additional steps you'll likely need are these:
+Your package will probably just about work now, but the result won't yet be perfect. The additional steps you'll likely need are these:
 
 \itemize{
-\item Provide documentation (see below)
+\item Sort out the \bold{Description file or object}[(]see below[)]
+\item Provide \bold{Documentation and metadata}[(]see below[)]
 \item Sort out any C/Fortran source code, pre-compiled code, demos, and other additional files (see \code{\link{pre.install}})
 \item Move any subtasks of Splendid to one level up the task hierarchy (see \code{\link{maintain.packages}})
 }
 
-Once you have set up "Splendid" so that \code{\link{maintain.packages}} works, you should never need to \code{\link{cd}} directly into "Splendid" again.
+Once you have set up "Splendid" so that \code{\link{maintain.packages}} works, you won't need to \code{\link{cd}} directly into "Splendid" again--- which is good, because you're not allowed to.
 \subsection{Glossary}{
 \emph{Task package} is a folder with at least an ".RData" file, linked into the \code{\link{cd}} hierarchy. It contains master copies of the objects in your package, plus perhaps a few other objects required to build the package (e.g. stand-alone items of documentation).
 
@@ -59,59 +58,89 @@ Once you have set up "Splendid" so that \code{\link{maintain.packages}} works, y
 Suppose you have already have a \emph{source} package "hardway", and would like to try maintaining it via \code{mvbutils}. You'll need to create a task package, then create a new version of the source package, then re-install it. The first step is to call \code{unpackage( hardway)} to creat the task package "hardway" in a subdirectory of the current task. Plain-text documentation will be attached to functions, or stored as ".doc" text objects. All functions and documentation must thereafter be edited using \code{\link{fixr}}. The full sequence is something like:
 
 \preformatted{
-# Create task package in subdirectory of current:
-unpackage( "path/to/existing/source/package/hardway")
-#
-# Load image into memory:
-maintain.packages( hardway)
-#
-# Make new version of source package:
-pre.install( hardway, ...) # use dir= to control where new source pkg goes
-#
-install.pkg( hardway) # or build.pkg.binary( hardway) followed by "install from local zip file" menu
-#
-library( hardway) # off yer go
+  # Create task package in subdirectory of current:
+  unpackage( "path/to/existing/source/package/hardway")
+  #
+  # Load image into memory:
+  maintain.packages( hardway)
+  #
+  # Make new version of source package:
+  pre.install( hardway, ...) # use dir= to control where new source pkg goes
+  #
+  install.pkg( hardway) # or build.pkg.binary( hardway) followed by "install from local zip file" menu
+  #
+  library( hardway) # off yer go
 }
 
 If you get problems after \code{\link{maintain.packages}}, you might need \code{unmaintain.package( hardway)} to clear out the in-memory copy of the new task package.
 }
-\section{Documentation}{
-Documentation for functions can be stored as plain text just after a function's source code, as described in \code{\link{flatdoc}}. Just about anything will do-- you don't absolutely have to follow the conventional structure of R{} help if you are really in a hurry. However, the easiest way to add "proper" but skeletal documentation to your function \code{brilliant}, is \code{fixr( brilliant, new.doc=TRUE)}; again, see \code{\link{flatdoc}} and \code{\link{doc2Rd}} if you want to understand what's going on. The format is almost exactly as displayed in plain-text help, i.e. from \code{help(..., help_type="text")}. My recommendation is to just start writing something that looks reasonable, and see whether it works. To test the ultimate appearance, you'll need to run \code{\link{patch.install}} to update the help system, as explained below in MAINTAINING.A.PACKAGE. If you run into problems with writing documentation for your functions, then refer to \code{\link{doc2Rd}} for further details of format, such as how to document several functions in the same file.
+\section{Documentation and metadata}{
+Documentation for functions can be stored as plain text just after a function's source code, as described in \code{\link{flatdoc}}. Just about anything will do-- you don't absolutely have to follow the conventional structure of R{} help if you are really in a hurry. However, the easiest way to add kosheR but skeletal documentation to your function \code{brilliant}, is \code{fixr( brilliant, new.doc=TRUE)}; again, see \code{\link{flatdoc}} and \code{\link{doc2Rd}} if you want to understand what's going on. The format is almost exactly as displayed in plain-text help, i.e. from \code{help(..., help_type="text")}. My recommendation is to just start writing something that looks reasonable, and see if it works. To quickly test the ultimate appearance, you can use e.g. \code{docotest(..Splendid$brilliant)}. More generally, run \code{patch.install(Splendid)} which, as explained in \bold{Maintaining a package} below, updates everything for your package including the help system, so you can then just do \code{?brilliant}. If you run into problems with writing documentation for your functions, then refer to \code{\link{doc2Rd}} for further details of format, such as how to document several functions in the same file.
 
 You can also provide three other types of documentation, for: (i) general use of your package (please do! it helps the user a lot; packages where the doco PDF consists only of an alphabetical list of functions/objects are a pain); (ii) more specific aspects of usage that are not tied to individual functions, such as this file; and (iii) datasets. These types of documentation should be stored in the package as text objects whose name ends in ".doc"; examples of the three types could be "Splendid.package.doc", "glitzograms.with.Splendid.doc", and "earlobes.doc" if you have a dataset \code{earlobes}. See \code{\link{doc2Rd}} for format details.
 
-You must document every function and dataset that the user will see, but you don't need to document any others. The foregoing applies iff your package is namespaced (see next), which it must be for R{} 2.14 up.
+You must document every function and dataset that the user will see, but you don't need to document any others. The foregoing applies iff your package has a \bold{Namespace}, which it must for R{} 2.14 up.
+\subsection{Description file or object}{
+When you first create a package from a task via \code{\link{pre.install}}, there probably won't be any DESCRIPTION information, so \code{mvbutils} will create a default "DESCRIPTION" file in your task folder, which it then copies to the source package. However, the default won't really be what you really want, as you'll realize if you type \code{library( help=Splendid)}. You can either manually edit the default "DESCRIPTION" file, or you can use \code{fixtext(Splendid.DESCRIPTION, pkg="Splendid")} to create a text object in your task package, which you then populate with the contents of the default "DESCRIPTION" file, and then edit. If a \code{Splendid.DESCRIPTION} object exists, \code{mvbutils} will use it in preference to a file; I find this tidier, because more of the package metadata lives in a single place, viz. inside the task package.
+
+Apart from the obvious changes needed to the default "DESCRIPTION" file or text object, the most important fields to add are "Imports:" (or "Depends:" for packages that are pre-R2.14 and that also don't have a namespace), to say what other packages are needed by "Splendid". The DESCRIPTION file/text should rarely need to be updated, since the "autoversion" feature (see \code{\link{pre.install}} doco) can be used to take care of version numbering. The most common reason to change the DESCRIPTION is probably to add/remove packages in "Imports"; at present, this pretty much requires you to unload & reload the package, but I may try to expedite this in future versions.
 }
-\section{Namespaces}{Usually this is automatic. \code{\link{pre.install}} etc automatically creates a "NAMESPACE" file for your package, ensuring inter alia that all documented objects are user-visible. To load DLLs, add a \code{.onLoad} function that contains the body code of \code{\link{generic.dll.loader}} in package \pkg{mvbutils} (thus avoiding dependence on \code{mvbutils}). For more complicated fiddling, see \bold{Customizing package creation}.
+\subsection{Vignettes}{
+In time, I plan to get \code{mvbutils} working nicely with \code{knitr}. At present (Jan 2013), the easiest way to create vignettes with \code{mvbutils} is to produce your own "homebrewed" PDFs however you prefer, and put them into the "inst/doc" folder. \code{pre.install/patch.install} will sort them out and link them into the help system. To provide more information than the filename, use \code{\link{fixtext}} to create a text object in your task package called e.g. \code{mypack.VIGNETTES}, with lines as follows:
+
+\preformatted{
+  my.first.vignette: Behold leviathan, mate
+  my.second.vignette: What a good idea, to write a vignette
+}
+
+As a \emph{very} experimental feature, you can also include R{} code for a homebrewed vignette, via a file with the same name but extension ".R" also in "inst/doc". Users can access it as normal for vignette code, via \code{edit( vignette( "my.first.vignette", package="mypack")) or via doing something to }system.file( file.path( "doc", "my.first.vignette.R"), package="mypack").
+
+You can put full-on Sweave-style vignettes into a "vignettes" folder, and they should be set up correctly in the source package. Currently, though, they are \bold{not} re-installed by \code{\link{patch.install}}; you need to use \code{\link{build.pkg}} and \code{\link{install.pkg}} (partly defeating the point of these package-building utilities).
+\subsection{Very technical details about homebrewed vignettes}{"Rnw stubs" are created for all homebrewed vignettes so that the help system finds them. A rudimentary index will be created for vignettes not mentioned in \code{<<mypack>>.VIGNETTES}. If you create your own "inst/doc/index.html" file, this takes precedence over mvbutil's versions, so that \code{<<mypack>>.VIGNETTES} is not used.
+}
+}
+\subsection{Namespace}{Usually this is automatic. \code{\link{pre.install}} etc automatically creates a "NAMESPACE" file for your package, ensuring inter alia that all documented objects are user-visible. To load DLLs, add a \code{.onLoad} function that contains the body code of \code{\link{generic.dll.loader}} in package \pkg{mvbutils} (thus avoiding dependence on \code{mvbutils}). For more complicated fiddling, see \bold{Customizing package creation}.
 \subsection{Packages without namespaces pre r 2 14}{Namespaces only became compulsory with R{} 2.14. If you're setting up your package in an earlier version of R{}, \code{mvbutils} will \emph{not} create a namespace unless it finds a \code{.onLoad} function. To trigger namespacing, just create a \code{.onLoad} with this definition: \code{function( libname, pkgname) {}}.
 }
 }
+}
 \section{Maintaining a package}{
-Once you have successfully gotten your \code{Splendid} package installed and loaded the first time, you should rarely need to call \code{\link{install.pkg}} or \code{\link{build.pkg}} etc again, except when you are about to distribute to others. In your own work, after calling \code{\link{maintain.packages}} and \code{library} in an R{} session, you can modify, add and delete functions, datasets, and documentation in your package via the standard functions \code{\link{fixr}}, \code{\link{move}}, and \code{\link{rm.pkg}} (or directly), and these changes will mostly be immediately manifested in the loaded package within your R{} session-- this is "live editing". The changes are made first to the in-memory task package, which will be called e.g. \code{..Splendid}, and then propagated to the loaded package. Don't try to manipulate the loaded package's namespace directly. See \code{\link{maintain.packages}} for details.
+Once you have successfully gotten your "Splendid" package installed and loaded the first time, you should rarely need to call \code{\link{install.pkg}} or \code{\link{build.pkg}} etc again, except when you are about to distribute to others. In your own work, after calling \code{\link{maintain.packages}} and \code{library} in an R{} session, you can modify, add and delete functions, datasets, and documentation in your package via the standard functions \code{\link{fixr}}, \code{\link{move}}, and \code{\link{rm.pkg}} (or directly), and these changes will mostly be immediately manifested in the loaded package within your R{} session-- this is "live editing". The changes are made first to the in-memory task package, which will be called e.g. \code{..Splendid}, and then propagated to the loaded package. Don't try to manipulate the loaded package's namespace directly. See \code{\link{maintain.packages}} for details.
 
 To update the installed package (on disk), call \code{patch.install( Splendid)}; this also calls \code{\link{pre.install}} to update the source package, updates the help system in the current session, and does a few other synchronizations. You need to call \code{\link{patch.install}} before quitting R{} to ensure that the changes are manifest in the loaded package the next time you start R{}; otherwise they will only exist in the in-memory task package, and won't be callable.
 \subsection{Troubleshooting}{
 In rare cases, you may find that \code{maintain.packages( Splendid)} fails. If that happens, there won't be a \code{..Splendid} environment, which means you can't fix whatever caused the load failure. The load failure is (invariably in my experience) caused by a hidden attempt to load a namespaced package, which is failing for yet another reason, usually something in its \code{.onLoad}; that package might or might not be "Splendid" itself. If you can work out what other package is trying to load itself-- say \code{badpack}-- you can temporarily get round the problem by making use of the character vector \code{partial.namespaces}, which lives in the "mvb.session.info" search environment, as follows:
 
 \preformatted{
-partial.namespaces <<- c( partial.namespaces, "badpack")
+  partial.namespaces <<- c( partial.namespaces, "badpack")
 }
 
 That will prevent execution of \code{badpack:::.onLoad}. Consequently \code{badpack} won't be properly loaded, but at least the task package will be loaded into \code{..Splendid}, so that you can make a start on the problem. If you can't work out which package is causing the trouble, try
 
 \preformatted{
-partial.namespaces <<- "EVERY PACKAGE"
+  partial.namespaces <<- "EVERY PACKAGE"
 }
 
 After that, no namespaced package will load properly, so remember to clear \code{partial.namespaces <<- NULL} before resuming normal service.
 
+Occasionally (usually during \code{\link{patch.install}}), you might see R{} errors like "cannot allocate vector of size 4.8Gb". I think this happens when some internal cache gets out-of-synch. It doesn't seem to cause much damage to the installed package, but once it's happened in an R{} session, it tends to happen again. I usually quit & restart R{}.
+
 You might also find \code{\link{find.lurking.envs}} useful, via \code{eapply( ..Splendid, find.lurking.envs)}; this will show any functions (or other things) in \code{..Splendid} that have accidentally acquired a non-standard environment such as a namespace, which can trigger a "hidden" package load attempt. The environment for all functions in \code{..Splendid} \emph{should} probably be \code{.GlobalEnv}; the environments in the \emph{loaded} package will be different, of course.
+
+It's rare to need to manually inspect either the source package or the installed package. But if you do, then \code{\link{spkg}} helps for the former (e.g. \code{dir( spkg( mypack))}), and \code{system.file} for the latter (e.g. \code{system.file( package="mypack")}, or \code{system.file( file.path( "help", "AnIndex"), package="mypack")}).
 }
 }
 \section{Distributing and checking}{
-\code{\link{build.pkg}} calls R{} CMD BUILD to create a "tarball" of the package (a ".tar.gz" file), which is the appropriate format for distribution to Unix folk and submission to CRAN. \code{\link{build.pkg.binary}} creates a binary package (a ".zip" file), suitable for Windows or Macs. \code{\link{check.pkg}} runs R{} CMD CHECK, which is required by CRAN and sometimes useful at other times. These \code{.pkg} functions are pretty simple wrappers to the R{} CMD tools with similar names. However, for those with imperfect memories and limited time, there are enough arcane and mutable nuances with the "raw" R{} CMD commands (including the risk of inadvertently deleting existing installations) to make the wrappers in \code{mvbutils} useful.
+\code{\link{build.pkg}} calls R{} CMD BUILD to create a "tarball" of the package (a ".tar.gz" file), which is the appropriate format for distribution to Unix folk and submission to CRAN. \code{\link{build.pkg.binary}} creates a binary package (a ".zip" file), suitable for Windows or Macs. \code{\link{check.pkg}} runs R{} CMD CHECK (but see next paragraph for a quicker alternative), which is required by CRAN and sometimes useful at other times. These \code{.pkg} functions are pretty simple wrappers to the R{} CMD tools with similar names. However, for those with imperfect memories and limited time, there are enough arcane and mutable nuances with the "raw" R{} CMD commands (including the risk of inadvertently deleting existing installations) to make the wrappers in \code{mvbutils} useful.
 
-Various functions in the \pkg{tools} package can be used to check specific aspects of an \emph{installed} package, without needing a full-on (and slowish) R{} CMD CHECK-- \bold{but} note that they will first unload your package and then reload it, so they may disrupt your session especially if compiled code is involved. I find \code{codoc} and \code{undoc} useful, eg via \code{codoc( "debug", file.path( tasks[ "debug"], "debug"))}. Nothing is printed unless a problem is found, so a blank result is good news!
+Various functions in the \pkg{tools} package can be used to quickly check specific aspects of an \emph{installed} package, without needing a full-on, and slow, R{} CMD CHECK. In particular, I regularly use
+
+\preformatted{
+  codoc( spkg( mypack)) # also spkg( "mypack"), spkg( ..mypack)
+  undoc( spkg( ..mypack))
+}
+
+Nothing is printed unless a problem is found, so a blank result is good news! It's also possible to run other tools such as \code{checkTnF} and \code{checkFF} similarly.
 }
 \section{Different r versions}{You might need to distribute different versions of your package to go with different R{} versions. (This happened with-- at least-- 2.10, 2.12, and 2.14.) The \code{dir.above.source} argument of \code{\link{pre.install}} can be used to create different source package versions. Presumably you'll install the results into different R{} libraries.
 }

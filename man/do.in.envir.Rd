@@ -1,7 +1,8 @@
 \name{do.in.envir}
 \alias{do.in.envir}
 \title{Modify a function's scope}
-\description{\code{do.in.envir} lets you write a function whose scope (enclosing environment) is defined at runtime, rather than by the environment in which it was defined.}
+\description{\code{do.in.envir} lets you write a function whose scope (enclosing environment) is defined at runtime, rather than by the environment in which it was defined.
+}
 \usage{
 # Use only as wrapper of function body, like this:
 # my.fun <- function(...) do.in.envir( fbody, envir=)
@@ -24,7 +25,8 @@ Calls to e.g. \code{sys.nframe} won't work as expected inside \code{do.in.envir}
 
 The \pkg{debug} package does not yet trace inside \code{do.in.envir} functions-- this will change.
 }
-\value{Whatever \code{fbody} returns.}
+\value{Whatever \code{fbody} returns.
+}
 \examples{
 fff <- function( abcdef) ffdie( 3)
 ffdie <- function( x) do.in.envir( \{ x+abcdef\} )
@@ -35,7 +37,9 @@ fff( 9) # 12; ffdie wouldn't know about abcdef without the do.in.envir call
 ffe <- function(...) do.in.envir( envir=sys.frame( sys.nframe()), sys.call( -5))
 ffe( 27, b=4) # ffe( 27, b=4)
 }
-\seealso{\code{\link{mlocal}}}
+\seealso{\code{\link{mlocal}}
+}
 \author{Mark Bravington}
 \keyword{programming}
-\keyword{utilities}
+\keyword{utilities
+}

@@ -30,7 +30,7 @@ cditerate( from.text, what.to.do, so.far = vector("NULL", 0), ..., show.task.nam
 \item{ charlim}{maximum characters per line allowed in graphical display of \code{cdtree}; reduce if unreadable, or change par( \code{cex})}
 \item{ old.path}{regexpr showing portion of directory names to be replaced}
 \item{ new.path}{replacement portion of directory names}
-\item{ what.to.do}{function to be called on each task (see DETAILS)}
+\item{ what.to.do}{function to be called on each task (see \bold{Details})}
 \item{ so.far}{starting value for accumulated list of function results}
 \item{ ...}{further fixed arguments to be passed to \code{what.to.do} (for \code{cditerate}), or to \code{\link{foodweb}} (for \code{plot.cdtree})}
 \item{ x}{result of a call to \code{cdtree}, for plotting}

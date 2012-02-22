@@ -1,7 +1,8 @@
 \name{local.on.exit}
 \alias{local.on.exit}
 \title{Macro-like functions}
-\description{\code{local.on.exit} is the analogue of \code{on.exit} for "nested" or "macro" functions written with \code{\link{mlocal}}.}
+\description{\code{local.on.exit} is the analogue of \code{on.exit} for "nested" or "macro" functions written with \code{\link{mlocal}}.
+}
 \usage{
 # Inside an 'mlocal' function of the form function( <<args>>, nlocal=sys.parent(), <<temp.params>>) mlocal(\{ <<code>> \})
 local.on.exit( expr, add=FALSE)
@@ -28,6 +29,8 @@ ffout <- function() \{
 \}
 ffout()
 }
-\seealso{\code{\link{mlocal}}, \code{\link{local.return}}, \code{local.on.exit}, \code{\link{do.in.envir}}, and R-news 1/3}
+\seealso{\code{\link{mlocal}}, \code{\link{local.return}}, \code{local.on.exit}, \code{\link{do.in.envir}}, and R-news 1/3
+}
 \author{Mark Bravington}
-\keyword{programming}
+\keyword{programming
+}

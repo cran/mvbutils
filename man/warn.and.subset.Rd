@@ -1,9 +1,6 @@
-\name{warn.and.subset
-}
-\alias{warn.and.subset
-}
-\title{Extract subset and warn about omitted cases
-}
+\name{warn.and.subset}
+\alias{warn.and.subset}
+\title{Extract subset and warn about omitted cases}
 \description{Extract row-subset of a \code{data.frame} according to a condition. If any cases (rows) are omitted, they are listed with a warning. Rows where the condition gives NA are omitted.
 }
 \usage{
@@ -15,12 +12,12 @@ warn.and.subset(x, cond,
 }
 \arguments{
 \item{ x}{data.frame}
-\item{ cond}{expression to evaluate in the context of \code{data.frame}. If \code{sub=TRUE} (the default), this will be substituted, so . If \code{sub=FALSE}, you can use a pre-assigned expression; in that case, you had better set \code{mess.cond} manually.}
+\item{ cond}{expression to evaluate in the context of \code{data.frame}. If \code{sub=TRUE} (the default), this will be substituted. If \code{sub=FALSE}, you can use a pre-assigned expression; in that case, you had better set \code{mess.cond} manually.}
 \item{ mess.head}{description of data.frame (e.g. its name) for use in a warning.}
 \item{ mess.cond}{description of the desired condition for use in a warning.}
 \item{ row.info}{character vector that will describe rows; omitted elements appear in the warning}
 \item{ sub}{should \code{cond} be treated as a literal expression to be evaluated, or as a pre-computed logical index?}
-# \dots{}: just there to keep RCMD CHECK happy-- for heaven's sake\dots{}
+# ...: just there to keep RCMD CHECK happy-- for heaven's sake...
 }
 \value{The subsetted data.frame.
 }

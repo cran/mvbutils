@@ -1,9 +1,6 @@
-\name{unpackage
-}
-\alias{unpackage
-}
-\title{Convert existing source package into task package
-}
+\name{unpackage}
+\alias{unpackage}
+\title{Convert existing source package into task package}
 \description{Converts an existing source package into a task package. A subdirectory with the package name will be created under the current working directory, and will be populated with a ".RData" file, the DESCRIPTION file, and various other files/directories from the source package. All Rd files will be turned into flat-format help in the ".RData", either attached to functions or as stand-alone "*.doc" text objects. The subdirectory will also be made into a \emph{task}, i.e. it will be added to the "tasks" vector in the current workspace that \code{\link{cd}} uses to keep track of the task hierarchy.
 }
 \usage{unpackage(spath, force = FALSE)

@@ -1,13 +1,9 @@
-\name{hack
-}
-\alias{hack
-}
-\alias{assign.to.base
-}
-\title{Modify standard R functions, including tweaking their default arguments
-}
+\name{hack}
+\alias{hack}
+\alias{assign.to.base}
+\title{Modify standard R functions, including tweaking their default arguments}
 \description{
-You probably shouldn't use these\dots{} \code{hack} lets you easily change the argument defaults of a function. \code{assign.to.base} replaces a function in \code{base} or \code{utils} (or any other package and its namespace and S3 methods table) with a modified version, possibly produced by \code{hack}. Package \pkg{mvbutils} uses these two to change the default position for library attachment, etc; see the code of \code{mvbutils:::.onLoad}.
+You probably shouldn't use these... \code{hack} lets you easily change the argument defaults of a function. \code{assign.to.base} replaces a function in \code{base} or \code{utils} (or any other package and its namespace and S3 methods table) with a modified version, possibly produced by \code{hack}. Package \pkg{mvbutils} uses these two to change the default position for library attachment, etc; see the code of \code{mvbutils:::.onLoad}.
 
 Note that, if you call \code{assign.to.base} during the \code{.onLoad} of your package, then it must be called \emph{directly} from the \code{.onLoad}, not via an intermediate function; otherwise, it won't correctly reset its argument in the import-environment of your namespace. To get round this, wrap it in an \code{\link{mlocal}}; see \code{mvbutils:::.onLoad} for an example.
 

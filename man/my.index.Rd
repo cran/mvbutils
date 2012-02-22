@@ -1,13 +1,8 @@
-\name{my.index
-}
-\alias{my.index
-}
-\alias{my.index.assign
-}
-\alias{my.index.exists
-}
-\title{Arbitrary-level retrieval from and modification of recursive objects
-}
+\name{my.index}
+\alias{my.index}
+\alias{my.index.assign}
+\alias{my.index.exists}
+\title{Arbitrary-level retrieval from and modification of recursive objects}
 \description{As of R{} 2.12, you probably don't need these at all. But, in case you do: \code{my.index} and \code{my.index.assign} are designed to replace \code{[[} and \code{[[<-} \emph{within} a function, to allow arbitrary-depth access into any recursive object. In order to avoid conflicts with system usage and/or slowdowns, it is wise to do this only inside a function definition where they are needed. A zero-length index returns the entire object, which I think is more sensible than the default behaviour (chuck a tanty). \code{my.index.exists} tests whether the indexed element actually exists. Note that these functions were written in 2001; since then, base-R has extended the default behaviour of \code{[[} etc for recursive objects, so that \code{my.index( thing, 1, 3, 5)} can sometimes be achieved just by to \code{thing[[c(1,3,5)]]} with the system version of \code{[[}. However, at least as of R{} 2.10.1, the system versions still have limited "recursability".
 }
 \usage{
@@ -46,8 +41,7 @@ At present, there is no facility to use a mixture of character and numeric index
 #ff # function () \{ a <- ifelse(a > 1, 2, 3) + c \}
 #my.index.exists( c(2,3,2,1), body( ff)) # now TRUE
 }
-\author{Mark Bravington
-}
+\author{Mark Bravington}
 \keyword{programming}
 \keyword{utilities
 }

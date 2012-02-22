@@ -1,9 +1,6 @@
-\name{move
-}
-\alias{move
-}
-\title{Organizing R workspaces
-}
+\name{move}
+\alias{move}
+\title{Organizing R workspaces}
 \description{\code{move} shifts one or more objects around the task hierarchy (see \code{\link{cd}}), whether or not the source and destination are currently attached on the search path.
 }
 \usage{
@@ -23,7 +20,7 @@ move( x='.', from='.', to='.', what, overwrite.by.default=FALSE, copy=FALSE)
 \item{ copy}{logical(1)}
 }
 \details{
-The normal invocation is something like \code{move( myobj, ., 0/another.task)}-- note the lack of quotes around \code{myobj}. To move objects with names that have to be quoted, or to move several objects at the same time, specify the \code{what} argument: e.g. \code{move( what=c( "myobj", "\%myop\%"), ., 0/another.task)}. Note that \code{move} is playing fast and loose with standard argument matching here; it correctly interprets the \code{.} as \code{from}, rather than \code{x}. This well-meaning subversion can lead to unexpected trouble if you deviate from the paradigms in EXAMPLES. If in doubt, you can always name \code{from} and \code{to}.
+The normal invocation is something like \code{move( myobj, ., 0/another.task)}-- note the lack of quotes around \code{myobj}. To move objects with names that have to be quoted, or to move several objects at the same time, specify the \code{what} argument: e.g. \code{move( what=c( "myobj", "\%myop\%"), ., 0/another.task)}. Note that \code{move} is playing fast and loose with standard argument matching here; it correctly interprets the \code{.} as \code{from}, rather than \code{x}. This well-meaning subversion can lead to unexpected trouble if you deviate from the paradigms in \bold{Examples}. If in doubt, you can always name \code{from} and \code{to}.
 
 \code{move} can also handle moves in and out of packages being live-edited (see \code{\link{maintain.packages}}). If you want to specify a move to/from your package "whizzbang", the syntax of \code{to} and \code{from} should be \code{..whizzbang} (i.e. the actual environment where the pre-installed package lives). An alternative for those short of typing practice is \code{maintained.packages$whizzbang}. No quotes in either case.
 
@@ -47,7 +44,6 @@ move( myobj, ..myfirstpack, ..mysecondpack) # live-edited packages
 }
 \seealso{\code{\link{cd}}
 }
-\author{Mark Bravington
-}
+\author{Mark Bravington}
 \keyword{utilities
 }

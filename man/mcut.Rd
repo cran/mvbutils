@@ -2,7 +2,8 @@
 \alias{mcut}
 \alias{mintcut}
 \title{Put reals and integers into specified bins, returning factors.}
-\description{Put reals and integers into specified bins, returning factors. Like \code{\link{cut}} but for human use.}
+\description{Put reals and integers into specified bins, returning ordered factors. Like \code{\link{cut}} but for human use.
+}
 \usage{
 mcut( x, breaks, pre.lab='', mid.lab='', post.lab='', digits=getOption( 'digits'))
 mintcut( x, breaks, prefix='', all.levels=)
@@ -16,7 +17,8 @@ mintcut( x, breaks, prefix='', all.levels=)
 \item{ digits}{(integer) How many digits to put into the factor labels.}
 \item{ all.levels}{if FALSE, omit factor levels that don't occur in \code{x}. To override "automatically", just set the "all.levels" attribute of \code{breaks} to anything non-NULL; useful e.g. if you are repeatedly calling \code{mintcut} with the same \code{breaks} and you always want \code{all.levels=TRUE}.}
 }
-\details{Values of \code{x} below \code{breaks[1]} will end up as NAs. For \code{mintcut}, factor labels (well, the bit after the \code{prefix}) will be of the form "2-7" or "3" (if the bin range is 1) or "8+" (for last in range). For \code{mcut}, labels will look like this (apart from the \code{pre.lab} and \code{post.lab} bits): "[<0.25]" or "[0.25,0.50]" or "[>=0.75]".}
+\details{Values of \code{x} below \code{breaks[1]} will end up as NAs. For \code{mintcut}, factor labels (well, the bit after the \code{prefix}) will be of the form "2-7" or "3" (if the bin range is 1) or "8+" (for last in range). For \code{mcut}, labels will look like this (apart from the \code{pre.lab} and \code{post.lab} bits): "[<0.25]" or "[0.25,0.50]" or "[>=0.75]".
+}
 \examples{
 set.seed( 1)
 mcut( runif( 5), c( 0.25, 0.5, 0.75))

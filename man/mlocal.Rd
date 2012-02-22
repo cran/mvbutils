@@ -20,17 +20,15 @@ Sometimes it's useful to write a "child" function that can create and modify var
 
 The \code{nlocal} argument of an \code{mlocal} function-- which must ALWAYS be included in the definition, with the default specified as \code{sys.parent()}-- can normally be omitted when invoking your \code{mlocal} function. However, you will need to set it explicitly when your function is to be called by another, e.g. \code{lapply}; see the third example. A more daring usage is to call e.g. \code{fun.mlocal(nlocal=another.frame.number)} so that the statements in \code{fun.mlocal} get executed in a completely different frame. A convoluted example can be found in the (internal) function \code{find.debug.HQ} in the \pkg{debug} package, which creates a frame and then defines a large number of variables in it by calling \code{setup.debug.admin(nlocal=new.frame.number)}.
 
-\code{mlocal} functions can be nested, though this gets confusing. By default, all evaluation will happen in the same frame.
+\code{mlocal} functions can be nested, though this gets confusing. By default, all evaluation will happen in the same frame, that of the original caller.
 
 Note that (at least at present) all arguments are evaluated as soon as your \code{mlocal} function is invoked, rather than by the usual lazy evaluation mechanism. Missing arguments are still OK, though.
 
 If you call \code{return} in an \code{mlocal} function, you must call \code{\link{local.return}} too.
 
-Frame-dependent functions (sys.parent()) etc. will not do what you expect inside an \code{mlocal} function. In R{} 1.8 at least, you need to shift the normal index by 3 to get what you'd expect, so that \code{sys.call(-3)} inside an \code{mlocal} function will return the call to the \code{mlocal} function, and \code{sys.function( sys.parent(3))} will return the \code{mlocal} function definition. You can get the expected results for the \bold{caller} via \code{\link{mvb.sys.parent}} with no shift, etc.-- unless the caller is itself an \code{mlocal} function.
+\code{on.exit} doesn't work properly. If you want to have exit code in the \code{mlocal} function itself, use \code{\link{local.on.exit}}. I can't find any way to set the exit code in the calling function from within an \code{mlocal} function. (Not checked for some years)
 
-\code{on.exit} \bold{doesn't} work properly, \bold{contrary} to what previous \code{mlocal} documentation said (the scoping is wrong, though often this doesn't matter). If you want to have exit code in the \code{mlocal} function itself, use \code{\link{local.on.exit}}. I can't find any way to set the exit code in the calling function from within an \code{mlocal} function.
-
-See R-news 2001 #3 (1/3) for another closely related approach to "macros".
+Frame-dependent functions (sys.parent()) etc. will not do what you expect inside an \code{mlocal} function. For R{} versions between at least 1.8 and 2.15, calling the \code{mvb...} versions will return information about the \bold{caller} of the current \code{mlocal()} function caller (or the original caller, if there is a chain of \code{mlocal}s). For example, \code{mvb.sys.function()} returns the definition of the caller, and \code{mvb.sys.parent()} the frame of the caller's parent. Note that \code{sys.frame( mvb.sys.nframe())} gives the current environment (i.e. where all the variables live), because this is shared between the caller and the \code{mlocal} function. Other behaviour seems to depend on the version of R{}, and in R{} 2.15 I don't know how to access the definition of the \code{mlocal} function itself. This means, for example, that you can't reliably access attributes of the \code{mlocal} function itself, though you can access those of its caller via e.g. \code{attr( mvb.sys.function(), "thing")}.
 }
 \value{As per your function; also see \code{\link{local.return}}.
 }
@@ -63,7 +61,7 @@ ffin <- function( i, nlocal=sys.parent()) mlocal( a <- a+i )
 ffout <- function( ivec) \{ a <- 0; sapply( ivec, ffin, nlocal=sys.nframe()) \}
 ffout( 1:3) # 1 3 6
 }
-\seealso{\code{\link{local.return}}, \code{\link{local.on.exit}}, \code{\link{do.in.envir}}, \code{\link{localfuncs}}, and R-news 1/3
+\seealso{\code{\link{local.return}}, \code{\link{local.on.exit}}, \code{\link{do.in.envir}}, \code{\link{localfuncs}}, and R-news 1/3 2001 for a related approach to "macros"
 }
 \author{Mark Bravington}
 \keyword{programming
