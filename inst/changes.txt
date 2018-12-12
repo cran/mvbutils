@@ -27,3 +27,13 @@ This file was reset in November 2009 after 4 years of neglect.
 14/10/2012: Version 2.6.1 now handles "srcref" (sigh). Much better handling of scriptlets (scripts-as-expressions). 'nicetime' functions moved to separate package. Minor bugfixes and doco tweaks.
 
 1/2/2013: Version 2.7 is really 2.6.1 for public release. Cleans up redeclaration of 'rbind.data.frame' and 'print.function', rudimentary vignette support, doco tweaks, minor bugfixes.
+
+7/8/2013: Version 2.8 improves folder structure for built/source packages, helping package maintainers cope with the ever-changing moods of R.
+
+2/11/2015: Version 2.8.100 fixes bug in 'mvbutils:::rbind.data.frame' (columns were sometimes renamed-- reported by Tim Hesterberg)
+
+5/11/2015: fixes NBC base-R change, whereby the "source" attribute of non-parsable function code would now get printed (most unhelpfully). Added a patch that tests for R-version and fixes it, to 'mvbutils:::print.function'.
+
+19/4/2016: fixed the 'isF' function to be as strict as 'isT'
+
+22/11/2017: improvements to 'unpackage' and 'help2flatdoc'. Methods such as 'print.docattr' are now registered in base as well as mvbutils, fixing some autoprint problems.

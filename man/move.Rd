@@ -4,11 +4,13 @@
 \description{\code{move} shifts one or more objects around the task hierarchy (see \code{\link{cd}}), whether or not the source and destination are currently attached on the search path.
 }
 \usage{
-# Usually: unquoted object name, unquoted from and to, e.g. move( thing, ., 0/somewhere)
-# Use 'what' arg to move several objects at once, e.g. move( what=c( "thing1", "thing2"), <<etc>>)
+# Usually: unquoted object name, unquoted from and to, e.g.
+# move( thing, ., 0/somewhere)
+# Use 'what' arg to move several objects at once, e.g.
+# move( what=c( "thing1", "thing2"), <<etc>>)
 # move( x, from, to)
 # move( what=, from, to)
-# Next line shows the formal args, but the real usage would NEVER be like this...
+# Next line shows the formal args, but the real usage would NEVER be like this...0
 move( x='.', from='.', to='.', what, overwrite.by.default=FALSE, copy=FALSE)
 }
 \arguments{

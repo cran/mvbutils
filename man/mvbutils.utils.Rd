@@ -10,8 +10,8 @@
 \alias{everyth}
 \alias{find.funs}
 \alias{find.lurking.envs}
-\alias{generic.dll.loader}
 \alias{index}
+\alias{integ}
 \alias{is.dir}
 \alias{isF}
 \alias{isT}
@@ -47,8 +47,8 @@ expanded.call( nlocal=sys.parent())
 everyth( x, by=1, from=1)
 find.funs(pos=1, ..., exclude.mcache = TRUE, mode="function")
 find.lurking.envs(obj, delve=FALSE, trace=FALSE)
-generic.dll.loader( libname, pkgname)
 index( lvector)
+integ(expr, lo, hi, what = "x", ..., args.to.integrate = list())
 is.dir( dir)
 isF( x)
 isT( x)
@@ -58,7 +58,7 @@ masked( pos)
 masking( pos=1)
 mkdir( dirlist)
 most.recent( lvec)
-my.all.equal( x, y)
+my.all.equal( x, y, ...)
 named( x)
 nscat( fmt, ..., sep='\\n', file='')
 nscatn( fmt, ..., sep='\\n', file='')
@@ -71,7 +71,7 @@ scatn( fmt, ..., sep='\\n', file='')
 to.regexpr( x)
 yes.no( prompt, default)
 }
-\arguments{\item{ x, y, n, ..., by, env, from, exclude.mcache, nlocal, lvector, dir, name, pos, frame, mode, dirlist, lvec, opt.name, default, substrs, mainstrs, any.case, names.for.output, df1, df2, prompt,  obj, delve, trace, fmt, sep, file, libname, pkgname}{see "Arguments by function"}
+\arguments{\item{ x, y, n, ..., by, env, from, exclude.mcache, nlocal, lvector, dir, name, pos, frame, mode, dirlist, lvec, opt.name, default, substrs, mainstrs, any.case, names.for.output, df1, df2, prompt,  obj, delve, trace, fmt, sep, file, expr, lo, hi, what, args.to.integrate}{see "Arguments by function"}
 }
 \details{
 \code{as.cat} makes a character vector print as if it was \code{cat}ted rather than \code{\link{print}}ed (one element per line, no extra quotes or backslashes, no [1] etc prefixes).
@@ -94,13 +94,13 @@ yes.no( prompt, default)
 
 \code{find.lurking.envs( myobj)} will search through \code{myobj} and all its attributes, returning the size of each sub-object. The size of environments is returned as Inf. The search is completely recursive, except for environments and by default the inner workings of functions; attributes of the entire function are always recursed. Changing the \code{delve} parameter to TRUE ensures full recursion of function arguments and function bodies, which will show e.g. the \code{srcref} structure; try it to see why the default is FALSE. \code{find.lurking.envs} can be very useful for working out e.g. why the result of a model-fitting function is taking up 1000000MB of disk space; sometimes this is due to unnecessary environments in well-concealed places.
 
-\code{generic.dll.loader} is to be called from the \code{.onLoad} or \code{.First.lib} of a package. It looks for its DLLs either directly in the "libs" directory, or in the appropriate sub-architecture directory below "libs".
-
 \code{index} returns the position(s) of TRUE elements. Unlike \code{which}: attributes are lost; NA elements map to NAs; \code{index(<<length 0 object>>)} is \code{numeric(0)}; \code{index( <<non-logical>>)} is NA.
+
+\code{integ} is a handy wrapper for \code{integrate}, that takes an expression rather than a function--- so \code{integ( sin(x), 0, 1)} "just works".
 
 \code{is.dir} tests for directoriness.
 
-\code{isF} and \code{isT} test a logical vector in the obvious way, with NA elements failing the test, to avoid teeeedious repetition of \code{is( !is.na( my.complicated.expression) & my.complicated.expression) ...}.
+\code{isF} and \code{isT} test a logical \emph{scalar} in the obvious way, with NA (and non-logicals) failing the test, to avoid teeeedious repetition of \code{is( !is.na( my.complicated.expression) & my.complicated.expression) ...}. They are deliberately not vectorized (contrary to some versions of \code{mvbutils} documentation); arguments with non-1 length trigger a warning.
 
 \code{legal.filename} coerces its character argument into a similar-looking string that is a legal filename on any (?) system.
 
@@ -142,10 +142,10 @@ yes.no( prompt, default)
 \item{  everyth}{same type as \code{x}}
 \item{  find.funs}{a character vector of function names}
 \item{  find.lurking.envs}{a \code{data.frame} with columns "what" and "size"}
-\item{  generic.dll.loader}{a useless list}
+\item{  integ}{scalar}
 \item{  is.dir}{logical vector}
 \item{  is.nonzero}{TRUE or FALSE}
-\item{  isF, isT}{vector of TRUE or FALSE}
+\item{  isF, isT}{TRUE or FALSE}
 \item{  legal.filename}{character( 1)}
 \item{  masked}{character vector}
 \item{  masking}{character vector}
@@ -178,17 +178,17 @@ yes.no( prompt, default)
 \item{find.funs}{mode: "function" to look for functions, "environment" to look for environments, etc}
 \item{find.lurking.envs}{delve: whether to recurse into function arguments and function bodies}
 \item{find.lurking.envs}{trace: just a debugging aid-- leave as FALSE}
-\item{generic.dll.loader}{libname, pkgname: as per \code{.onLoad}}
 \item{index}{lvector: vector of TRUE/FALSE/NA}
+\item{integ}{expr: an expression; what: a string, the argument of \code{expr} to be integrated over; lo, hi: limits; ...: other variables to be set in the expression; args.to.integrate: a list of other things to pass to \code{integrate}}
 \item{is.dir}{dir: character vector of files to check existence and directoriness of.}
-\item{isF, isT}{x: logical vector (will be coerced to logical)}
+\item{isF, isT}{x: anything, but meant to be a logical scalar}
 \item{legal.filename}{name: character string to be modified}
 \item{find.funs}{pos: list of environments, or vector of char or numeric positions in search path.}
 \item{lsall}{...: as for \code{ls}, except that \code{all.names} will be coerced to TRUE}
 \item{masking, masked}{pos: position in search path}
 \item{mkdir}{dirlist: character vector of directories to create}
 \item{most.recent}{logical vector}
-\item{my.all.equal}{x, y: anything}
+\item{my.all.equal}{x, y: anything; ...: passed to \code{all.equal}}
 \item{named}{x: character vector which will become its own \code{names} attribute}
 \item{nscat, nscatn}{see \code{\link{scatn}}}
 \item{option.or.default}{opt.name: character(1)}
@@ -231,12 +231,18 @@ find.lurking.envs( cd)
 #3 environment(obj) <: namespace:mvbutils>   Inf
 \dontrun{
 eapply( .GlobalEnv, find.lurking.envs)
-mypack:::.onLoad <- function( libname, pkgname) generic.dll.loader( libname, pkgname)
-#... or just copy the code into your .onLoad
 }
+integ( sin(x), 0, 1) # [1] 0.4597
+integ( sin(x+a), a=5, 0, 1) # [1] -0.6765; 'a' is "passed" to 'expr'
+integ( sin(y+a), what='y', 0, 1, a=0) # [1] 0.4597; arg is 'y' not 'x'
 is.dir( getwd()) # TRUE
-isF( c( FALSE, TRUE, NA)) # T F F
-isT( c( FALSE, TRUE, NA)) # F T F
+isF( FALSE) # TRUE
+isF( NA) # FALSE
+isF( c( FALSE, FALSE)) # FALSE, with a warning
+sapply( c( FALSE, NA, TRUE), isF)
+# [1]  TRUE FALSE FALSE
+sapply( c( FALSE, NA, TRUE), isT)
+# [1] FALSE FALSE  TRUE
 legal.filename( "a:b\\\\c/d&f") # "a.b.c.d&f"
 most.recent( c( FALSE,TRUE,FALSE,TRUE)) # c( 0, 2, 2, 4)
 sapply( named( cq( alpha, beta)), nchar)  # c( alpha=5, beta=4)

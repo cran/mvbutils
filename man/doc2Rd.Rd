@@ -8,7 +8,8 @@
 \code{docotest} allows you to quickly check what your plain-text doco would look life
 }
 \usage{
-doc2Rd( text, file=NULL, append=, warnings.on=TRUE, Rd.version=, def.valids=NULL, check.legality=TRUE)
+doc2Rd( text, file=NULL, append=, warnings.on=TRUE, Rd.version=,
+    def.valids=NULL, check.legality=TRUE)
 docotest( fun.or.text, ...)
 }
 \arguments{
@@ -87,7 +88,7 @@ When \code{doc2Rd} runs, the docfile name will appear in both the \\name\{\} fie
 
 "Informal documentation" is interpreted as any documentation that doesn't include a "DESCRIPTION" (or "Description:") line. If this is the case, \code{doc2Rd} first looks for a blank line, treats everything before it as \\alias\{\} entries, and then generates the \bold{Description} section into which all the rest of your documentation goes. No other sections in your documentation are recognized, but all the special field substitutions above are applied. (If you really don't want them to be, use the multi-line code block mechanism.) Token \bold{Usage}, \bold{Arguments}, and \bold{Keywords} sections are appended automatically, to keep RCMD happy.
 
-Section titles built into Rd are: \bold{Description}, \bold{Usage}, \bold{Synopsis}, \bold{Arguments}, \bold{Value}, \bold{Details}, \bold{Examples}, \bold{Author} or \bold{Author(s)}, \bold{See also}, \bold{References}, \bold{Note}, \bold{Keywords} and, for data documentation only, \bold{Format} and \bold{Source}. Other section titles (in capitals, or terminated with a colon) can be used, and will be sentence-cased and wrapped in a \\section\{\} construct. Subsections work like sections, but begin with a sequence of full stops, one per nesting level. Most cross-refs to (sub)sections will be picked up automatically and put into \bold{bold}, so that e.g. "see MY.SECTION" will appear as "see \bold{My section}"; when referring to subsections, omit the initial dots. To force a cross-reference that just doesn't want to appear, use e.g. "MY.SECTION (qv)", or just wrap it in "*...*".
+Section titles built into Rd are: \bold{Description}, \bold{Usage}, \bold{Synopsis} (defunct for R>=3.1), \bold{Arguments}, \bold{Value}, \bold{Details}, \bold{Examples}, \bold{Author} or \bold{Author(s)}, \bold{See also}, \bold{References}, \bold{Note}, \bold{Keywords} and, for data documentation only, \bold{Format} and \bold{Source}. Other section titles (in capitals, or terminated with a colon) can be used, and will be sentence-cased and wrapped in a \\section\{\} construct. Subsections work like sections, but begin with a sequence of full stops, one per nesting level. Most cross-refs to (sub)sections will be picked up automatically and put into \bold{bold}, so that e.g. "see MY.SECTION" will appear as "see \bold{My section}"; when referring to subsections, omit the initial dots. To force a cross-reference that just doesn't want to appear, use e.g. "MY.SECTION (qv)", or just wrap it in "*...*".
 
 The \\docType field is set automatically for data documentation (iff a \bold{Format} section is found) and for package documentation (iff the name on the first line includes "-package").
 
@@ -122,11 +123,11 @@ I never bother with \bold{Keywords}, but if you do, then separate the keywords w
 
  \bold{Q:} What about S3?
 
- \bold{A:} S3 methods can be documented just like any other function, except for one small detail: in the \bold{Usage} section, the generic name instead of your method name should be used. IE if you are documenting a method \code{\link{print.cat}}, the \bold{Usage} section should contain a call to \code{print(x,...)} rather than \code{print.cat(x,...)}. \code{doc2Rd} will then detect your intent and produce correct Rd format. To avoid ambiguity if you describe several different S3 methods for the same generic in the same piece of documentation (and even if you describe just one), put a comment starting with the method or class name after each reference in \bold{Usage} (qv), e.g. \code{print(x,...) # cat class object} or \code{print(x,...) # print.cat method}. This gives \code{\link{pre.install}} a much better chance of correctly sorting out the documentation.
+ \bold{A:} S3 methods often don't need to be documented. However, they can be documented just like any other function, except for one small detail: in the \bold{Usage} section, the call should use the generic name instead of your method name, and should be followed by a comment "# S3 method for <class>"; you can append more text to the comment if you wish. E.G.: if you are documenting a method \code{\link{print.cat}}, the \bold{Usage} section should contain a call to \code{print(x,...) # S3 method for cat} rather than \code{print.cat(x,...)}. The version seen by the user will duplicate this "S3 method..." information, but never mind eh.
 
- If you are also (re)defining an S3 generic and documenting it in the same file as various methods, then put a comment \code{# generic} on the relevant usage line.
+ If you are also (re)defining an S3 generic and documenting it in the same file as various methods, then put a comment \code{# generic} on the relevant usage line. See \code{?print.function} for associated requirements.
 
- Confusion will deservedly arise with a function that looks like an S3 method, but isn't. It will be not be labelled as S3 by \code{\link{pre.install}} because you will of course have used the full name in the \bold{Usage} section, because it isn't a method. However, it can still be found by \code{NextMethod} etc., so you shouldn't do this.
+ Confusion will deservedly arise with a function that looks like an S3 method, but isn't. It will be not be labelled as S3 by \code{\link{pre.install}} because you will of course have used the full name in the \bold{Usage} section, because it isn't a method. However, it can still be found by \code{NextMethod} etc., so you shouldn't do that. (Though \code{mvbutils::max.pkg.ver} currently does exactly that...)
 
  S3 classes themselves need to be documented either via a relevant method using an alias line, or via a separate \code{myclass.doc} text object.
 
@@ -140,7 +141,7 @@ The file "sample.fun.rrr" in subdirectory "demostuff", and the demo "flatdoc.dem
 
 To do a whole group at once: \code{\link{pre.install}}.
 
-To check the results: "RCMD Rd2dvi --pdf XXX.Rd" and "RCMD Rdconv -t=html XXX.Rd" and/or "-t=txt" (though \code{\link{patch.installed}} will allow to check the HTML version immediately).
+To check the results: \code{docotest(myfun)} to check the HTML (or \code{patch.installed(mypack)} and then \code{?myfun}). TODO something to easily check PDF (though R{}'s PDF doco is pointless IMO); for now you need to manually generate the file, then from a command-line prompt do something like "RCMD Rd2dvi --pdf XXX.Rd" and "RCMD Rdconv -t=html XXX.Rd" and/or "-t=txt"
 
 To convert existing Rd documentation: \code{\link{help2flatdoc}}.
 
@@ -149,7 +150,9 @@ If you want to tinker with the underlying mechanisms: \code{\link{flatdoc}}, \co
 \examples{
 ## Needs a function with the right kind of "doc" attr
 ## Look at file "demostuff/sample.fun.rrr"
-sample.fun <- source.mvb( system.file( file.path( 'demostuff', 'sample.fun.rrr'), package='mvbutils'))
+sample.fun <- source.mvb( system.file( file.path(
+    'demostuff', 'sample.fun.rrr'), package='mvbutils'))
+print( names( attributes( sample.fun)))
 cat( '***Original plain-text doco:***\\n')
 print( as.cat( attr( sample.fun, 'doc'))) # unescaped, ie what you'd actually edit
 cat( '\\n***Rd output:***\\n')

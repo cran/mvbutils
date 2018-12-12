@@ -8,7 +8,8 @@ See \code{\link{mvbutils.packaging.tools}} before reading or experimenting!
 Set up task package(s) for editing and/or live-editing. Usually called in \code{.First} or \code{.First.task}. You need to be \code{\link{cd}}ed into the parent task of your task-package. \code{maintain.packages} must be called \emph{before} loading the package via \code{library} or \code{require}. The converse, \code{unmaintain.package}, is rarely needed; it's really only meant for when \code{\link{unpackage}} doesn't work properly, and you want a "clean slate" task package.
 }
 \usage{
-# E.g. in your .First, after library( mvbutils), or in a '.First.task' above yr task-package
+# E.g. in your .First, after library( mvbutils), or in...
+# ... a '.First.task' above yr task-package
 maintain.packages(..., character.only = FALSE, autopatch=FALSE)
 unmaintain.package( pkg, character.only = FALSE)
 }

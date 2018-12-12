@@ -4,7 +4,8 @@
 \description{\code{local.on.exit} is the analogue of \code{on.exit} for "nested" or "macro" functions written with \code{\link{mlocal}}.
 }
 \usage{
-# Inside an 'mlocal' function of the form function( <<args>>, nlocal=sys.parent(), <<temp.params>>) mlocal(\{ <<code>> \})
+# Inside an 'mlocal' function of the form
+# function( <<args>>, nlocal=sys.parent(), <<temp.params>>) mlocal(\{ <<code>> \})
 local.on.exit( expr, add=FALSE)
 }
 \arguments{

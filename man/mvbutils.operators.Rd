@@ -11,6 +11,7 @@
 \alias{\%is.an\%}
 \alias{\%matching\%}
 \alias{\%not.in\%}
+\alias{\%not.in.range\%}
 \alias{\%perling\%}
 \alias{\%that.match\%}
 \alias{\%that.dont.match\%}
@@ -23,6 +24,7 @@
 \alias{\%downto\%}
 \alias{\%where\%}
 \alias{\%where.warn\%}
+\alias{\%<-\%}
 \title{Utility operators}
 \description{Succinct or convenience operators
 }
@@ -38,6 +40,7 @@ x \%is.not.an\% what
 x \%is.an\% what
 x \%matching\% patt
 a \%not.in\% b
+a \%not.in.range\% b
 x \%perling\% patt
 x \%that.match\% patt
 x \%that.dont.match\% patt
@@ -50,14 +53,16 @@ from \%upto\% to
 from \%downto\% to
 x \%where\% cond
 x \%where.warn\% cond
+a \%<-\% value # really e.g. \{x;y\} \%<-\% list( 'yes', sqrt(pi)) to create x & y
 }
-\arguments{\item{ a, b, vector, condition, x, y, what, patt, from, to, cond}{see \bold{Arguments by function}.}
+\arguments{\item{ a, b, vector, condition, x, y, what, patt, from, to, cond, value}{see \bold{Arguments by function}.}
 }
 \value{
 \item{ \%&\%}{character vector. If either is zero-length, so is the result (unlike \code{paste}).}
 \item{ \%**\%}{numeric, possibly a matrix}
 \item{ \%upto\%, \%downto\%}{numeric}
-\item{ \%is.a\% etc}{logical}
+\item{ \%is.a\%, \%in\%, etc}{logical}
+\item{ \%<-\%}{technically NULL return, but it overwrites / creates objects; see below...}
 \item{ All others}{same type as first argument.}
 }
 \section{Arguments by function}{
@@ -69,7 +74,7 @@ x \%where.warn\% cond
 
 \code{\%except\%} vector, condition: character or numeric vectors
 
-\code{\%in.range\%} a, b: numeric vectors.
+\code{\%in.range\%}, \code{\%not.in.range\%} a, b: numeric vectors.
 
 \code{\%is.a\%}, etc. x: object whose class is to be checked
 
@@ -92,6 +97,8 @@ x \%where.warn\% cond
 \code{\%without.name\%} x: object with \code{names} attribute
 
 \code{\%without.name\%} what: character vector of names to drop
+
+\code{\%<-\%} a, value: \code{value} should be a list, and \code{a} should be e.g. \code{{x;y;z}} with as many elements as \code{value} has. The elements of \code{value} are assigned, in order, to the objects named in \code{a}, which are created / overwritten in the calling environment.
 }
 \author{Mark Bravington}
 \seealso{bquote
@@ -102,23 +109,27 @@ matrix( 1:4, 2, 2) \%**\% matrix( 1:2, 2, 1) # c( 7, 10); '\%*\%' gives matrix r
 matrix( 1:2, 2, 1) \%**\% matrix( 1:4, 2, 2) # c( 5, 11); '\%*\%' gives error
 1:2 \%**\% matrix( 1:4, 2, 2) # '\%*\%' gives matrix result
 1:5 \%!in\% 3:4 # c( TRUE, TRUE, FALSE, FALSE, TRUE)
+1:5 \%not.in\% 3:4 # c( TRUE, TRUE, FALSE, FALSE, TRUE)
 1:5 \%that.are.in\% 3:4 # c( 3, 4)
 trf <- try( 1+"nonsense")
 if( trf \%is.not.a\% "try-error") cat( "OK\\n") else cat( "not OK\\n")
 1:5 \%except\% c(2,4,6) # c(1,3,5)
 c( alpha=1, beta=2) \%without.name\% "alpha" # c( beta=2)
 1:5 \%in.range\% c( 2, 4) # c(F,T,T,T,F)
+1:5 \%not.in.range\% c( 2, 4) # c(T,F,F,F,T)
 c( "cat", "hat", "dog", "brick") \%matching\% c( "at", "ic") # cat hat brick
-c( "cat", "hat", "dog", "brick") \%that.match\% c( "at", "ic") # cat hat brick; synonym for '\%matching\%'
-c( "cat", "hat", "dog", "brick") \%that.dont.match\% c( "at", "ic") # dog; like '\%except\%' but for regexps
+c( "cat", "hat", "dog", "brick") \%that.match\% c( "at", "ic") # cat hat brick; ...
+# ... synonym for '\%matching\%'
+c( "cat", "hat", "dog", "brick") \%that.dont.match\% c( "at", "ic") # dog; ...
+# ... like '\%except\%' but for regexps
 1 \%upto\% 2 # 1:2
 1 \%upto\% 0 # numeric( 0); use \%upto\% rather than : in for-loops to avoid unintended errors
 1 \%downto\% 0 # 1:0
 1 \%downto\% 2 # numeric( 0)
 ff <- function( which.row) \{
-x <- data.frame( a=1:3, b=4:6)
-x \%where\% (a==which.row)
-\}
+    x <- data.frame( a=1:3, b=4:6)
+    x \%where\% (a==which.row)
+  \}
 ff( 2) # data.frame( a=2, b=5)
 x <- data.frame( start=1:3, end=c( 4, 5, 0))
 x \%where.warn\% (start < end) # gives warning about row 3
@@ -126,5 +137,8 @@ x \%where.warn\% (start < end) # gives warning about row 3
 listio <- list( a=1,  b=2)
 chars <- cq( a, b)
 chars \%SUCH.THAT\% (listio[[.]]==2) # 'b'; \%such.that\% won't work because [[]] can't handle xtuples
+\{x;y\} \%<-\% list( 'yes', sqrt(pi))
+# x: [1] "yes"
+# y: [1] 1.772
 }
 \keyword{misc}

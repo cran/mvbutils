@@ -1,6 +1,7 @@
 export( "%!in%",
 "%&%",
 "%**%",
+"%<-%",
 "%downto%",
 "%except%",
 "%grepling%",
@@ -11,6 +12,7 @@ export( "%!in%",
 "%is.not.an%",
 "%matching%",
 "%not.in%",
+"%not.in.range%",
 "%perling%",
 "%such.that%",
 "%SUCH.THAT%",
@@ -40,16 +42,19 @@ export( "%!in%",
 "cdregexpr",
 "cdtree",
 "changed.funs",
+"check.patch.versions",
 "check.pkg",
 "clip",
 "cq",
 "create.backups",
+"create.wrappers.for.dll",
 "cull.old.builds",
 "current.source",
 "demlazy",
 "deparse.names.parsably",
 "ditto.list",
 "do.in.envir",
+"do.on",
 "doc2Rd",
 "dochelp",
 "docotest",
@@ -71,6 +76,7 @@ export( "%!in%",
 "fixtext",
 "flatdoc",
 "foodweb",
+"FOR",
 "from.here",
 "full.path",
 "generic.dll.loader",
@@ -80,10 +86,14 @@ export( "%!in%",
 "help2flatdoc",
 "index",
 "install.pkg",
+"integ",
 "is.dir",
 "isF",
 "isT",
+"ldyn.tester",
+"ldyn.unload",
 "legal.filename",
+"library.dynam.reg",
 "load.refdb",
 "local.on.exit",
 "local.return",
@@ -94,9 +104,11 @@ export( "%!in%",
 "make.arguments.section",
 "make.NAMESPACE",
 "make.usage.section",
+"make_dull",
 "masked",
 "masking",
 "massrep",
+"max_pkg_ver",
 "mcachees",
 "mcut",
 "mintcut",
@@ -121,6 +133,8 @@ export( "%!in%",
 "my.index.assign",
 "my.index.exists",
 "named",
+"NEG",
+"noice",
 "nscat",
 "nscatn",
 "option.or.default",
@@ -131,11 +145,19 @@ export( "%!in%",
 "pos",
 "pre.install",
 "print",
+"print.(",
+"print.{",
+"print.<-",
 "print.call",
 "print.cat",
 "print.default",
+"print.for",
 "print.function",
+"print.if",
+"print.name",
+"print.pagertemp",
 "print.specialprint",
+"print.while",
 "put.in.session",
 "rbdf",
 "rbind",
@@ -152,9 +174,11 @@ export( "%!in%",
 "scatn",
 "search.for.regexpr",
 "search.task.trees",
+"set.finalizer",
 "set.presave.hook.mvb",
 "set.rcmd.vars",
 "setup.mcache",
+"sleuth",
 "source.mvb",
 "spkg",
 "strip.missing",
@@ -169,17 +193,31 @@ export( "%!in%",
 import( utils)
 import( tools)
 import( stats)
+import( graphics)
+S3method( "[", "dull")
 S3method( "rbind", "data.frame")
 S3method( "close", "selfdeleting.file")
+S3method( "format", "dull")
+S3method( "print", "(")
+S3method( "print", "{")
+S3method( "print", "<-")
 S3method( "print", "browsertemp")
 S3method( "print", "call")
 S3method( "print", "cat")
 S3method( "print", "cdtree")
 S3method( "print", "default")
 S3method( "print", "docattr")
+S3method( "print", "for")
 S3method( "print", "function")
+S3method( "print", "if")
+S3method( "print", "name")
 S3method( "print", "nullprint")
 S3method( "print", "pagertemp")
 S3method( "print", "specialprint")
 S3method( "print", "thing.with.source")
+S3method( "print", "while")
+S3method( "plot", "cdtree")
+S3method( "plot", "foodweb")
+S3method( "as.env", "character")
+S3method( "as.env", "default")
 

@@ -3,7 +3,11 @@
 \title{Read in fixed-width files quickly}
 \description{Experimental replacement for \code{read.fwf} that runs much faster. Included in \code{mvbutils} only to reduce dependencies amongst my other packages.
 }
-\usage{fast.read.fwf(file, width, col.names = if (!is.null(colClasses)) names(colClasses) else "V" \%&\%  1:ncol(fields), colClasses = character(0), na.strings = character(0L),  tz = "", ...)
+\usage{
+fast.read.fwf(file, width,
+    col.names = if (!is.null(colClasses))
+        names( colClasses) else "V" \%&\%  1:ncol(fields),
+    colClasses = character(0), na.strings = character(0L),  tz = "", ...)
 }
 \arguments{
 \item{ file}{character}

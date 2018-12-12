@@ -29,17 +29,17 @@ Note that \code{my.index} and \code{my.index.assign} distort strict R{} syntax, 
 At present, there is no facility to use a mixture of character and numeric indexes, which you can in S+ via "list subscripting of lists".
 }
 \examples{
-#e <- new.env()
-#evalq(\{
-#assign( "[[", my.index)
-#assign( "[[<-", my.index.assign)
-#ff <- function() \{ a <- b + c \}
-#body( ff)[[2,3,2]] # as.name( "b")
-#my.index.exists( c(2,3,2), body( ff)) # TRUE
-#my.index.exists( c(2,3,2,1), body( ff)) # FALSE
-#body( ff)[[2,3,2]] <- quote( ifelse( a>1,2,3))
-#ff # function () \{ a <- ifelse(a > 1, 2, 3) + c \}
-#my.index.exists( c(2,3,2,1), body( ff)) # now TRUE
+local(\{
+  assign( "[[", my.index)
+  assign( "[[<-", my.index.assign)
+  ff <- function() \{ a <- b + c \}
+  body( ff)[[2,3,2]] # as.name( "b")
+  my.index.exists( c(2,3,2), body( ff)) # TRUE
+  my.index.exists( c(2,3,2,1), body( ff)) # FALSE
+  body( ff)[[2,3,2]] <- quote( ifelse( a>1,2,3))
+  ff # function () \{ a <- ifelse(a > 1, 2, 3) + c \}
+  my.index.exists( c(2,3,2,1), body( ff)) # now TRUE
+\})
 }
 \author{Mark Bravington}
 \keyword{programming}

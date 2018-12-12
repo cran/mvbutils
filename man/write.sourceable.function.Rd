@@ -3,7 +3,9 @@
 \title{Sourceable code for functions (and more) with flat-format documentation}
 \description{Works like \code{write} for functions without flat documentation (i.e. without a "doc" attribute). If a "doc" attribute exists, the file is written in a form allowing it to be edited and then read back in with "source.mvb"; the "doc" attribute is given as free-form text following the function definition. If applied to a non-function with a "source" attribute, just the source attribute is printed; the idea is that this could be read back by \code{source} (or \code{\link{source.mvb}}), probably in the course of \code{\link{FF}} after \code{\link{fixr}}, to regenerate the non-function object.
 }
-\usage{write.sourceable.function( x, con, append=FALSE, print.name=FALSE, doc.special=TRUE, xn=NULL)
+\usage{
+write.sourceable.function( x, con, append=FALSE, print.name=FALSE,
+    doc.special=TRUE, xn=NULL)
 }
 \arguments{
 \item{ x}{function or other object, or the name thereof, that is to be written. If \code{x} is not a function, then it must have an attribute "source".}

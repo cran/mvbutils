@@ -14,18 +14,21 @@ The safest is to call \code{fixtext} to edit text objects, and \code{fixr} for f
 }
 \usage{
   # Usually: fixr( x) or fixr( x, new.doc=T)
-  fixr( x, new=FALSE, install=FALSE, what, fixing, pkg=NULL, character.only=FALSE, new.doc=FALSE)
+  fixr( x, new=FALSE, install=FALSE, what, fixing, pkg=NULL,
+      character.only=FALSE, new.doc=FALSE, force.srcref=FALSE)
   # fixtext really has exact same args as fixr, but technically its args are:
   fixtext( x, ...)
   # Usually: readr( x) but exact same args as fixr, though the defaults are different
   readr( x, ...)
-  FF() # manual check and update, usually only needed temporarily if autoedit() stops working
+  FF() # manual check and update, usually only needed...
+      # ... temporarily if autoedit() stops working
   autoedit( do=TRUE) # stick this line in your .First
 }
 \arguments{
 \item{ x}{a quoted or unquoted name of a function, text object, or expression. You can also write \code{mypack$myfun}, or \code{mypack::myfun}, or \code{mypack:::myfun}, or \code{..mypack$myfun}, to simultaneously set the \code{pkg} argument (only if \code{mypack} has been set up with \code{maintain.packages}). Note that \code{fixr} uses non-standard evaluation of its \code{x} argument, unless you specify \code{character.only=TRUE}. If your object has a funny name, either quote it and set \code{character.only=TRUE}, or pass it directly as...}
 \item{ character.only}{(logical or character) if TRUE, \code{x} is treated as a string naming the object to be edited, rather than the unquoted object name. If \code{character.only} is a string, it is treated as the name of \code{x}, so that eg \code{fixr(char="funny\%name")} works.}
 \item{ new.doc}{(logical) if TRUE, add skeleton plain-text R-style documentatation, as per \code{add.flatdoc.to}. Also use this to create an empty scriptlet for a general (non-function, non-text) object.}
+\item{ force.srcref}{(logical) Occasionally there have been problems transferring old code into "new" R{}, especially when a function has text attributes such as (but not limited to) \code{doc}; the symptom is, they appear in the editor just as "# FLAT-FORMAT DOCUMENTATION". This sometimes requires manual poking-around, but usually can be sorted out by calling \code{fixr(...,force.srcref=TRUE)}.}
 \item{ new}{(logical, seldom used) if TRUE, edit a blank function template, rather than any existing object of that name elsewhere in the search path. New edit will go into \code{.GlobalEnv} unless argument \code{pkg} is set.}
 \item{ install}{(logical, rarely used) logical indicating whether to go through the process of asking you about your editor}
 \item{ what}{Don't use this-- it's "internal"! [Used by \code{fixtext}, which calls \code{fixr} with \code{what=""} to force text-mode object. \code{what} should be an object with the desired class.]}
@@ -49,6 +52,14 @@ If something goes wrong during an automatic call to \code{FF}, the automatic-cal
 \code{readr} requires a similar installation process. To get the read-only feature, you'll need to add some kind of option/switch on the command line that invokes your text editor in read-only mode; not all text editors support this. Similarly to \code{fixr}, you'll need to set \code{options( program.reader=<<something>>)} in your \code{.First}; the installation process will tell you what to use.
 
 \code{fixr}, and of course \code{fixtext}, will also edit character vectors. If the object to be edited exists beforehand and has a class attribute, \code{fixr} will not change its class; otherwise, the class will be set to "cat". This means that \code{\link{print}} invokes the \code{\link{print.cat}} method, which displays text more readably than the default. Any other attributes on character vectors are stripped.
+
+For functions, the file passed to the editor will have a ".r" extension. For character vectors or other things, the default extension is ".txt", which may not suit you since some editors decide syntax-highlighting based on the file extension. (EG if the object is a character-vector "R script", you might want R-style syntax highlighting.) You can somewhat control that behaviour by setting \code{options()$fixr.suffices}, eg
+
+\preformatted{
+  options( fixr.suffices=c( r='.r', data='.dat'))
+}
+
+which will mean that non-function objects whose name ends \code{.r} get written to files ending ".r.r", and objects whose name ends \code{.data} get written to files ending ".data.dat"; any other non-functions will go to files ending ".txt". This does require you to use some discipline in naming objects, which is no bad thing; FWIW my "scripts" always do have names ending in \code{.r}, so that I can see what's what.
 
 \code{fixr} creates a blank function template if the object doesn't exist already, or if \code{new=TRUE}. If you want to create a new character vector as opposed to a new function, call \code{fixtext}, or equivalently set \code{what=""} when you call \code{fixr}.
 
@@ -91,6 +102,8 @@ Note that it's \emph{not} necessary to assign the last definition to a variable 
 \bold{Note}: I \emph{think} all this works OK in normal use (Oct 2012), but be careful! I doubt it works when building a package, and I'm not sure that R-core intend that it should; you might have to put the local-building code into the \code{.onLoad}.
 }
 \subsection{Scriptlets}{
+\bold{Note}: I've really gone off "scriptlets" (writing this in mid 2016). These days I prefer to keep "scripts" as R{} character-vector objects (because I dislike having lots of separate files), edited by \code{fixtext} and manually executed as required by \code{debug::mrun}--- which also has a debugging option that automatically applies \code{mtrace}. I'm not going to remove support for scriptlets in \code{fixr}, but I'm not going to try hard to sort out any bugs either. Instructions below are unchanged, and unchecked, from some years ago.
+
 You can also maintain "scriptlets" with \code{fixr}, by embedding the instructions (and comments etc) in an \code{expression(...)} statement. Obviously, the result will be an \code{expression}; to actually execute a scriptlet after editing it, use \code{eval()}. The scriptlet itself is stored in the "source" attribute as a character vector of class \code{cat}, and the expression itself is given class \code{thing.with.source} so that the source is displayed in preference to the raw expression. Backup files are maintained just as for functions. Only the \emph{first} syntactically complete statement is returned by \code{fixr} (though subsequent material, including extra comments, is always retained in the \code{source} attribute); make sure you wrap everything you want done inside that call to \code{expression(...)}.
 
 Two cases I find useful are:

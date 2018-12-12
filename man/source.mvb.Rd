@@ -11,7 +11,8 @@ source.mvb( con, envir=parent.frame(), max.n.expr=Inf,
   prompt.echo=getOption( 'prompt'), continue.echo=getOption( 'continue'))
 current.source()
 from.here( EOF=as.character(NA)) # Don't use it like this!
-# Use "from.here" only inside "read.table", like so: read.table( file=from.here( EOF=), ...)
+# Use "from.here" only inside "read.table", like so:
+# read.table( file=from.here( EOF=), ...)
 }
 \arguments{
 \item{ con}{a filename or connection}

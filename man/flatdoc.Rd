@@ -51,17 +51,20 @@ If you are writing with \code{\link{doc2Rd}} in mind and a number of such functi
 \code{\link{make.arguments.section}}, \code{\link{fixr}}, the demo in "flatdoc.demo.R"
 }
 \examples{
-### Don't run
-### Put everything before the next comment into a text file <<your filename>>
+\dontrun{
+## Put next lines up to "<<end of doc>>" into a text file <<your filename>>
+## and remove the initial hashes
 #structure( function( x) \{
 #  x*x
 #\}
 #,doc=flatdoc("<<end of doc>>"))
+#
 #Here is some informal documentation for the "SQUARE" function
 #<<end of doc>>
-### Now try SQUARE <- source.mvb( <<your filename>>); ?SQUARE
-### Example with multiple attributes
-### Put everything before the next comment into a text file
+## Now try SQUARE <- source.mvb( <<your filename>>); ?SQUARE
+## Example with multiple attributes
+## Put the next lines up to "<<end of part 2>>"
+## into a text file, and remove the single hashes
 #myfun <- structure( function( attname) \{
 #  attr( sys.function(), attname)
 #\}
@@ -71,10 +74,10 @@ If you are writing with \code{\link{doc2Rd}} in mind and a number of such functi
 #<<end of part 1>>
 #and this goes into "att2"
 #<<end of part 2>>
-### Now "source.mvb" that file, to create "myfun"; then:
-#myfun( 'att1') # "This goes into \\\"att1\\\""
-#myfun( 'att2') # "and this goes into \\\"att2\\\""
-### End don't run
+## Now "source.mvb" that file, to create "myfun"; then:
+myfun( 'att1') # "This goes into \\\"att1\\\""
+myfun( 'att2') # "and this goes into \\\"att2\\\""
+}
 }
 \author{Mark Bravington}
 \keyword{documentation}

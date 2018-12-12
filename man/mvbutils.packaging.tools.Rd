@@ -52,6 +52,8 @@ Once you have set up "Splendid" so that \code{\link{maintain.packages}} works, y
 \emph{Tarball package} is a zipped-up version of a source package, for distro on non-Windows-Mac platforms or submission to CRAN and subsequent installation via "R CMD INSTALL". Usually it will not contain DLLs of any low-level code, just the source low-level code. It is created by \code{\link{build.pkg}}.
 
 \emph{Binary package} is a special zipped-up version for distro to Windows or Macs that includes actual DLLs, for installation via e.g. the "Packages/Install from local ZIP" menu. It is created by \code{\link{build.pkg.binary}}.
+
+\emph{Built package} is a tarball package or binary package.
 }
 }
 \section{Converting an existing package}{
@@ -93,7 +95,7 @@ In time, I plan to get \code{mvbutils} working nicely with \code{knitr}. At pres
   my.second.vignette: What a good idea, to write a vignette
 }
 
-As a \emph{very} experimental feature, you can also include R{} code for a homebrewed vignette, via a file with the same name but extension ".R" also in "inst/doc". Users can access it as normal for vignette code, via \code{edit( vignette( "my.first.vignette", package="mypack")) or via doing something to }system.file( file.path( "doc", "my.first.vignette.R"), package="mypack").
+As a \emph{very} experimental feature, you can also include R{} code for a homebrewed vignette, via a file with the same name but extension ".R" also in "inst/doc". Users can access it as normal for vignette code, via \code{edit( vignette( "my.first.vignette", package="mypack"))} or via doing something to \code{system.file( file.path( "doc", "my.first.vignette.R"), package="mypack")}.
 
 You can put full-on Sweave-style vignettes into a "vignettes" folder, and they should be set up correctly in the source package. Currently, though, they are \bold{not} re-installed by \code{\link{patch.install}}; you need to use \code{\link{build.pkg}} and \code{\link{install.pkg}} (partly defeating the point of these package-building utilities).
 \subsection{Very technical details about homebrewed vignettes}{"Rnw stubs" are created for all homebrewed vignettes so that the help system finds them. A rudimentary index will be created for vignettes not mentioned in \code{<<mypack>>.VIGNETTES}. If you create your own "inst/doc/index.html" file, this takes precedence over mvbutil's versions, so that \code{<<mypack>>.VIGNETTES} is not used.
@@ -127,13 +129,13 @@ Occasionally (usually during \code{\link{patch.install}}), you might see R{} err
 
 You might also find \code{\link{find.lurking.envs}} useful, via \code{eapply( ..Splendid, find.lurking.envs)}; this will show any functions (or other things) in \code{..Splendid} that have accidentally acquired a non-standard environment such as a namespace, which can trigger a "hidden" package load attempt. The environment for all functions in \code{..Splendid} \emph{should} probably be \code{.GlobalEnv}; the environments in the \emph{loaded} package will be different, of course.
 
-It's rare to need to manually inspect either the source package or the installed package. But if you do, then \code{\link{spkg}} helps for the former (e.g. \code{dir( spkg( mypack))}), and \code{system.file} for the latter (e.g. \code{system.file( package="mypack")}, or \code{system.file( file.path( "help", "AnIndex"), package="mypack")}).
+It's rare to need to manually inspect either the source package or the installed package. But if you do, then \code{\link{spkg}} helps for the former, e.g. \code{dir( spkg( mypack))}; and \code{system.file} helps for the latter, e.g. \code{system.file( package="mypack")}, or \code{system.file( file.path( "help", "AnIndex"), package="mypack")}.
 }
 }
 \section{Distributing and checking}{
 \code{\link{build.pkg}} calls R{} CMD BUILD to create a "tarball" of the package (a ".tar.gz" file), which is the appropriate format for distribution to Unix folk and submission to CRAN. \code{\link{build.pkg.binary}} creates a binary package (a ".zip" file), suitable for Windows or Macs. \code{\link{check.pkg}} runs R{} CMD CHECK (but see next paragraph for a quicker alternative), which is required by CRAN and sometimes useful at other times. These \code{.pkg} functions are pretty simple wrappers to the R{} CMD tools with similar names. However, for those with imperfect memories and limited time, there are enough arcane and mutable nuances with the "raw" R{} CMD commands (including the risk of inadvertently deleting existing installations) to make the wrappers in \code{mvbutils} useful.
 
-Various functions in the \pkg{tools} package can be used to quickly check specific aspects of an \emph{installed} package, without needing a full-on, and slow, R{} CMD CHECK. In particular, I regularly use
+Various functions in the \pkg{tools} package can be used to quickly check specific aspects of an \emph{installed} package, without needing a full-on, and slow, R{} CMD CHECK. In particular, I sometimes use
 
 \preformatted{
   codoc( spkg( mypack)) # also spkg( "mypack"), spkg( ..mypack)
@@ -141,8 +143,32 @@ Various functions in the \pkg{tools} package can be used to quickly check specif
 }
 
 Nothing is printed unless a problem is found, so a blank result is good news! It's also possible to run other tools such as \code{checkTnF} and \code{checkFF} similarly.
+
+By default, \code{mvbutils} adds code to the source package to circumvent the CRAN checks for "no visible function/binding", which I consider to be a waste of time; for example, unless circumvented they generate 338 false positives for package \pkg{mvbutils}. If for some reason you actually want these checks, see "Overriding defaults" in \code{\link{pre.install}}.
 }
-\section{Different r versions}{You might need to distribute different versions of your package to go with different R{} versions. (This happened with-- at least-- 2.10, 2.12, and 2.14.) The \code{dir.above.source} argument of \code{\link{pre.install}} can be used to create different source package versions. Presumably you'll install the results into different R{} libraries.
+\section{Folders and different r versions}{
+Life can get complicated when there are several versions of R{} around, particularly when they require different package formats at source or build or install time (eg R{} 2.10, 2.12, R{} 3.0). \code{\link{install.pkg}} etc do their best to simplify this for you. You won't normally need to know the details unless you are trying to maintain several versions of your package for different versions of R{} for distribution to other people who use those different R{} versions. But if you do need to know the details, then the default folder structure is as follows. If the task package lives in folder "mypack", then the source package is created by \code{\link{pre.install}} in "mypack/mypack", and the built package(s) will go into folders such as "mypack/R2.15" depending on what R{} version is running.
+
+Note that your \emph{task package} can only ever have one version; if different behaviour is required for different R{} versions, then you need to code this up your functions, or via some trickery in \code{.onLoad}.
+\subsection{Built packages}{
+Building comes first: the tarballed/zipped packages from \code{\link{build.pkg}} and \code{\link{build.pkg.binary}} are placed in a folder parallel to the source package, with a name of the form "Rx.y". \code{mvbutils} tries to be sensible about what "x.y" should be. It will never be newer than the \emph{running} R{} version. It will never be older than the most recent major R{} version that required mandatory package rebuilds (eg R{} 3.0 and R{} 2.12). If one or more folders already exist that satisfy those properties, the highest-numbered one will be used. If not, a new folder will be created with the current R{} major version (eg R{} 2.15.3 will trigger a folder "R2.15"). You can create your own "Rx.y" folder, for instance if the current version of your package requires an R{} feature only found in R{} version "x.y". Also, \code{mvbutils} knows which R{} versions change the format of built packages, and will create a new folder for such a version if required.
+
+The default behaviour is therefore that \code{build.pkg.<binary>} will keep building into the same folder. For example, if at some point a "mypack/R2.12" folder was created, then that's where all builds will be sent regardless of the running R{} version, until you either manually create an "mypack/Rx.y" folder that's closer to the running R{} version, or the latter hits 3.0 which automatically triggers the creation of a new "mypack/R3.0" folder. Thanks to the "autoversion" feature of \code{\link{pre.install}}, the version number of the build will change whenever \code{<pre/patch>.install} is used. (Note that old built packages are not removed until/unless you explicitly call \code{\link{cull.old.builds}}, although it's "good housekeeping" to do the latter occasionally.) By manually creating new "Rx.y" folder when necessary, you can ensure that there \emph{won't} be any updates to built packages for R{} older than "x.y", which gives a kind of "checkpoint" feature; your built packages for older versions of R{} (ie for distribution to users of those older R{} versions) won't be accidentally zapped by \code{\link{cull.old.builds}} housekeeping, and you can be sure that old code running under old versions of R{} will still work.
+
+What this does \emph{not} let you do easily, is use your current R{} version to create updated versions of your package for R-versions that pre-date the most up-to-date "Rx.y" folder. For example, if you are running R3.0, there is guaranteed to be an "R3.0" folder, so calling \code{build.pkg<.binary>} won't build new packages in an "R2.15" folder. Again, usually this doesn't matter, because new "Rx.y" folders are only rarely created automatically, so builds will tend to stay in the same folder and the newest version will be accessible to all. But sometimes it is a hassle... Nevertheless, I have managed to maintain parallel versions of my packages across the R2.15-R3.0 change, by (sequentially) running two R{} versions and calling \code{build.pkg<.binary>} from each. (Note that \code{build.pkg<.binary>} can only build in the format of running R{} version-- you can't "cross-build" for different built formats from the same R{} session.)
+}
+\subsection{Source packages}{
+R{} occasionally demands a change in \emph{source} package format, as opposed to \emph{built} package format (as with R{} 3.0). (IIRC one example is R{} 2.10, with the change in helpfile format.) Then you face the problem of how to keep several source packages. This can be controlled by \code{options("mvbutils.sourcepkgdir.postfix")}, which is appended to the name of the folder where your source package will be created and used for building or installing. The default is the empty string \code{""}, so that the default source package folder for "mypack" is "mypack/mypack". To allow for multiple source package versions, you could put something like this in your \code{.First} or ".Rprofile":
+
+\preformatted{
+  if( getRversion() >= numeric_version( '4.0')) {
+    # New source package format
+    options( mvbutils.sourcepkgdir.postfix='[R4]')
+  }
+}
+
+Everything \emph{should} then work automatically; all source-package operations will refer to "mypack/mypack[R4]" if you are running version 4 or above, or to "mypack/mypack" if you are running an earlier R{} version, and you should never really need to know the source package foldername yourself (\code{\link{build.pkg}} etc do it all for you). This depends on you setting the option yourself, and \emph{has not been tested} yet. Eventually I may hardwire the feature automatically into \code{mvbutils} (or is it better for each source package to go into an appropriate built-package folder? but that sounds a bit like version hell).
+}
 }
 \section{Customizing package creation}{You can customize many aspects of the \pkg{mvbutils} package-creation process, by adding a function \code{pre.install.hook.Splendid} to your package. See \code{\link{pre.install}} for further details.
 }

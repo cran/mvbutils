@@ -14,12 +14,12 @@ If a task folder or its ".RData" file doesn't exist, a warning is given and (obv
 }
 \usage{
 cdfind( pattern, from = ., from.text, show.task.name=FALSE)
-cdregexpr( regexp, from = ., from.text, show.task.name=FALSE)
+cdregexpr( regexp, from = ., from.text, ..., show.task.name=FALSE)
 cdtree( from = ., from.text = substitute(from), charlim = 90)
 cd.change.all.paths( from.text = "0", old.path, new.path)
 cd.write.mvb.tasks( from = ., from.text = substitute(from))
 cditerate( from.text, what.to.do, so.far = vector("NULL", 0), ..., show.task.name=FALSE)
-\method{plot}{cdtree}( x, ...) # plot.cdtree; normally plot( cdtree(<<args>>))
+\method{plot}{cdtree}( x, ...) # S3 method for cdtree; normally plot( cdtree(<<args>>))
 }
 \arguments{
 \item{ pattern}{regexpr to be checked against object names.}
@@ -32,7 +32,7 @@ cditerate( from.text, what.to.do, so.far = vector("NULL", 0), ..., show.task.nam
 \item{ new.path}{replacement portion of directory names}
 \item{ what.to.do}{function to be called on each task (see \bold{Details})}
 \item{ so.far}{starting value for accumulated list of function results}
-\item{ ...}{further fixed arguments to be passed to \code{what.to.do} (for \code{cditerate}), or to \code{\link{foodweb}} (for \code{plot.cdtree})}
+\item{ ...}{further fixed arguments to be passed to \code{what.to.do} (for \code{cditerate}), or \code{grep} (for \code{cdregexpr}), or \code{\link{foodweb}} (for \code{plot.cdtree})}
 \item{ x}{result of a call to \code{cdtree}, for plotting}
 }
 \value{
