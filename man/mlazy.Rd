@@ -8,7 +8,9 @@
 \description{
 \code{mlazy} and friends are designed for handling collections of biggish objects, where only a few of the objects are accessed during any period, and especially where the individual objects might change and the collection might grow or shrink. As with "lazy loading" of packages, and the \code{gdata/ASOR} packages, the idea is to avoid the time & memory overhead associated with loading in numerous huge R{} binary objects when not all will be needed. Unlike lazy loading and \code{gdata}, \code{mlazy} caches each mlazyed object in a separate file, so it also avoids the overhead that would be associated with changing/adding/deleting objects if all objects lived in the same big file. When a workspace is \code{\link{Save}}d, the code updates only those individual object files that need updating.
 
-\code{mlazy} does not require any special structure for object collections; in particular, the data doesn't have to go into a package. \code{mlazy} is particularly useful for users of \code{\link{cd}} because each \code{\link{cd}} to/from a task causes a read/write of the binary image file (usually ".RData"), which can be very large if \code{mlazy} is not used. Read DETAILS next. Feedback is welcome.
+Apart from possibly \code{environment} objects (see subsection), \code{mlazy} does not require any special structure for object collections; in particular, the data doesn't have to go into a package. \code{mlazy} is particularly useful for users of \code{\link{cd}} because each \code{\link{cd}} to/from a task causes a read/write of the binary image file (usually ".RData"), which can be very large if \code{mlazy} is not used. Read DETAILS next. Feedback is welcome.
+\subsection{Environments}{Sometimes nowadays I use an R{} \code{environment} instead of a \code{list} to store stuff, usually to take advantage of inheritance. They are a bit different to other R{} objects, and if you don't understand them properly, then be careful! The salient point here is that an \code{environment} is really a pointer, and unlike other R{} objects, two R{} \code{environment} "objects" can actually point to exactly the same "shared memory". Now, \code{mlazy} works fine with single copy of an \code{environment} (when it's saved into the cache folder, R{} will automatically include any necessary parent environments, etc) \emph{but} if you have two objects that point to the same "real" environment, and you \code{mlazy} just one of them or both of them, then I don't know what's going to happen when you reload them; do you now end up with two separate unlinked copies, or what? So... like I said, be very careful with \code{mlazy} and \code{environment} objects. (It would be handy if there was a tool to check for other references to a given environment, which must be buried inside R{}'s internal structures since reference-counting is certainly used there. But...)
+}
 }
 \usage{
 mlazy( ..., what, envir=.GlobalEnv, save.now=TRUE)
@@ -96,14 +98,16 @@ There is presumably some speed penalty from using a cache, but experience to dat
 \author{Mark Bravington}
 \examples{
 \dontrun{
-biggo <- matrix( runif( 1e6), 1000, 1000)
-gc() # lots of memory
-mlazy( biggo)
-gc() # still lots of memory
-mtidy( biggo)
-gc() # better
-biggo[1,1]
-gc() # worse; it's been reloaded
+if( FALSE && is_very_annoying( CRAN))\{ # otherwise CMD CHECK --as-cran tries to run this :/
+  biggo <- matrix( runif( 1e6), 1000, 1000)
+  gc() # lots of memory
+  mlazy( biggo)
+  gc() # still lots of memory
+  mtidy( biggo)
+  gc() # better
+  biggo[1,1]
+  gc() # worse; it's been reloaded
+\} # if F
 }
 }
 \keyword{programming}

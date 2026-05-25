@@ -1,6 +1,6 @@
-\name{make.usage.section}
-\alias{make.usage.section}
+\name{make.arguments.section}
 \alias{make.arguments.section}
+\alias{make.usage.section}
 \title{Construct sections of documentation}
 \description{Don't bother reading about these unless you are sure you need to! These are really intended for expediting documentation of large numbers of "internal" functions in a proto-package, and are called by \code{make.internal.doc}. \code{make.usage.section} and \code{make.arguments.section} form prototype USAGE and ARGUMENTS section for the specified functions. These are ready for pasting into flat-format documentation (and subsequent editing).
 }
@@ -23,8 +23,15 @@ The default \code{funs} argument will find all functions not mentioned in flat-f
 \code{make.arguments.section} puts one argument per line, then a colon, then the name of the function in parentheses. The idea is that something about the argument should be added manually in a text editor.
 }
 \examples{
-make.usage.section( c( "make.usage.section", "find.funs"), env=asNamespace( 'mvbutils'))
-make.arguments.section( c( "make.usage.section", "find.funs"), env=asNamespace( 'mvbutils'))
+if( FALSE)\{
+  # Can't run this directly, coz internal
+  # so not exported
+  ns <- asNamespace( 'mvbutils')
+  make.usage.section( c( "make.usage.section", "find.funs"),
+    env=ns)
+  make.arguments.section( c( "make.usage.section", "find.funs"),
+    env=ns)
+\}
 }
 \seealso{\code{\link{flatdoc}}, \code{\link{pre.install}}
 }

@@ -7,18 +7,20 @@
 \usage{
 # Don't call this directly-- pre.install will do it automatically for you
 make.NAMESPACE( env=1, path=attr( env, "path"),
-  description=read.dcf( file.path( path, "DESCRIPTION"))[1,], more.exports=character( 0))
+  description=read.dcf( file.path( path, "DESCRIPTION"))[1,], more.exports=character( 0),
+  useDynLib=character())
 }
 \arguments{
 \item{ env}{character or numeric position on search path}
 \item{ path}{directory where proto-package lives}
 \item{ description}{(character) elements for the DESCRIPTION file, e.g. \code{c( ..., Author="R.A. Fisher", ...)}. By default, read from existing file.}
 \item{ more.exports}{(character) things to export that normally wouldn't be.}
+\item{ useDynLib}{character vector of DLLs, without path or extension. Elements with names will get a NAMESPACE entry of the form \code{<env_name>=useDynLib( <DLL>, .registration=TRUE)}, with the symbols being placed into a subenvironment withint the package namespace environment. Unnamed elements just get \code{useDynLib(<DLL>)} and the symbols go directly into the package namespace environment; that's how \code{Rcpp} currently operates (and I'm not keen on it!). If you \emph{don't} want native-symbol registration, then you should use a PIBH (pre-install build hook; see \code{\link{pre.install}}) and move the non-regstrees from \code{nsinfo$useDynLib} into \code{nsinfo$useDynLib_sans_rego}.}
 }
 \details{
 There is (currently) no attempt to handle S4 methods.
 
-The imported packages are those listed in the "Depends:" and "Imports:" field of the DESCRIPTION file. At present, all functions in those packages will be imported (i.e. no "importFrom" provision).
+The imported packages are those listed in the "Depends:" and "Imports:" field of the DESCRIPTION file. All exported functions in those packages will be imported (i.e. currently no "importFrom" provision), except if a function would be screened by a later import or by your package's own functions. The latter should avoid clash warnings when your package is loaded.
 
 The exported functions are all those in \code{find.documented(doctype="any")} unless they appear to be S3 methods, plus any functions that have a non-NULL \code{export.me} attribute. The latter is a cheap way of arranging for a function to be exported, but without formal documentation (is that wise??). \code{\link{pre.install}} will incorporate any undocumented \code{export.me} functions in the "mypack-internal.Rd" file, so that RCMD CHECK will be happy.
 

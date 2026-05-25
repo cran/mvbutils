@@ -11,7 +11,7 @@ foodweb( funs, where=1, charlim=80, prune=character(0), rprune,
     ancestors=TRUE, descendents=TRUE, plotting =TRUE, plotmath=FALSE,
     generics=c( "c","print","plot", "["), lwd=0.5, xblank=0.18,
     border="transparent", boxcolor="white", textcolor="black",
-    color.lines=TRUE, highlight="red", ...)
+    color.lines=TRUE, highlight="red", calc_xpos=plotting, ...)
 \method{plot}{foodweb}(x, textcolor, boxcolor, xblank, border, textargs = list(),
     use.centres = TRUE, color.lines = TRUE, poly.args = list(),
     expand.xbox = 1.05, expand.ybox = expand.xbox * 1.2, plotmath = FALSE,
@@ -38,6 +38,7 @@ callees.of( funs, fw, recursive=FALSE)
 \item{ color.lines}{will linking lines be coloured according to the level they originate at?}
 \item{ highlight}{seemingly not used}
 \item{ cex}{text size (see "cex" in \code{?par})}
+\item{ calc_xpos}{whether to calculate reasonable on-screen positions. Defaults to TRUE if plotting, and FALSE otherwise (to save a bit of time). If you aren't plotting immediately but might plot the results \emph{later}, you should set this to TRUE.}
 \item{ ...}{passed to \code{plot.foodweb} and thence to \code{par}}
 \item{ textargs}{not currently used}
 \item{ use.centres}{where to start/end linking lines. \code{TRUE} is more accurate but less tidy with big webs.}
@@ -75,22 +76,25 @@ foodweb( ) # functions in .GlobalEnv
 # I have had to trim this set of examples because CRAN thinks it's too slow...
 # ... though it's only 5sec on my humble laptop. So...
 \dontrun{
-foodweb( where="package:mvbutils", cex=0.4, charlim=60) # yikes!
-foodweb( c( find.funs("package:mvbutils"), "paste"))
-# functions in .GlobalEnv, and "paste"
-foodweb( find.funs("package:mvbutils"), prune="paste")
-# only those parts of the tree connected to "paste";
-# NB that funs <- unique( c( funs, prune)) inside "foodweb"
-foodweb( where="package:mvbutils", rprune="aste")
-# doesn't include "paste" as it's not in "mvbutils", and rprune doesn't augment funs
-foodweb( where=asNamespace( "mvbutils")) # secret stuff
-fw <- foodweb( where="package:mvbutils")
+if( FALSE && is_very_annoying( CRAN))\{ # otherwise CMD CHECK --as-cran tries to run this :/
+  foodweb( where="package:mvbutils", cex=0.4, charlim=60) # yikes!
+  foodweb( c( find.funs("package:mvbutils"), "paste"))
+  # functions in .GlobalEnv, and "paste"
+  foodweb( find.funs("package:mvbutils"), prune="paste")
+  # only those parts of the tree connected to "paste";
+  # NB that funs <- unique( c( funs, prune)) inside "foodweb"
+  foodweb( where="package:mvbutils", rprune="aste")
+  # doesn't include "paste" as it's not in "mvbutils", and rprune doesn't augment funs
+  foodweb( where=asNamespace( "mvbutils")) # secret stuff
+  fw <- foodweb( where="package:mvbutils")
+  ## End Don't run
+  fw <- foodweb( where=asNamespace( "mvbutils")) # also plots
+  fw$funmat # a big matrix
+  callers.of( "mlocal", fw)
+  callees.of( "find.funs", fw)
+  # ie only descs of functions whose name contains 'name'
+  foodweb( where=asNamespace( 'mvbutils'), rprune="name", ancestors=FALSE, descendents=TRUE)
+\} # if F
 }
-fw <- foodweb( where=asNamespace( "mvbutils")) # also plots
-fw$funmat # a big matrix
-callers.of( "mlocal", fw)
-callees.of( "find.funs", fw)
-# ie only descs of functions whose name contains 'name'
-foodweb( where=asNamespace( 'mvbutils'), rprune="name", ancestors=FALSE, descendents=TRUE)
 }
 \keyword{misc}

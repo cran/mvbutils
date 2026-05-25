@@ -6,13 +6,14 @@
 }
 \usage{
 find.documented( pos=1, doctype=c( "Rd", "casual", "own", "any"),
-  only.real.objects=TRUE)
+  only.real.objects=TRUE, exclude.internal=FALSE)
 find.docholder( what, pos=find( what[1]))
 }
 \arguments{
 \item{ pos}{search path position(s), numeric or character. In \code{find.documented}, any length. In \code{find.docholder}, only \code{pos[1]} will be used; it defaults to where the first element of \code{what} is found.}
 \item{ doctype}{Defaults to "Rd". If supplied, it is partially matched against the choices in \bold{Usage}. "Rd" functions are named in the alias list at the start of (i) any \code{doc} attribute of a function, and (ii) any text object whose name ends with ".doc", that exist in \code{pos} (see \code{\link{doc2Rd}}). "casual" functions have their own \code{doc} attribute and will be found by the replacement of \code{help}; note that the \code{doc} attribute can be just a reference to another documented function, of mode "list" as described in \code{\link{dochelp}}. "own" functions (a subset of "casual") have their own character-mode \code{doc} attribute, and are suitable for \code{doc2Rd}. "any" combines \code{casual} and \code{Rd}.}
 \item{ only.real.objects}{If TRUE, only return names of things that exist somewhere in the \code{pos} environments. FALSE means that other things such as the name of helpfiles might be returned, too.}
+\item{ exclude.internal}{If TRUE, check the \code{doc} attributes to see if they have "KEYWORDS<whitespace>internal", and if so, omit that function. Normally you probably wouldn't want that yourself; but it is used in \code{make.NAMESPACE} to decide about exportees.}
 \item{ what}{names of objects whose documentation you're trying to find.}
 }
 \value{

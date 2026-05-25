@@ -5,16 +5,22 @@
 \alias{\%**\%}
 \alias{\%except\%}
 \alias{\%grepling\%}
+\alias{\%has.name\%}
 \alias{\%is.not.a\%}
 \alias{\%is.a\%}
 \alias{\%is.not.an\%}
 \alias{\%is.an\%}
+\alias{\%in.names.of\%}
 \alias{\%matching\%}
 \alias{\%not.in\%}
 \alias{\%not.in.range\%}
 \alias{\%perling\%}
+\alias{\%that.end.with\%}
+\alias{\%that.start.with\%}
 \alias{\%that.match\%}
 \alias{\%that.dont.match\%}
+\alias{\%THAT.MATCH\%}
+\alias{\%THAT.DONT.MATCH\%}
 \alias{\%that.are.in\%}
 \alias{\%without.name\%}
 \alias{\%in.range\%}
@@ -32,30 +38,36 @@
 a \%&\% b
 x \%**\% y
 a \%!in\% b
-vector \%except\% condition
+vector \%except\% condition    # does NOT strip attributes--- see *Value*
 x \%grepling\% patt
+x \%has.name\% name
 x \%is.not.a\% what
 x \%is.a\% what
 x \%is.not.an\% what
 x \%is.an\% what
+name \%in.names.of\% x
 x \%matching\% patt
 a \%not.in\% b
 a \%not.in.range\% b
 x \%perling\% patt
+x \%that.end.with\% suffix
+x \%that.start.with\% prefix
 x \%that.match\% patt
 x \%that.dont.match\% patt
-a \%that.are.in\% b
-x \%without.name\% what
+x \%THAT.MATCH\% patt
+x \%THAT.DONT.MATCH\% patt
+a \%that.are.in\% b       # does NOT strip attributes--- see *Value*
+x \%without.name\% what   # does NOT strip attributes--- see *Value*
 a \%in.range\% b
-a \%such.that\% b
-a \%SUCH.THAT\% b
+a \%such.that\% b         # does NOT strip attributes--- see *Value*
+a \%SUCH.THAT\% b         # does NOT strip attributes--- see *Value*
 from \%upto\% to
 from \%downto\% to
-x \%where\% cond
+x \%where\% cond          # also equiv mwhere(x,cond)
 x \%where.warn\% cond
 a \%<-\% value # really e.g. \{x;y\} \%<-\% list( 'yes', sqrt(pi)) to create x & y
 }
-\arguments{\item{ a, b, vector, condition, x, y, what, patt, from, to, cond, value}{see \bold{Arguments by function}.}
+\arguments{\item{ a, b, vector, condition, x, y, name, what, patt, from, to, cond, value, prefix, suffix}{see \bold{Arguments by function}.}
 }
 \value{
 \item{ \%&\%}{character vector. If either is zero-length, so is the result (unlike \code{paste}).}
@@ -63,7 +75,9 @@ a \%<-\% value # really e.g. \{x;y\} \%<-\% list( 'yes', sqrt(pi)) to create x &
 \item{ \%upto\%, \%downto\%}{numeric}
 \item{ \%is.a\%, \%in\%, etc}{logical}
 \item{ \%<-\%}{technically NULL return, but it overwrites / creates objects; see below...}
+\item{ \%has.name\%, \%in.names.of\%}{logical vector}
 \item{ All others}{same type as first argument.}
+\item{ Note that attributes are _not_ stripped by the subsetting of \%without.name\%, \%except\%, \%such.that\%, \%SUCH.THAT\%, or \%that.are.in\% (as of v2.8.369)--- whereas base R does, which I view as a bug. However, attributes may still get stripped by the other \%that... and \%matching\%, because (some of) those use unique. Possibly I should tweak those too, but I think they are inconsistently designed (e.g. \%that.match\% returns unique values, but \%that.dont.match\% uses subsetting) and I dont want to risk breaking more things...}{}
 }
 \section{Arguments by function}{
 \code{\%&\%} a, b: character vectors to be \code{paste}d with no separator. If either is zero-length, so is the result (unlike \code{paste}).
@@ -74,15 +88,19 @@ a \%<-\% value # really e.g. \{x;y\} \%<-\% list( 'yes', sqrt(pi)) to create x &
 
 \code{\%except\%} vector, condition: character or numeric vectors
 
+\code{\%has.name\%}, \code{\%in.names.of\%} x, name: whether \code{name} (perhaps several) is in \code{names(x)}. These differ only in the order of the parameters, but in some contexts one version seems more natural. Sugar for \code{base::hasName}.
+
 \code{\%in.range\%}, \code{\%not.in.range\%} a, b: numeric vectors.
 
 \code{\%is.a\%}, etc. x: object whose class is to be checked
 
 \code{\%is.a\%}, etc. what: class name
 
-\code{\%matching\%}, \code{\%that.match\%}, \code{\%that.dont.match\%}, \code{\%grepling\%}, \code{\%perling\%} x: character vector
+\code{\%matching\%}, \code{\%that.match\%}, \code{\%that.dont.match\%}, \code{\%THAT.MATCH\%}, \code{\%THAT.DONT.MATCH\%}, \code{\%grepling\%}, \code{\%perling\%} x: character vector
 
-\code{\%matching\%}, \code{\%that.match\%}, \code{\%that.dont.match\%}, \code{\%grepling\%}, \code{\%perling\%} patt: character vector of regexps, with perl syntax for \code{\%perling\%}
+\code{\%matching\%}, \code{\%that.match\%}, \code{\%that.dont.match\%}, \code{\%THAT.MATCH\%}, \code{\%THAT.DONT.MATCH\%}, \code{\%grepling\%}, \code{\%perling\%} patt: character vector of regexps, with perl syntax for \code{\%perling\%}. Use the upper-case versions for case-insensitive matching.
+
+\code{\%that.start.with\%}, \code{\%that.end.with\%} : prefix & suffix: \emph{fixed} (non-regex) strings that must match the start or end of \code{x} , as per \code{\link{startsWith}} and \code{\link{endsWith}}.
 
 \code{\%such.that\%}, \code{\%SUCH.THAT\%} a: vector
 
@@ -92,7 +110,7 @@ a \%<-\% value # really e.g. \{x;y\} \%<-\% list( 'yes', sqrt(pi)) to create x &
 
 \code{\%where\%}, \code{\%where.warn\%} x: data.frame
 
-\code{\%where\%}, \code{\%where.warn\%} cond: unquoted expression to be \code{eval}ed in context of \code{x}, then in the calling frame of \code{\%where\%} (or \code{.GlobalEnv}). Should evaluate to logical (or maybe numeric or character); NA is treated as FALSE. Wrap \code{cond} in parentheses to avoid trouble with operator precedence.
+\code{\%where\%}, \code{\%where.warn\%} cond: unquoted expression to be \code{eval}ed in context of \code{x}, then in the calling frame of \code{\%where\%} (or \code{.GlobalEnv}). Should evaluate to logical (or maybe numeric or character); NA is treated as FALSE. Wrap \code{cond} in parentheses to avoid trouble with operator precedence. NB \code{\%where\%} is equivalent to \code{\link{mwhere}}, which can be handily used in base-R pipes.
 
 \code{\%without.name\%} x: object with \code{names} attribute
 
@@ -101,7 +119,7 @@ a \%<-\% value # really e.g. \{x;y\} \%<-\% list( 'yes', sqrt(pi)) to create x &
 \code{\%<-\%} a, value: \code{value} should be a list, and \code{a} should be e.g. \code{{x;y;z}} with as many elements as \code{value} has. The elements of \code{value} are assigned, in order, to the objects named in \code{a}, which are created / overwritten in the calling environment.
 }
 \author{Mark Bravington}
-\seealso{bquote
+\seealso{bquote, mwhere
 }
 \examples{
 "a" \%&\% "b" # "ab"
@@ -115,13 +133,22 @@ trf <- try( 1+"nonsense")
 if( trf \%is.not.a\% "try-error") cat( "OK\\n") else cat( "not OK\\n")
 1:5 \%except\% c(2,4,6) # c(1,3,5)
 c( alpha=1, beta=2) \%without.name\% "alpha" # c( beta=2)
+xx <- list( y=0, z='pterodactyl')
+xx \%has.name\% 'y' # yep
+xx \%has.name\% 'pringle' # nope
+xx \%has.name\% cq( y, z) # yep and yep again
+cq( y, z, zzz) \%in.names.of\% xx # same thing
 1:5 \%in.range\% c( 2, 4) # c(F,T,T,T,F)
 1:5 \%not.in.range\% c( 2, 4) # c(T,F,F,F,T)
 c( "cat", "hat", "dog", "brick") \%matching\% c( "at", "ic") # cat hat brick
 c( "cat", "hat", "dog", "brick") \%that.match\% c( "at", "ic") # cat hat brick; ...
 # ... synonym for '\%matching\%'
+c( "cat", "hat", "dog", "brick") \%THAT.MATCH\% c( "AT", "ic") # cat hat brick; case-insensitive
+# ... synonym for '\%matching\%'
 c( "cat", "hat", "dog", "brick") \%that.dont.match\% c( "at", "ic") # dog; ...
 # ... like '\%except\%' but for regexps
+c( "cat", "hat", "dog", "brick") \%that.end.with\% 'at' # cat hat
+c( "cat", "hat", "dog", "brick") \%that.start.with\% 'br' # brick
 1 \%upto\% 2 # 1:2
 1 \%upto\% 0 # numeric( 0); use \%upto\% rather than : in for-loops to avoid unintended errors
 1 \%downto\% 0 # 1:0

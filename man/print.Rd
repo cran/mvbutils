@@ -1,6 +1,7 @@
 \name{print}
 \alias{print}
 \alias{print.cat}
+\alias{print.compacto}
 \alias{print.specialprint}
 \alias{print.pagertemp}
 \alias{print.function}
@@ -26,6 +27,10 @@ print(x, ...) # generic
 \method{print}{default}(x, ...) # S3 method for default
 \method{print}{function}(x, useSource=TRUE, ...) # S3 method for function
 \method{print}{cat}(x, ...) # S3 method for cat
+\method{print}{compacto}(x, ...,
+    gap= attr( x, 'gap'),
+    width= attr( x, 'width'),
+    extra= attr( x, 'extra'))# S3 method for compacto
 \method{print}{specialprint}(x, ...) # S3 method for specialprint
 \method{print}{pagertemp}(x, ...) # S3 method for pagertemp
 \method{print}{call}(x, ...) # S3 method for call
@@ -40,11 +45,13 @@ print(x, ...) # generic
 \arguments{
 \item{ x}{thing to print.}
 \item{ ...}{other arguments passed to \code{NextMethod} and/or ignored. There are many special arguments to base-R \code{print.default}, as described in its documentation. They are not named individually in the \code{mvbutils} version for technical reasons, but you can still use them.}
+\item{ gap, width, extra}{see \code{\link{compacto}}}
 \item{ useSource}{[print.function] logical, indicating whether to use source references or copies rather than deparsing language objects. The default is to use the original source if it is available. The \code{mvbutils} override will print a "source" attribute if one exists but no "srcref" attribute does, whereas base-R post-2.14 would just print a deparsed version of the function.}
 }
 \value{
 Technically, an \code{invisible} version of the object is returned. But the point of \code{print} is to display the object. \code{print.function} displays source code, as per \bold{Description}. \code{print.default} and \code{print.call} need to exist in \code{mvbutils} only for technical reasons. The other two special methods are:
 \code{print.cat} applies to character vectors of S3 class \code{cat}, which are printed each on a new line, without the [1] prefix or double-quotes or backslashes. It's ideal for displaying "plain text". Use \code{\link{as.cat}} to coerce a character vector so that it prints this way.
+\code{print.compacto} shows \code{\link{compacto}} matrices with \emph{vertical} column names/labels, and optionally with no gaps between columns.
 \code{print.specialprint} can be used to ensure an object (of class \code{specialprint}) displays in any particular way you want, without bothering to define a new S3 class and write a print method. Just give the object an attribute "print" of mode \code{expression}, which can refer to the main argument \code{x} and any other arguments. That expression will be run by \code{print.specialprint}-- see \bold{Examples}.
 \code{print.pagertemp} is meant only for internal use by the informal-help viewer.
 }
@@ -62,7 +69,6 @@ Suppose you maintain a package \pkg{mypack} in which you want to mildly redefine
 }
 }
 \examples{
-\dontrun{
 # Special methods shown below; basic behaviour of 'print', 'print.default',
 # and 'print.function' is as for base-R
 #cat
@@ -95,6 +101,5 @@ x # calls print.specialprint; consistently formatted for once
 #[2,]         0.00         0.00         0.14       403.43   1202604.28
 #[3,]         0.00         0.00         1.00      2980.96   8886110.52
 #[4,]         0.00         0.00         7.39     22026.47  65659969.14
-}
 }
 \keyword{misc}

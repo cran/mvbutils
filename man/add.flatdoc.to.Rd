@@ -1,7 +1,7 @@
 \name{add.flatdoc.to}
 \alias{add.flatdoc.to}
 \title{Skeletal flat-format documentation}
-\description{You very likely don't need to read this--- \code{add.flatdoc.to} is usually called automatically for you, by \code{fixr( ..., new.doc=TRUE)}. It adds skeleton flat-format documentation to a function, suitable for conversion to Rd-format using \code{\link{doc2Rd}}. The result should pass RCMD CHECK (but won't be much use until you actually edit the documentation).
+\description{You very likely don't need to read this--- \code{add.flatdoc.to} is usually called automatically for you, by \code{fixr( ..., new.doc=TRUE)}. It adds skeletal flat-format documentation to a function, suitable for conversion to Rd-format using \code{\link{doc2Rd}}. The result should pass RCMD CHECK (but won't be much use until you actually edit the documentation).
 }
 \usage{
 # See *Examples* for practical usage
@@ -22,10 +22,11 @@ add.flatdoc.to(x, char.x = NULL, pkg=NULL, env=NULL, convert.to.source=FALSE)
 }
 \examples{
 myfun <- function( ...) ...
-myfun <- add.flatdoc.to( myfun)
+myfun <- mvbutils:::add.flatdoc.to( myfun)
 # 'fixr( myfun)' will now allow editing of code & doco together
 # Or, in a maintained package:
 # ..mypack$myfun <<- add.flatdoc.to( myfun, pkg='mypack')
+## End don't run
 }
 \keyword{internal
 }

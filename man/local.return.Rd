@@ -15,7 +15,9 @@ ffout <- function( a) ffin()
 ffout( 3) # 3
 # whereas:
 ffin <- function( nlocal=sys.parent()) mlocal( return( a))
-ffout( 3) # NULL; "return" alone doesn't work
+try(
+  ffout( 3) # error:; "return" alone doesn't work
+)
 }
 \seealso{\code{\link{mlocal}}
 }

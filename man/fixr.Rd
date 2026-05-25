@@ -6,16 +6,21 @@
 \alias{autoedit}
 \title{Editing functions, text objects, and scriptlets}
 \description{
-\code{fixr} opens a function (or text object, or "script" stored as an R{} \code{expression}--- see \bold{Scriptlets}) in your preferred text editor. Control returns immediately to the R{} command line, so you can keep working in R{} and can be editing several objects simultaneously (cf \code{edit}). A session-duration list of objects being edited is maintained, so that each object can be easily sourced back into its rightful workspace. These objects will be updated automatically on file-change if you've run \code{autoedit( TRUE)} (e.g. in your \code{.First}), or manually by calling \code{FF()}. There is an optional automatic text backup facility.
+\code{fixr} opens a function (or text object, or "script" stored as an R{} \code{expression}--- see \bold{Scriptlets}) in your preferred text editor. Control returns immediately to the R{} command line, so you can keep working in R{} and can be editing several objects simultaneously (cf \code{edit}). A session-duration list of objects being edited is maintained, so that each object can be easily sourced back into its rightful workspace. These objects will be updated automatically on file-change if you've run \code{autoedit( TRUE)} (e.g. in your \code{.First}), or manually by calling \code{FF()}. There is an optional automatic text backup facility. It is designed to work with the \code{\link{cd}} system, and may well \emph{not}work outside of that system (note that you are automatically in that system if you call \code{library(mvbutils)}).
 
 The safest is to call \code{fixtext} to edit text objects, and \code{fixr} for functions and everything else. However, \code{fixr} can handle both, and for objects that already exist it will preserve the type. For new objects, though, you have to specify the type by calling either \code{fixr} or \code{fixtext}. If you forget--- ie if you really wanted to create a new text object, but instead accidentally typed \code{fixr( mytext)}--- you will (probably) get a parse error, and \code{mytext} will then be "stuck" as a broken function. Your best bet is to copy the actual contents in the text-editor to the clipboard, type \code{fixtext( mytext)} in R{}, paste the old contents into the text-editor, and save the file; R{} will then reset the type and all should be well.
 
 \code{readr} also opens a file in your text editor, but in read-only mode, and doesn't update the backups or the list of objects being edited.
+
+\code{fixr} is designed for interfacing stand-alone text editors with R{}. I've never tried to interface it with e.g. ESS or Rstudio; that \emph{might} be possible, and even desirable, not least because of the next subsection.
+\subsection{Packages}{\code{fixr} works with package \pkg{mvbutils} package-maintenance system, and in fact is probably the only way to edit stuff inside that system. If your \emph{maintained} package \code{mypack} (see \code{\link{maintain.packages}}) is already loaded, changes will be reflected immediately in the namespace of \code{mypack}, and also in any packages that import \code{mypack}, and to lists of S3 methods. The sole exception is if your function already exists in \code{asNamespace(mypack)} and consists of a single call to \code{.Call} or \code{.External}. In that case, it is assumed to be an automated wrapper to low-level code that was created when the DLL was loaded, and thus should not be mucked about with; a warning is issued (but it's usually fine). [To force an overwrite without a rebuild, you'd have to first delete the function directly from the namespace--- yikes; but you're probably at a point of needing to rebuild the package anyway.] The newly-edited version will still go into the source-package for \code{mypack}, though, even though it is just a placeholder. The reason you might want to do that, is merely to note the existence of this wrapper-to-low-level (and what its arguments are), and to document it (either internally for use in the package, or for actual export if the user can call it directly).
+}
 }
 \usage{
   # Usually: fixr( x) or fixr( x, new.doc=T)
   fixr( x, new=FALSE, install=FALSE, what, fixing, pkg=NULL,
-      character.only=FALSE, new.doc=FALSE, force.srcref=FALSE)
+      character.only=FALSE, new.doc=FALSE, force.srcref=FALSE,
+      stop.fixing=character())
   # fixtext really has exact same args as fixr, but technically its args are:
   fixtext( x, ...)
   # Usually: readr( x) but exact same args as fixr, though the defaults are different
@@ -36,11 +41,7 @@ The safest is to call \code{fixtext} to edit text objects, and \code{fixr} for f
 \item{ pkg}{(string or environment) if non-NULL, then specifies in which package a specific maintained package (see \code{\link{maintain.packages}}) \code{x} should be looked for.}
 \item{ do}{(logical) TRUE => automatically update objects from altered files; FALSE => don't.}
 \item{ ...}{other arguments, except \code{what} in \code{fixtext}, and \code{fixing} in \code{readr}, are passed to \code{fixr}.}
-}
-\note{
-\code{fixr} is designed to be used with \code{\link{cd}}; I'm not sure it will work independently.
-
-Originally, \code{fixr} was only for functions, and not even for functions in packages, so that it was mostly an alternative to e.g. ESS; if you liked ESS, you wouldn't have bothered with \code{fixr}. However, \code{fixr} now has more sophisticated purposes, in particular being AFAIK the only reliable way of interfacing the package-maintenance features in the \pkg{mvbutils} package. It would be interesting to find out if it can be integrated with e.g. ESS (which I know only enough about to dislike). Input welcome (but unexpected; none has ever come from ESSers).
+\item{ stop.fixing}{(character vector) removes these items from fix list.}
 }
 \details{
 When \code{fixr} is run for the first time (or if you set \code{install=TRUE}), it will ask you for some basic information about your text editor. In particular, you'll need to know what to type at a command prompt to invoke your text editor on a specific file; in Windows, you can usually find this by copying the Properties/Shortcut/Target field of a shortcut, followed by a space and the filename. After supplying these details, \code{fixr} will launch the editor and print a message showing some \code{options} (\code{"backup.fix"}, \code{"edit.scratchdir"} and \code{"program.editor"}), that will need to be set in your \code{.First}. function. You should now be able to do that via \code{fixr(.First)}.
@@ -63,13 +64,23 @@ which will mean that non-function objects whose name ends \code{.r} get written 
 
 \code{fixr} creates a blank function template if the object doesn't exist already, or if \code{new=TRUE}. If you want to create a new character vector as opposed to a new function, call \code{fixtext}, or equivalently set \code{what=""} when you call \code{fixr}.
 
-If the function has attributes, the version in the text editor will be wrapped in a \code{structure(...)} construct (and you can do this yourself). If a \code{doc} attribute exists, it's printed as free-form text at the end of the file, and the call to \code{structure} will end with a line similar to:
+If the function has attributes, the version in the text editor will be wrapped in a \code{structure(...)} construct (and you can do this yourself). If a \code{doc} attribute exists, it's printed as free-form text at the end of the file, nowadays wrapped in a call like this:
+
+\preformatted{
+  , doc =  mvbutils::docattr( r"----{
+  <documentation here...>
+  }----")
+}
+
+(perhaps with no dashes, or a different number) which eventually ends with some closing brackets and so on. Or, in functions written with old versions of \code{mvbutils} (pre-2.11), you'll instead see something like this:
 
 \preformatted{
   ,doc=flatdoc( EOF="<<end of doc>>"))
 }
 
-When the file is sourced back in, that line will cause the rest of the file-- which should be free-format text, with no escape characters etc.-- to be read in as a \code{doc} attribute, which can be displayed by \code{\link{help}}. If you want to add plain-text documentation, you can also add these lines yourself-- see \code{\link{flatdoc}}. Calling \code{fixr( myfun, new.doc=TRUE)} sets up a documentation template that you can fill in, ready for later conversion to Rd format in a package (see \code{\link{mvbutils.packaging.tools}}).
+and then the docu, and no closing stuff at the end of the file.
+
+When the file is sourced back in, those lines will cause the rest of the free-format text (no escape characters needed, etc) to be read in as a \code{doc} attribute, which can be displayed by \code{\link{help}}. If you want to add plain-text documentation, you can also add these lines yourself-- see \code{\link{flatdoc}}. Calling \code{fixr( myfun, new.doc=TRUE)} sets up a documentation template that you can fill in, ready for later conversion to Rd format in a package (see \code{\link{mvbutils.packaging.tools}}).
 
 The list of functions being edited by \code{fixr} is stored in the variable \code{fix.list} in the \code{mvb.session.info} environment. When you quit and restart R{}, the function files you have been using will stay open in the editor, but \code{fix.list} will be empty; hence, updating the file "myfun.r" will not update the corresponding R{} function. If this happens, just type \code{fixr(myfun)} in R{} and when your editor asks you if you want to replace the on-screen version, say no. Save the file again (some editors require a token modification, such as space-then-delete, first) and R{} will notice the update. Very very occasionally, you may want to tell R{} to stop trying to update one of the things it's editing, via eg \code{fixtext <<- fixtext[-3,]} if the offending thing is the third row in \code{fixlist}; note the double arrow.
 
@@ -77,7 +88,7 @@ An automatic text backup facility is available from \code{fixr}: see \code{?get.
 \subsection{Changes with r 2 14}{
 Time was, functions had their source code (including comments, author's preferred layout, etc) stored in a "source" attribute, a simple character vector that was automatically printed when you looked at the function. Thanks to the fiddly, convoluted, opaque "srcref" system that has replaced "source" as of R{} 2.14--- to no real benefit that I can discern--- \code{fixr} in versions of \code{mvbutils} prior to 2.5.209 didn't work correctly with R{} 2.14 up. Versions of \code{mvbutils} after 2.5.509 should work seamlessly.
 
-The technical point is that, from R{} 2.14 onwards, basic R{} will \emph{not} show the \code{source} attribute when you type a function name without running the function; unless there is a \code{srcref} attribute, all you will see is the deparsed raw code. Not nice; so the replacement to \code{\link{print.function}} in \code{mvbutils} will show the \code{source} attribute if it and no \code{srcref} attribute is present. As soon as you change a function with \code{fixr} post-R-2.14, it automatically loses any \code{source} attribute and acquires a "proper" \code{srcref} attribute, which will from then on.
+The technical point is that, from R{} 2.14 onwards, basic R{} will \emph{not} show the \code{source} attribute when you type a function name without running the function; unless there is a \code{srcref} attribute, all you will see is the deparsed raw code. Not nice; so the replacement to \code{\link{print.function}} in \code{mvbutils} will show the \code{source} attribute if it, but no \code{srcref} attribute, is present. As soon as you change a function with \code{fixr} post-R-2.14, it automatically loses any \code{source} attribute and acquires a "proper" \code{srcref} attribute, which will from then on.
 }
 \subsection{Local function groups}{
 There are several ways to work with "nested" (or "child" or "lisp-style macro") functions in R{}, thanks to R{}'s scoping and environment rules; I've used at least four, most often \code{\link{mlocal}} in package \pkg{mvbutils}. One is to keep a bunch of functions together in a \code{\link{local}} environment so that they (i) know about each other's existence and can access a shared variable pool, (ii) can be edited en bloc, but (iii) don't need to clutter up the "parent" code with the definitions of the children. \code{fixr} will happily create & edit such a function-group, as long as you make sure the last statement in \code{local} evaluates to a function. For example:
@@ -87,6 +98,8 @@ There are several ways to work with "nested" (or "child" or "lisp-style macro") 
   local({
     tot <- 0
     firstfun <- function( i) tot <<- tot+i
+    # secondfun is defined in the next few lines:
+    # entirely optional to precede them with 'secondfun <-'
     function( j) {
         for( ii in 1:j)
           firstfun( ii)
@@ -102,7 +115,7 @@ Note that it's \emph{not} necessary to assign the last definition to a variable 
 \bold{Note}: I \emph{think} all this works OK in normal use (Oct 2012), but be careful! I doubt it works when building a package, and I'm not sure that R-core intend that it should; you might have to put the local-building code into the \code{.onLoad}.
 }
 \subsection{Scriptlets}{
-\bold{Note}: I've really gone off "scriptlets" (writing this in mid 2016). These days I prefer to keep "scripts" as R{} character-vector objects (because I dislike having lots of separate files), edited by \code{fixtext} and manually executed as required by \code{debug::mrun}--- which also has a debugging option that automatically applies \code{mtrace}. I'm not going to remove support for scriptlets in \code{fixr}, but I'm not going to try hard to sort out any bugs either. Instructions below are unchanged, and unchecked, from some years ago.
+\bold{Note}: I've really gone off "scriptlets" (writing this in mid 2016). These days I prefer to keep "scripts" as R{} character-vector objects (because I dislike having lots of separate files), edited by \code{fixtext} and manually executed as required by \code{mrun}--- which also has a debugging option that automatically applies \code{debug::mtrace}. I'm not going to remove support for scriptlets in \code{fixr}, but I'm not going to try hard to sort out any bugs either. Instructions below are unchanged, and unchecked, from some years ago.
 
 You can also maintain "scriptlets" with \code{fixr}, by embedding the instructions (and comments etc) in an \code{expression(...)} statement. Obviously, the result will be an \code{expression}; to actually execute a scriptlet after editing it, use \code{eval()}. The scriptlet itself is stored in the "source" attribute as a character vector of class \code{cat}, and the expression itself is given class \code{thing.with.source} so that the source is displayed in preference to the raw expression. Backup files are maintained just as for functions. Only the \emph{first} syntactically complete statement is returned by \code{fixr} (though subsequent material, including extra comments, is always retained in the \code{source} attribute); make sure you wrap everything you want done inside that call to \code{expression(...)}.
 
@@ -170,7 +183,7 @@ To purge the entire \code{fix.list}, do this:
 
  fix.list <<- fix.list[ 0,]
 }
-\seealso{\code{.First}, \code{edit}, \code{\link{cd}}, \code{\link{get.backup}}, \code{\link{fix.order}}, \code{\link{move}}
+\seealso{\code{.First}, \code{edit}, \code{\link{cd}}, \code{\link{get.backup}}, \code{\link{fix.order}}, \code{\link{move}}, \code{\link{maintain.packages}}
 }
 \keyword{utilities}
 \keyword{programming

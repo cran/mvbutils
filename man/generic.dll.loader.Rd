@@ -13,7 +13,7 @@ If you just want to use \code{mvbutils} to help build/maintain your package, and
 }
 \usage{
 # Only call this inside your .onLoad!
-generic.dll.loader(libname, pkgname, ignore_error=FALSE)
+generic.dll.loader(libname, pkgname, ignore_error=FALSE, dlls=NULL)
 # Only call these if you are informally developing a DLL outside a package
 ldyn.tester(chname)
 create.wrappers.for.dll( this.dll.info, ns=new.env( parent=parent.frame(2)))
@@ -22,6 +22,7 @@ ldyn.unload( l1)
 \arguments{
 \item{ libname, pkgname}{as per \code{.onLoad}}
 \item{ ignore_error}{?continue to load other DLLs if one fails?}
+\item{ dlls}{default (NULL) means "load all the DLLs you can find". Otherwise, it should be a character vector specifying the DLLs by name, without folder--- no extension is necessary.}
 \item{ chname}{(for \code{ldyn.tester}) Path to the DLL (extension not required)}
 \item{ this.dll.info}{(for \code{create.wrappers.for.dll}) A \code{DLLInfo} object, as returned by \code{.dynLibs()[[N]]} or \code{library.dynam(...)}}
 \item{ ns}{(for \code{create.wrappers.for.dll}) If you're calling \code{create.wrappers.for.dll} manually, then this defaults to the calling environment, probably \code{.GlobalEnv}. For "internal use", \code{ns} is meant to be a namespace, but you shouldn't be using it like that!}
@@ -50,18 +51,20 @@ Getting fancy, you can alternatively set the environment of your calling functio
 }
 \examples{
 \dontrun{
-mypack:::.onLoad <- function( libname, pkgname) generic.dll.loader( libname, pkgname)
-#... or just copy the code into your .onLoad
-# For casual testing of a DLL that's not yet in a package
-dl <- ldyn.tester( 'path/to/my/dll/libs/i386/mydll.dll')
-getDLLRegisteredRoutines( l1)
-LL_mydll <- create.wrappers.for.dll( dl)
-.C( LL_mydll$C_rout1, as.integer( 0)) # ... whatever!
-ldyn.unload( dl)
-# Safer because not permanent:
-assign( 'dl', ldyn.tester( 'path/to/my/dll/libs/i386/mydll.dll'), pos='mvb.session.info')
-assign( 'LL_mydll', create.wrappers.for.dll( dl), pos='mvb.session.info')
-.C( LL.mydll$C_rout1, as.integer( 0)) # ... whatever!
+if( FALSE && is_very_annoying( CRAN))\{ # otherwise CMD CHECK --as-cran tries to run this :/
+  mypack:::.onLoad <- function( libname, pkgname) generic.dll.loader( libname, pkgname)
+  #... or just copy the code into your .onLoad
+  # For casual testing of a DLL that's not yet in a package
+  dl <- ldyn.tester( 'path/to/my/dll/libs/i386/mydll.dll')
+  getDLLRegisteredRoutines( l1)
+  LL_mydll <- create.wrappers.for.dll( dl)
+  .C( LL_mydll$C_rout1, as.integer( 0)) # ... whatever!
+  ldyn.unload( dl)
+  # Safer because not permanent:
+  assign( 'dl', ldyn.tester( 'path/to/my/dll/libs/i386/mydll.dll'), pos='mvb.session.info')
+  assign( 'LL_mydll', create.wrappers.for.dll( dl), pos='mvb.session.info')
+  .C( LL.mydll$C_rout1, as.integer( 0)) # ... whatever!
+\} # if F
 }
 }
 \keyword{misc}

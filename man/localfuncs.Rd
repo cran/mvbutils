@@ -23,5 +23,4 @@ outer <- function( z) \{
 \}
 outer( 4) # 8
 }
-\keyword{internal
-}
+\keyword{misc}
